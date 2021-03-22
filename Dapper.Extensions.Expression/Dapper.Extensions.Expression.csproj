@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<Version>1.0.0.1</Version>
+		<Description>将表达式翻译为sql语句</Description>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<Copyright>swpudp</Copyright>
+		<Company>swpudp</Company>
+		<Authors>swpudp@163.com</Authors>
+		<PackageReleaseNotes>基本功能实现</PackageReleaseNotes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.0.78" />
+		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.0.78" />
+		<PackageReference Include="Microsoft.CSharp" Version="4.0.1" />
+		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
+	</ItemGroup>
+
+</Project>
