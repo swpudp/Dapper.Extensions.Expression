@@ -96,7 +96,7 @@ namespace Dapper.Extensions.Expression.Adapters
             {
                 return;
             }
-            int currentPage = page - 1 <= 0 ? 0 : page - 1;
+            int currentPage = page > 1 ? page - 1 : 0;
             sb.AppendFormat(" LIMIT {0},{1}", currentPage * pageSize, pageSize);
         }
 

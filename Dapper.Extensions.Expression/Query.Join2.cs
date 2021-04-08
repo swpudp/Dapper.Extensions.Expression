@@ -31,16 +31,6 @@ namespace Dapper.Extensions.Expression
         private readonly ISqlAdapter _adapter;
 
         /// <summary>
-        /// count的sql语句
-        /// </summary>
-        private string _countSql;
-
-        /// <summary>
-        /// sql语句
-        /// </summary>
-        private string _commandSql;
-
-        /// <summary>
         /// 参数
         /// </summary>
         public DynamicParameters Parameters { get; }
@@ -409,10 +399,6 @@ namespace Dapper.Extensions.Expression
 
         public string GetCommandText()
         {
-            if (!string.IsNullOrEmpty(_commandSql))
-            {
-                return _commandSql;
-            }
             StringBuilder sqlBuilder = new StringBuilder();
             BuildSelect(sqlBuilder);
             ParseTable(sqlBuilder);
@@ -420,8 +406,7 @@ namespace Dapper.Extensions.Expression
             BuildGroup(sqlBuilder);
             BuildOrder(sqlBuilder);
             _adapter.AppendPage(sqlBuilder, _page, _pageSize);
-            _commandSql = sqlBuilder.ToString();
-            return _commandSql;
+            return sqlBuilder.ToString();
         }
 
         private void BuildSelect(StringBuilder sqlBuilder)
@@ -456,32 +441,22 @@ namespace Dapper.Extensions.Expression
 
         public string GetCountCommandText()
         {
-            if (!string.IsNullOrEmpty(_countSql))
-            {
-                return _countSql;
-            }
             StringBuilder countBuilder = new StringBuilder();
             countBuilder.Append("SELECT COUNT(*)");
             ParseTable(countBuilder);
             BuildWhere(countBuilder);
             BuildGroup(countBuilder);
-            _countSql = countBuilder.ToString();
-            return _countSql;
+            return countBuilder.ToString();
         }
 
         private string GetFunctionCommandText()
         {
-            if (!string.IsNullOrEmpty(_countSql))
-            {
-                return _countSql;
-            }
             StringBuilder countBuilder = new StringBuilder();
             countBuilder.Append("SELECT ").Append(_aggregateBuilder);
             ParseTable(countBuilder);
             BuildWhere(countBuilder);
             BuildGroup(countBuilder);
-            _countSql = countBuilder.ToString();
-            return _countSql;
+            return countBuilder.ToString();
         }
 
         private void BuildWhere(StringBuilder builder)
