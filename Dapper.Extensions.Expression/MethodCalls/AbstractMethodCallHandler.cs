@@ -1,5 +1,5 @@
-﻿using System.Linq.Expressions;
-using System.Reflection;
+﻿using Dapper.Extensions.Expression.Adapters;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace Dapper.Extensions.Expression.MethodCalls
@@ -17,11 +17,11 @@ namespace Dapper.Extensions.Expression.MethodCalls
         /// <summary>
         /// 是否满足条件
         /// </summary>
-        public abstract bool IsMatch(MethodInfo methodInfo);
+        public abstract bool IsMatch(MethodCallExpression exp);
 
         /// <summary>
         /// 处理方法调用
         /// </summary>
-        public abstract void Handle(MethodCallExpression e, ExpressionVisitor visitor, StringBuilder builder, DynamicParameters parameters);
+        public abstract void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Dapper.Extensions.Expression.Adapters;
 using Dapper.Extensions.Expression.Providers;
+using Dapper.Extensions.Expression.Visitors;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -61,7 +62,7 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
-                adapter.AppendColumnName(columnList, property);  //fix for issue #336
+                adapter.AppendColumnName(columnList, property);
                 if (i < canWriteProperties.Count - 1)
                 {
                     columnList.Append(", ");
@@ -130,7 +131,7 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
-                adapter.AppendColumnName(columnList, property);  //fix for issue #336
+                adapter.AppendColumnName(columnList, property);
                 if (i < canWriteProperties.Count - 1)
                 {
                     columnList.Append(", ");
@@ -207,36 +208,34 @@ namespace Dapper.Extensions.Expression
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static int Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql<T>(connection);
-            return connection.Execute(sql, entityToUpdate, transaction, commandTimeout);
+            string sql = BuildUpdateSql(connection, entityToUpdate, out DynamicParameters parameters);
+            return connection.Execute(sql, parameters, transaction, commandTimeout);
         }
 
         /// <summary>
         /// 创建更新sql语句
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
         /// <returns></returns>
-        private static string BuildUpdateSql<T>(IDbConnection connection)
+        private static string BuildUpdateSql<T>(IDbConnection connection, T entity, out DynamicParameters parameters)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
             {
                 type = eleType;
             }
-
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             string name = TypeProvider.GetTableName(type);
             StringBuilder sb = new StringBuilder();
-            sb.AppendFormat("update {0} set ", name);
-
+            sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
             IList<PropertyInfo> nonIdProps = TypeProvider.GetCanUpdateProperties(type);
             IList<PropertyInfo> keyProperties = TypeProvider.GetUpdateKeyProperties(type);
 
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            parameters = new DynamicParameters();
             for (int i = 0; i < nonIdProps.Count; i++)
             {
                 PropertyInfo property = nonIdProps[i];
-                adapter.AppendColumnNameEqualsValue(sb, property);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
+                parameters.Add("@" + columnName, property.GetValue(entity));
                 if (i < nonIdProps.Count - 1)
                     sb.Append(", ");
             }
@@ -244,7 +243,8 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < keyProperties.Count; i++)
             {
                 PropertyInfo property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
+                parameters.Add("@" + columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
@@ -282,14 +282,13 @@ namespace Dapper.Extensions.Expression
 
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
-            ExpressionVisitor visitor = new ExpressionVisitor(adapter);
 
             string name = TypeProvider.GetTableName(typeof(T));
             sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
-            visitor.Visit(content, sb, parameters);
+            UpdateExpressionVisitor.Visit(content, adapter, sb, parameters);
 
             sb.AppendFormat(" where ");
-            visitor.Visit(condition, sb, parameters);
+            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
 
             return sb.ToString();
         }
@@ -324,14 +323,13 @@ namespace Dapper.Extensions.Expression
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
-            ExpressionVisitor visitor = new ExpressionVisitor(adapter);
 
             string name = TypeProvider.GetTableName(typeof(T));
             sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
-            visitor.Visit(content, sb, parameters);
+            UpdateExpressionVisitor.Visit(content, adapter, sb, parameters);
 
             sb.Append(" where ");
-            visitor.Visit(condition, sb, parameters);
+            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
 
             return sb.ToString();
         }
@@ -347,17 +345,15 @@ namespace Dapper.Extensions.Expression
         /// <returns>true if deleted, false if not found</returns>
         public static int Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string sql = BuildDeleteSql<T>(connection);
-            return connection.Execute(sql, entityToDelete, transaction, commandTimeout);
+            string sql = BuildDeleteSql(connection, entityToDelete, out DynamicParameters parameters);
+            return connection.Execute(sql, parameters, transaction, commandTimeout);
         }
 
         /// <summary>
         /// 创建删除sql
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
         /// <returns></returns>
-        private static string BuildDeleteSql<T>(IDbConnection connection)
+        private static string BuildDeleteSql<T>(IDbConnection connection, T entity, out DynamicParameters parameters)
         {
             Type type = typeof(T);
 
@@ -370,10 +366,12 @@ namespace Dapper.Extensions.Expression
             string name = adapter.GetQuoteName(TypeProvider.GetTableName(type));
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
+            parameters = new DynamicParameters();
             for (int i = 0; i < keyProperties.Count; i++)
             {
                 PropertyInfo property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property);  //fix for issue #336
+                adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
+                parameters.Add("@" + columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
@@ -439,9 +437,8 @@ namespace Dapper.Extensions.Expression
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
             string name = TypeProvider.GetTableName(typeof(T));
-            sb.AppendFormat("delete from {0} where ", name);
-            ExpressionVisitor visitor = new ExpressionVisitor(adapter);
-            visitor.Visit(condition, sb, parameters);
+            sb.AppendFormat("delete from {0} where ", adapter.GetQuoteName(name));
+            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
             return sb.ToString();
         }
 
@@ -478,20 +475,25 @@ namespace Dapper.Extensions.Expression
             {
                 ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
                 PropertyInfo key = TypeProvider.GetSingleKey<T>(nameof(Get));
-                string name = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
-                string columnName = sqlAdapter.GetQuoteName(key.Name);
+                string tableName = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
+                string keyName = sqlAdapter.GetQuoteName(key.Name);
                 IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
                 StringBuilder sqlBuilder = new StringBuilder();
                 sqlBuilder.Append("SELECT ");
                 foreach (PropertyInfo propertyInfo in queryProperties)
                 {
-                    sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                    bool isAlias = sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                    if (isAlias)
+                    {
+                        sqlBuilder.Append(" AS ");
+                        sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
+                    }
                     if (queryProperties.IndexOf(propertyInfo) < queryProperties.Count - 1)
                     {
                         sqlBuilder.Append(",");
                     }
                 }
-                sqlBuilder.AppendFormat(" FROM {0} WHERE {1} = @id", name, columnName);
+                sqlBuilder.AppendFormat(" FROM {0} WHERE {1} = @id", tableName, keyName);
                 sql = sqlBuilder.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
@@ -535,7 +537,12 @@ namespace Dapper.Extensions.Expression
                 sqlBuilder.Append("SELECT ");
                 foreach (PropertyInfo propertyInfo in queryProperties)
                 {
-                    sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                    bool isAlias = sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                    if (isAlias)
+                    {
+                        sqlBuilder.Append(" AS ");
+                        sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
+                    }
                     if (queryProperties.IndexOf(propertyInfo) < queryProperties.Count - 1)
                     {
                         sqlBuilder.Append(",");
@@ -659,6 +666,24 @@ namespace Dapper.Extensions.Expression
             string name = TypeProvider.GetTableName(typeof(T));
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             return adapter.GetQuoteName(name);
+        }
+
+        /// <summary>
+        /// 两表联合查询
+        /// </summary>
+        /// <returns></returns>
+        public static Query<T1, T2> JoinQuery<T1, T2>(this IDbConnection connection, JoinType joinType, Expression<Func<T1, T2, bool>> predicate)
+        {
+            return new Query<T1, T2>(connection, joinType, predicate);
+        }
+
+        /// <summary>
+        /// 三表联合查询
+        /// </summary>
+        /// <returns></returns>
+        public static Query<T1, T2, T3> JoinQuery<T1, T2, T3>(this IDbConnection connection, JoinType joinType, Expression<Func<T1, T2, bool>> predicate, JoinType joinType1, Expression<Func<T1, T2, T3, bool>> predicate1)
+        {
+            return new Query<T1, T2, T3>(connection, joinType, predicate, joinType1, predicate1);
         }
     }
 }

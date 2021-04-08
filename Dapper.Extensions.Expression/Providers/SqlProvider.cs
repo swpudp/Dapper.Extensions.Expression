@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Adapters;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using Dapper.Extensions.Expression.Adapters;
 
 namespace Dapper.Extensions.Expression.Providers
 {
@@ -21,5 +21,16 @@ namespace Dapper.Extensions.Expression.Providers
             }
             return adapter;
         }
+
+        /// <summary>
+        /// 连接类型对应sql语句
+        /// </summary>
+        internal static readonly IDictionary<JoinType, string> JoinTypeSqlCause = new Dictionary<JoinType, string>
+        {
+            [JoinType.Full] = "FULL LEFT",
+            [JoinType.Left] = "LEFT JOIN",
+            [JoinType.Inner] = "INNER JOIN",
+            [JoinType.Right] = "RIGHT JOIN"
+        };
     }
 }

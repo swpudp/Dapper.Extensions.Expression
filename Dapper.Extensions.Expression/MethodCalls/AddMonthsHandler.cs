@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Adapters;
+using System;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 
 namespace Dapper.Extensions.Expression.MethodCalls
@@ -9,14 +9,14 @@ namespace Dapper.Extensions.Expression.MethodCalls
     {
         public override string MethodName => "AddMonths";
 
-        public override bool IsMatch(MethodInfo methodInfo)
+        public override bool IsMatch(MethodCallExpression exp)
         {
-            return methodInfo.DeclaringType == typeof(DateTime);
+            return exp.Method.DeclaringType == typeof(DateTime);
         }
 
-        public override void Handle(MethodCallExpression e, ExpressionVisitor visitor, StringBuilder builder, DynamicParameters parameters)
+        public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
-            visitor.DateTimeAddMethod(e, "MONTH", builder, parameters);
+            sqlAdapter.DateTimeAddMethod(e, "MONTH", builder, parameters, appendParameter);
         }
     }
 }

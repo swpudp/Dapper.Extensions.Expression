@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper.Extensions.Expression.Extensions;
 
 namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
@@ -42,7 +43,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         public IEnumerable<TestEntity> QueryTest()
         {
             using IDbConnection connection = CreateConnection();
-            Query<TestEntity> query = new Query<TestEntity>(connection);
+            Query<TestEntity> query = connection.Query<TestEntity>();
             query = query.Where(v => v.TestName.Contains("FD2D"));
             IList<TestEntity> data = query.ToList<TestEntity>();
             return data;

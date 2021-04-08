@@ -1,13 +1,14 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Providers;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq.Expressions;
 
-namespace Dapper.Extensions.Expression
+namespace Dapper.Extensions.Expression.Utilities
 {
-    internal static class ExpressionResolver
+    public static class ExpressionResolver
     {
-        internal static System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression exp)
+        public static System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression exp)
         {
             if (exp == null)
             {
@@ -89,7 +90,7 @@ namespace Dapper.Extensions.Expression
                 case MemberBindingType.ListBinding:
                     return VisitMemberListBinding((MemberListBinding)binding);
                 default:
-                    throw new Exception(string.Format("Unhandled binding type '{0}'", binding.BindingType));
+                    throw new Exception($"Unhandled binding type '{binding.BindingType}'");
             }
         }
 
@@ -105,6 +106,31 @@ namespace Dapper.Extensions.Expression
 
         private static System.Linq.Expressions.Expression VisitUnary(UnaryExpression u)
         {
+            if (u.NodeType == ExpressionType.Not && u.Operand.NodeType == ExpressionType.MemberAccess)
+            {
+                MemberExpression unaryMemberExp = (MemberExpression)u.Operand;
+                ConstantExpression right;
+                System.Linq.Expressions.Expression left;
+                if (unaryMemberExp.Expression == null || unaryMemberExp.Expression.NodeType == ExpressionType.Parameter)
+                {
+                    left = unaryMemberExp;
+                    right = ConstantDefined.BooleanFalse;
+                }
+                else
+                {
+                    if (unaryMemberExp.Member.Name == ConstantDefined.MemberNameHasValue)
+                    {
+                        left = unaryMemberExp.Expression;
+                        right = TypeProvider.GetNullExpression(unaryMemberExp.Expression.Type);
+                    }
+                    else
+                    {
+                        left = unaryMemberExp.Expression;
+                        right = TypeProvider.GetFalseExpression(unaryMemberExp.Expression.Type);
+                    }
+                }
+                return System.Linq.Expressions.Expression.Equal(left, right);
+            }
             System.Linq.Expressions.Expression operand = Visit(u.Operand);
             if (operand != u.Operand)
             {
@@ -162,12 +188,37 @@ namespace Dapper.Extensions.Expression
 
         private static System.Linq.Expressions.Expression VisitMemberAccess(MemberExpression m)
         {
-            System.Linq.Expressions.Expression exp = Visit(m.Expression);
-            if (exp != m.Expression)
+            if (m.Type != ConstantDefined.TypeOfBoolean)
             {
-                return System.Linq.Expressions.Expression.MakeMemberAccess(exp, m.Member);
+                System.Linq.Expressions.Expression exp = Visit(m.Expression);
+                if (exp != m.Expression)
+                {
+                    return System.Linq.Expressions.Expression.MakeMemberAccess(exp, m.Member);
+                }
+                return m;
             }
-            return m;
+            System.Linq.Expressions.Expression left;
+            ConstantExpression right;
+            ExpressionType type;
+            if (m.Member.Name == ConstantDefined.MemberNameHasValue)
+            {
+                right = TypeProvider.GetNullExpression(m.Expression.Type);
+                type = ExpressionType.NotEqual;
+                left = m.Expression;
+            }
+            else if (m.Member.Name == ConstantDefined.MemberNameValue)
+            {
+                right = TypeProvider.GetTrueExpression(m.Expression.Type);
+                type = ExpressionType.Equal;
+                left = m.Expression;
+            }
+            else
+            {
+                right = ConstantDefined.BooleanTrue;
+                type = ExpressionType.Equal;
+                left = m;
+            }
+            return System.Linq.Expressions.Expression.MakeBinary(type, left, right);
         }
 
         private static System.Linq.Expressions.Expression VisitMethodCall(MethodCallExpression m)
@@ -231,7 +282,7 @@ namespace Dapper.Extensions.Expression
         private static MemberListBinding VisitMemberListBinding(MemberListBinding binding)
         {
             IEnumerable<ElementInit> initializers = VisitElementInitializerList(binding.Initializers);
-            if (initializers != binding.Initializers)
+            if (Equals(initializers, binding.Initializers))
             {
                 return System.Linq.Expressions.Expression.ListBind(binding.Member, initializers);
             }
@@ -301,12 +352,9 @@ namespace Dapper.Extensions.Expression
         private static NewExpression VisitNew(NewExpression nex)
         {
             IEnumerable<System.Linq.Expressions.Expression> args = VisitExpressionList(nex.Arguments);
-            if (args != nex.Arguments)
+            if (Equals(args, nex.Arguments))
             {
-                if (nex.Members != null)
-                    return System.Linq.Expressions.Expression.New(nex.Constructor, args, nex.Members);
-                else
-                    return System.Linq.Expressions.Expression.New(nex.Constructor, args);
+                return nex.Members != null ? System.Linq.Expressions.Expression.New(nex.Constructor, args, nex.Members) : System.Linq.Expressions.Expression.New(nex.Constructor, args);
             }
             return nex;
         }
@@ -315,7 +363,7 @@ namespace Dapper.Extensions.Expression
         {
             NewExpression n = VisitNew(init.NewExpression);
             IEnumerable<MemberBinding> bindings = VisitBindingList(init.Bindings);
-            if (n != init.NewExpression || bindings != init.Bindings)
+            if (n != init.NewExpression || Equals(bindings, init.Bindings))
             {
                 return System.Linq.Expressions.Expression.MemberInit(n, bindings);
             }
@@ -326,7 +374,7 @@ namespace Dapper.Extensions.Expression
         {
             NewExpression n = VisitNew(init.NewExpression);
             IEnumerable<ElementInit> initializers = VisitElementInitializerList(init.Initializers);
-            if (n != init.NewExpression || initializers != init.Initializers)
+            if (n != init.NewExpression || Equals(initializers, init.Initializers))
             {
                 return System.Linq.Expressions.Expression.ListInit(n, initializers);
             }
@@ -335,17 +383,14 @@ namespace Dapper.Extensions.Expression
 
         private static System.Linq.Expressions.Expression VisitNewArray(NewArrayExpression na)
         {
-            IEnumerable<System.Linq.Expressions.Expression> exprs = VisitExpressionList(na.Expressions);
-            if (exprs != na.Expressions)
+            IEnumerable<System.Linq.Expressions.Expression> expressions = VisitExpressionList(na.Expressions);
+            if (Equals(expressions, na.Expressions))
             {
                 if (na.NodeType == ExpressionType.NewArrayInit)
                 {
-                    return System.Linq.Expressions.Expression.NewArrayInit(na.Type.GetElementType(), exprs);
+                    return System.Linq.Expressions.Expression.NewArrayInit(na.Type.GetElementType(), expressions);
                 }
-                else
-                {
-                    return System.Linq.Expressions.Expression.NewArrayBounds(na.Type.GetElementType(), exprs);
-                }
+                return System.Linq.Expressions.Expression.NewArrayBounds(na.Type.GetElementType(), expressions);
             }
             return na;
         }
@@ -354,7 +399,7 @@ namespace Dapper.Extensions.Expression
         {
             IEnumerable<System.Linq.Expressions.Expression> args = VisitExpressionList(iv.Arguments);
             System.Linq.Expressions.Expression expr = Visit(iv.Expression);
-            if (args != iv.Arguments || expr != iv.Expression)
+            if (!Equals(args, iv.Arguments) || expr != iv.Expression)
             {
                 return System.Linq.Expressions.Expression.Invoke(expr, args);
             }

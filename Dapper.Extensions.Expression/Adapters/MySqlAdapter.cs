@@ -1,4 +1,6 @@
-﻿using System.Linq.Expressions;
+﻿using Dapper.Extensions.Expression.Extensions;
+using Dapper.Extensions.Expression.Visitors;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -14,10 +16,11 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        public void AppendColumnName(StringBuilder sb, MemberInfo memberInfo)
+        public bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo)
         {
-            string name = GetQuoteName(memberInfo);
+            string name = GetQuoteName(memberInfo, out bool isAlias);
             sb.Append(name);
+            return isAlias;
         }
 
         /// <summary>
@@ -28,12 +31,13 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="aliasMemberInfo">别名</param>
         public void AppendAliasColumnName(StringBuilder sb, MemberInfo memberInfo, MemberInfo aliasMemberInfo)
         {
-            sb.AppendFormat("`{0}` AS `{1}`", memberInfo.Name, aliasMemberInfo.Name);
+            string columnName = GetQuoteName(memberInfo, out _);
+            sb.AppendFormat("{0} AS `{1}`", columnName, aliasMemberInfo.Name);
         }
 
-        public void AppendTableName(StringBuilder sb, string tableName)
+        public void AppendQuoteName(StringBuilder sb, string name)
         {
-            sb.AppendFormat("`{0}`", tableName);
+            sb.AppendFormat("`{0}`", name);
         }
 
         /// <summary>
@@ -49,12 +53,15 @@ namespace Dapper.Extensions.Expression.Adapters
         /// Adds the name of a column.
         /// </summary>
         /// <param name="memberInfo">The column name.</param>
-        public string GetQuoteName(MemberInfo memberInfo)
+        /// <param name="isAlias"></param>
+        public string GetQuoteName(MemberInfo memberInfo, out bool isAlias)
         {
-            if (!memberInfo.IsDefined(typeof(ColumnAttribute)))
+            if (!memberInfo.IsColumnAlias())
             {
+                isAlias = false;
                 return $"`{memberInfo.Name}`";
             }
+            isAlias = true;
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
             return $"`{columnAttribute.ColumnName}`";
         }
@@ -64,16 +71,19 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        public void AppendColumnNameEqualsValue(StringBuilder sb, MemberInfo memberInfo)
+        /// <param name="name"></param>
+        public void AppendColumnNameEqualsValue(StringBuilder sb, MemberInfo memberInfo, out string name)
         {
-            if (memberInfo.IsDefined(typeof(ColumnAttribute)))
+            if (memberInfo.IsColumnAlias())
             {
                 ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
                 sb.AppendFormat("`{0}` = @{1}", columnAttribute.ColumnName, columnAttribute.ColumnName);
+                name = columnAttribute.ColumnName;
             }
             else
             {
                 sb.AppendFormat("`{0}` = @{1}", memberInfo.Name, memberInfo.Name);
+                name = memberInfo.Name;
             }
         }
 
@@ -87,10 +97,10 @@ namespace Dapper.Extensions.Expression.Adapters
                 return;
             }
             int currentPage = page - 1 <= 0 ? 0 : page - 1;
-            sb.AppendFormat("LIMIT {0},{1}", currentPage * pageSize, pageSize);
+            sb.AppendFormat(" LIMIT {0},{1}", currentPage * pageSize, pageSize);
         }
 
-        public void HandleDateTime(ExpressionVisitor visitor, MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters)
+        public void HandleDateTime(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
             MemberInfo member = exp.Member;
             if (member == ConstantDefined.PropertyDateTimeNow)
@@ -111,78 +121,78 @@ namespace Dapper.Extensions.Expression.Adapters
             if (member == ConstantDefined.PropertyDateTimeDate)
             {
                 sqlBuilder.Append("DATE(");
-                visitor.InternalVisit(exp.Expression, sqlBuilder, parameters);
+                WhereExpressionVisitor.InternalVisit(exp.Expression, this, sqlBuilder, parameters, appendParameter);
                 sqlBuilder.Append(")");
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeYear)
             {
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "YEAR");
+                AppendDatePart(exp, sqlBuilder, parameters, "YEAR", appendParameter);
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeMonth)
             {
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "MONTH");
+                AppendDatePart(exp, sqlBuilder, parameters, "MONTH", appendParameter);
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeDay)
             {
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "DAY");
+                AppendDatePart(exp, sqlBuilder, parameters, "DAY", appendParameter);
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeHour)
             {
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "HOUR");
+                AppendDatePart(exp, sqlBuilder, parameters, "HOUR", appendParameter);
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeMinute)
             {
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "HOUR");
+                AppendDatePart(exp, sqlBuilder, parameters, "HOUR", appendParameter);
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeSecond)
             {
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "SECOND");
+                AppendDatePart(exp, sqlBuilder, parameters, "SECOND", appendParameter);
                 return;
             }
             /* MySql is not supports MILLISECOND */
             if (member == ConstantDefined.PropertyDateTimeDayOfWeek)
             {
                 sqlBuilder.Append("(");
-                AppendDatePart(visitor, exp, sqlBuilder, parameters, "DAYOFWEEK");
+                AppendDatePart(exp, sqlBuilder, parameters, "DAYOFWEEK", appendParameter);
                 sqlBuilder.Append(" - 1)");
             }
         }
 
-        private void AppendDatePart(ExpressionVisitor visitor, MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, string functionName)
+        private void AppendDatePart(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, string functionName, bool appendParameter)
         {
             sqlBuilder.Append(functionName);
             sqlBuilder.Append("(");
-            visitor.InternalVisit(exp.Expression, sqlBuilder, parameters);
+            WhereExpressionVisitor.InternalVisit(exp.Expression, this, sqlBuilder, parameters, appendParameter);
             sqlBuilder.Append(")");
         }
 
         /// <summary>
         /// 处理日期
         /// </summary>
-        public void DateTimeAddMethod(ExpressionVisitor visitor, MethodCallExpression e, string function, StringBuilder sqlBuilder, DynamicParameters parameters)
+        public void DateTimeAddMethod(MethodCallExpression e, string function, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
             sqlBuilder.Append("DATE_ADD(");
-            visitor.InternalVisit(e.Object, sqlBuilder, parameters);
+            WhereExpressionVisitor.InternalVisit(e.Object, this, sqlBuilder, parameters, appendParameter);
             sqlBuilder.Append(",INTERVAL ");
-            visitor.InternalVisit(e.Arguments[0], sqlBuilder, parameters);
+            WhereExpressionVisitor.InternalVisit(e.Arguments[0], this, sqlBuilder, parameters, appendParameter);
             sqlBuilder.AppendFormat(" {0} ", function);
             sqlBuilder.Append(")");
         }
 
-        public bool HandleStringLength(MemberExpression memberExpression, ExpressionVisitor visitor, StringBuilder sqlBuilder, DynamicParameters parameters)
+        public bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
             if (memberExpression.Member.Name != "Length")
             {
                 return false;
             }
             sqlBuilder.Append("LENGTH(");
-            visitor.InternalVisit(memberExpression.Expression, sqlBuilder, parameters);
+            WhereExpressionVisitor.InternalVisit(memberExpression.Expression, this, sqlBuilder, parameters, appendParameter);
             sqlBuilder.Append(")");
             return true;
         }

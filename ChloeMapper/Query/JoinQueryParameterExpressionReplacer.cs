@@ -24,6 +24,8 @@ namespace Dapper.Extensions.Expression.Query
 
         LambdaExpression Replace()
         {
+            
+            
             System.Linq.Expressions.Expression lambdaBody = this._lambda.Body;
             System.Linq.Expressions.Expression newBody = this.Visit(lambdaBody);
 

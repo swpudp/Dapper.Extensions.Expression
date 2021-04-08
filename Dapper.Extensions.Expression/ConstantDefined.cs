@@ -59,6 +59,11 @@ namespace Dapper.Extensions.Expression
 
         internal static readonly Type TypeOfDateTime = typeof(DateTime);
         internal static readonly Type TypeOfString = typeof(string);
+        internal static readonly Type TypeOfBoolean = typeof(bool);
+        internal static readonly Type TypeOfInt32 = typeof(int);
+
+        internal const string MemberNameValue = "Value";
+        internal const string MemberNameHasValue = "HasValue";
 
     }
 }

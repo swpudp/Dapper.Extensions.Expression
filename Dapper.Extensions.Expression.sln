@@ -13,7 +13,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expressio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChloeMapper", "ChloeMapper\ChloeMapper.csproj", "{BF2F8AD2-0E32-4148-A73F-D4485639FB06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Extensions.Expression.WebTest", "Dapper.Extensions.Expression.WebTest\Dapper.Extensions.Expression.WebTest.csproj", "{040425FE-A3D0-435B-A8C8-B12D10038EAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expression.WebTest", "Dapper.Extensions.Expression.WebTest\Dapper.Extensions.Expression.WebTest.csproj", "{040425FE-A3D0-435B-A8C8-B12D10038EAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EfTest", "EfTest\EfTest.csproj", "{9760FBC4-10C6-43AC-8364-E61C93DDF396}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +47,10 @@ Global
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

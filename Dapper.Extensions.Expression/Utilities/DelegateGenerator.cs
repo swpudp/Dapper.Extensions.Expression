@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using Dapper.Extensions.Expression.Extensions;
 
-namespace Dapper.Extensions.Expression
+namespace Dapper.Extensions.Expression.Utilities
 {
     internal delegate object MethodInvoker(object instance, params object[] parameters);
 
@@ -62,12 +63,12 @@ namespace Dapper.Extensions.Expression
 
         internal static MethodInvoker CreateMethodInvoker(MethodInfo method)
         {
-            List<ParameterExpression> parameterExps = new List<ParameterExpression>();
+            List<ParameterExpression> parameterExpressions = new List<ParameterExpression>();
             ParameterExpression p = System.Linq.Expressions.Expression.Parameter(typeof(object), "instance");
-            parameterExps.Add(p);
+            parameterExpressions.Add(p);
 
             ParameterExpression pParameterArray = System.Linq.Expressions.Expression.Parameter(typeof(object[]), "parameters");
-            parameterExps.Add(pParameterArray);
+            parameterExpressions.Add(pParameterArray);
 
             System.Linq.Expressions.Expression instance = null;
             if (!method.IsStatic)
@@ -76,7 +77,7 @@ namespace Dapper.Extensions.Expression
             }
 
             ParameterInfo[] parameters = method.GetParameters();
-            List<System.Linq.Expressions.Expression> argumentExps = new List<System.Linq.Expressions.Expression>(parameters.Length);
+            List<System.Linq.Expressions.Expression> argExpressions = new List<System.Linq.Expressions.Expression>(parameters.Length);
 
             var getItemMethod = typeof(object[]).GetMethod("GetValue", new Type[] { typeof(int) });
 
@@ -88,21 +89,21 @@ namespace Dapper.Extensions.Expression
                 var parameterExp = System.Linq.Expressions.Expression.Call(pParameterArray, getItemMethod, System.Linq.Expressions.Expression.Constant(i));
                 //T argument = (T)parameter;
                 var argumentExp = System.Linq.Expressions.Expression.Convert(parameterExp, parameter.ParameterType);
-                argumentExps.Add(argumentExp);
+                argExpressions.Add(argumentExp);
             }
 
             //instance.Method(parameters)
-            MethodCallExpression methodCallExp = System.Linq.Expressions.Expression.Call(instance, method, argumentExps);
+            MethodCallExpression methodCallExp = System.Linq.Expressions.Expression.Call(instance, method, argExpressions);
 
             MethodInvoker ret;
             if (method.ReturnType == typeof(void))
             {
-                var act = System.Linq.Expressions.Expression.Lambda<Action<object, object[]>>(methodCallExp, parameterExps).Compile();
+                var act = System.Linq.Expressions.Expression.Lambda<Action<object, object[]>>(methodCallExp, parameterExpressions).Compile();
                 ret = MakeMethodInvoker(act);
             }
             else
             {
-                ret = System.Linq.Expressions.Expression.Lambda<MethodInvoker>(System.Linq.Expressions.Expression.Convert(methodCallExp, typeof(object)), parameterExps).Compile();
+                ret = System.Linq.Expressions.Expression.Lambda<MethodInvoker>(System.Linq.Expressions.Expression.Convert(methodCallExp, typeof(object)), parameterExpressions).Compile();
                 ret = MakeMethodInvoker(ret);
             }
 
@@ -111,24 +112,22 @@ namespace Dapper.Extensions.Expression
 
         private static MethodInvoker MakeMethodInvoker(Action<object, object[]> act)
         {
-            MethodInvoker ret = (object instance, object[] parameters) =>
+            object Ret(object instance, object[] parameters)
             {
                 act(instance, parameters ?? EmptyArray);
                 return null;
-            };
-
-            return ret;
+            }
+            return Ret;
         }
 
         private static MethodInvoker MakeMethodInvoker(MethodInvoker methodInvoker)
         {
-            MethodInvoker ret = (object instance, object[] parameters) =>
+            object Ret(object instance, object[] parameters)
             {
                 object val = methodInvoker(instance, parameters ?? EmptyArray);
                 return val;
-            };
-
-            return ret;
+            }
+            return Ret;
         }
 
         internal static bool IsStaticMember(this MemberInfo propertyOrField)
@@ -139,7 +138,7 @@ namespace Dapper.Extensions.Expression
                 return getter.IsStatic;
             }
 
-            if (propertyOrField.MemberType == MemberTypes.Field && (propertyOrField as FieldInfo).IsStatic)
+            if (propertyOrField.MemberType == MemberTypes.Field && propertyOrField is FieldInfo field && field.IsStatic)
                 return true;
 
             return false;

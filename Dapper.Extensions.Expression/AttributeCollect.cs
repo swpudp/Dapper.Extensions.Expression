@@ -40,7 +40,7 @@ namespace Dapper.Extensions.Expression
     }
 
     /// <summary>
-    /// 计算列，不可写入和更新，但是可以查询
+    /// 自动计算字段，不可写入和更新，可查询
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class ComputedAttribute : Attribute
@@ -48,7 +48,7 @@ namespace Dapper.Extensions.Expression
     }
 
     /// <summary>
-    /// 不可写入、更新、查询
+    /// 未映射字段，不可写入、更新、查询
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
     public class NotMappedAttribute : Attribute
@@ -70,5 +70,13 @@ namespace Dapper.Extensions.Expression
         /// 列名
         /// </summary>
         public string ColumnName { get; }
+    }
+
+    public enum JoinType
+    {
+        Left,
+        Right,
+        Inner,
+        Full
     }
 }

@@ -102,8 +102,8 @@ namespace Dapper.Extensions.Expression
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
         public static Task<int> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql<T>(connection);
-            return connection.ExecuteAsync(sql, entityToUpdate, transaction, commandTimeout);
+            string sql = BuildUpdateSql(connection, entityToUpdate, out DynamicParameters parameters);
+            return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -150,8 +150,8 @@ namespace Dapper.Extensions.Expression
         /// <returns>true if deleted, false if not found</returns>
         public static Task<int> DeleteAsync<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string sql = BuildDeleteSql<T>(connection);
-            return connection.ExecuteAsync(sql, entityToDelete, transaction, commandTimeout);
+            string sql = BuildDeleteSql(connection, entityToDelete, out DynamicParameters parameters);
+            return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
 
         /// <summary>

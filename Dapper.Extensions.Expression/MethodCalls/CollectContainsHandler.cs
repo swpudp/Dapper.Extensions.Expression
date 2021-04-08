@@ -1,8 +1,11 @@
-﻿using Dapper.Extensions.Expression.Providers;
+﻿using Dapper.Extensions.Expression.Adapters;
+using Dapper.Extensions.Expression.Utilities;
+using Dapper.Extensions.Expression.Visitors;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Text;
 
 namespace Dapper.Extensions.Expression.MethodCalls
@@ -11,27 +14,42 @@ namespace Dapper.Extensions.Expression.MethodCalls
     {
         public override string MethodName => "Contains";
 
-        public override bool IsMatch(MethodInfo methodInfo)
+        public override bool IsMatch(MethodCallExpression methodInfo)
         {
-            return methodInfo.IsListContains();
+            Type declaringType = methodInfo.Method.DeclaringType;
+            bool isAssign = typeof(IList).IsAssignableFrom(declaringType);
+            bool isGeneric = declaringType != null && declaringType.IsGenericType && typeof(ICollection<>).MakeGenericType(declaringType.GetGenericArguments()).IsAssignableFrom(declaringType);
+            return isAssign || isGeneric;
         }
 
-        public override void Handle(MethodCallExpression e, ExpressionVisitor visitor, StringBuilder builder, DynamicParameters parameters)
+        public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters,
+            bool appendParameter)
         {
-            visitor.InternalVisit(e.Arguments[0], builder, parameters);
-            builder.Append(" IN (");
-            IEnumerable<object> array = ExpressionEvaluator.Evaluate(e.Object) as IEnumerable<object> ?? Enumerable.Empty<object>();
-            int idx = 0;
-            foreach (object v in array)
+            if (!(ExpressionEvaluator.Visit(e.Object) is IEnumerable array))
             {
-                if (idx > 0)
-                {
-                    builder.Append(",");
-                }
-                idx++;
-                visitor.AddParameter(builder, parameters, v);
+                return;
             }
-            builder.Append(")");
+            IList<object> values = array.Cast<object>().ToList();
+            if (values.Any())
+            {
+                WhereExpressionVisitor.InternalVisit(e.Arguments[0], sqlAdapter, builder, parameters, appendParameter);
+                builder.Append(" IN (");
+                int idx = 0;
+                foreach (object v in values)
+                {
+                    if (idx > 0)
+                    {
+                        builder.Append(",");
+                    }
+                    idx++;
+                    WhereExpressionVisitor.AddParameter(builder, parameters, v);
+                }
+                builder.Append(")");
+            }
+            else
+            {
+                builder.Append(" 1=0 ");
+            }
         }
     }
 }

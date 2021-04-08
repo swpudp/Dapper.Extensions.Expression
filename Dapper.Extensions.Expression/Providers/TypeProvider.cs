@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Extensions;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Dapper.Extensions.Expression.Providers
@@ -11,26 +13,40 @@ namespace Dapper.Extensions.Expression.Providers
     internal static class TypeProvider
     {
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> NotMappedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> CanWriteProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> CanUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>> CanQueryProperties = new ConcurrentDictionary<RuntimeTypeHandle, IEnumerable<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> NotMappedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> CanWriteProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> CanUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> CanQueryProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression> ConstantTrueExpressions = new ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression> ConstantFalseExpressions = new ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression> ConstantNullExpressions = new ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ColumnProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
 
-        private static List<PropertyInfo> GetComputedProperties(Type type)
+
+        private static IList<PropertyInfo> GetComputedProperties(Type type)
         {
-            if (ComputedProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
+            if (ComputedProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
-                return pi.ToList();
+                return pi;
             }
-
             List<PropertyInfo> computedProperties = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ComputedAttribute)).ToList();
-
             ComputedProperties[type.TypeHandle] = computedProperties;
             return computedProperties;
+        }
+
+        public static MemberInfo GetColumnProperty(Type type, MemberInfo member)
+        {
+            if (ColumnProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> propertyInfos))
+            {
+                return propertyInfos.FirstOrDefault(f => f.Name == member.Name) ?? member;
+            }
+            propertyInfos = GetAllProperties(type).Where(f => f.IsColumnAlias()).ToList();
+            ColumnProperties[type.TypeHandle] = propertyInfos;
+            return propertyInfos.FirstOrDefault(f => f.Name == member.Name) ?? member;
         }
 
         /// <summary>
@@ -40,11 +56,11 @@ namespace Dapper.Extensions.Expression.Providers
         /// <returns></returns>
         internal static IList<PropertyInfo> GetCanQueryProperties(Type type)
         {
-            if (CanQueryProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> propertyInfos))
+            if (CanQueryProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> propertyInfos))
             {
-                return propertyInfos.ToList();
+                return propertyInfos;
             }
-            List<PropertyInfo> props = GetAllProperties(type);
+            IList<PropertyInfo> props = GetAllProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
             IList<PropertyInfo> canQueryProperties = props.Except(notMappedProperties).ToList();
             CanQueryProperties[type.TypeHandle] = canQueryProperties;
@@ -53,11 +69,11 @@ namespace Dapper.Extensions.Expression.Providers
 
         private static IEnumerable<PropertyInfo> GetNotMappedProperties(Type type)
         {
-            if (NotMappedProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
+            if (NotMappedProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
-                return pi.ToList();
+                return pi;
             }
-            List<PropertyInfo> notMappedPropertyInfos = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is NotMappedAttribute)).ToList();
+            IList<PropertyInfo> notMappedPropertyInfos = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is NotMappedAttribute)).ToList();
             NotMappedProperties[type.TypeHandle] = notMappedPropertyInfos;
             return notMappedPropertyInfos;
         }
@@ -74,30 +90,29 @@ namespace Dapper.Extensions.Expression.Providers
             return name;
         }
 
-        private static List<PropertyInfo> GetAllProperties(Type type)
+        private static IList<PropertyInfo> GetAllProperties(Type type)
         {
-            if (TypeProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pis))
+            if (TypeProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pis))
             {
-                return pis.ToList();
+                return pis;
             }
-            List<PropertyInfo> properties = type.GetProperties().ToList();
+            IList<PropertyInfo> properties = type.GetProperties().ToList();
             TypeProperties[type.TypeHandle] = properties;
-            return properties.ToList();
+            return properties;
         }
 
         private static IList<PropertyInfo> GetKeyProperties(Type type)
         {
-            if (KeyProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
+            if (KeyProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
-                return pi.ToList();
+                return pi;
             }
-
-            List<PropertyInfo> allProperties = GetAllProperties(type);
-            List<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
+            IList<PropertyInfo> allProperties = GetAllProperties(type);
+            IList<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
 
             if (keyProperties.Count == 0)
             {
-                PropertyInfo idProp = allProperties.Find(p => string.Equals(p.Name, "id", StringComparison.CurrentCultureIgnoreCase));
+                PropertyInfo idProp = allProperties.FirstOrDefault(p => string.Equals(p.Name, "id", StringComparison.CurrentCultureIgnoreCase));
                 if (idProp != null && !idProp.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
                 {
                     keyProperties.Add(idProp);
@@ -114,15 +129,15 @@ namespace Dapper.Extensions.Expression.Providers
         /// <returns></returns>
         internal static IList<PropertyInfo> GetCanWriteProperties(Type type)
         {
-            if (CanWriteProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> propertyInfos))
+            if (CanWriteProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> propertyInfos))
             {
-                return propertyInfos.ToList();
+                return propertyInfos;
             }
-            List<PropertyInfo> allProperties = GetAllProperties(type);
+            IList<PropertyInfo> allProperties = GetAllProperties(type);
             IEnumerable<PropertyInfo> keyProperties = GetKeyProperties(type);
-            List<PropertyInfo> computedProperties = GetComputedProperties(type);
+            IList<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
-            List<PropertyInfo> canWriteProperties = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
+            IList<PropertyInfo> canWriteProperties = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
             CanWriteProperties[type.TypeHandle] = canWriteProperties;
             return canWriteProperties;
         }
@@ -134,13 +149,13 @@ namespace Dapper.Extensions.Expression.Providers
         /// <returns></returns>
         internal static IList<PropertyInfo> GetCanUpdateProperties(Type type)
         {
-            if (CanUpdateProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> properties))
+            if (CanUpdateProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> properties))
             {
-                return properties.ToList();
+                return properties;
             }
             IList<PropertyInfo> keyProperties = GetUpdateKeyProperties(type);
-            List<PropertyInfo> allProperties = GetAllProperties(type);
-            List<PropertyInfo> computedProperties = GetComputedProperties(type);
+            IList<PropertyInfo> allProperties = GetAllProperties(type);
+            IList<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
             List<PropertyInfo> nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
             CanUpdateProperties[type.TypeHandle] = nonIdProps;
@@ -150,7 +165,7 @@ namespace Dapper.Extensions.Expression.Providers
         internal static IList<PropertyInfo> GetUpdateKeyProperties(Type type)
         {
             List<PropertyInfo> keyProperties = GetKeyProperties(type).ToList();
-            List<PropertyInfo> explicitKeyProperties = GetExplicitKeyProperties(type);
+            IList<PropertyInfo> explicitKeyProperties = GetExplicitKeyProperties(type);
             if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
             {
                 throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
@@ -159,11 +174,11 @@ namespace Dapper.Extensions.Expression.Providers
             return keyProperties;
         }
 
-        private static List<PropertyInfo> GetExplicitKeyProperties(Type type)
+        private static IList<PropertyInfo> GetExplicitKeyProperties(Type type)
         {
-            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out IEnumerable<PropertyInfo> pi))
+            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
-                return pi.ToList();
+                return pi;
             }
             List<PropertyInfo> explicitKeyProperties = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute)).ToList();
             ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
@@ -264,5 +279,39 @@ namespace Dapper.Extensions.Expression.Providers
             typeof(float),
             typeof(float?)
         };
+
+
+        internal static ConstantExpression GetTrueExpression(Type type)
+        {
+            if (ConstantTrueExpressions.TryGetValue(type.TypeHandle, out ConstantExpression constantExpression))
+            {
+                return constantExpression;
+            }
+            constantExpression = System.Linq.Expressions.Expression.Constant(true, type);
+            ConstantTrueExpressions[type.TypeHandle] = constantExpression;
+            return constantExpression;
+        }
+
+        internal static ConstantExpression GetFalseExpression(Type type)
+        {
+            if (ConstantFalseExpressions.TryGetValue(type.TypeHandle, out ConstantExpression constantExpression))
+            {
+                return constantExpression;
+            }
+            constantExpression = System.Linq.Expressions.Expression.Constant(false, type);
+            ConstantFalseExpressions[type.TypeHandle] = constantExpression;
+            return constantExpression;
+        }
+
+        internal static ConstantExpression GetNullExpression(Type type)
+        {
+            if (ConstantNullExpressions.TryGetValue(type.TypeHandle, out ConstantExpression constantExpression))
+            {
+                return constantExpression;
+            }
+            constantExpression = System.Linq.Expressions.Expression.Constant(null, type);
+            ConstantNullExpressions[type.TypeHandle] = constantExpression;
+            return constantExpression;
+        }
     }
 }

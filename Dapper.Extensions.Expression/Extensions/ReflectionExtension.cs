@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using Dapper.Extensions.Expression.Utilities;
 
-namespace Dapper.Extensions.Expression
+namespace Dapper.Extensions.Expression.Extensions
 {
     internal static class ReflectionExtension
     {
@@ -41,6 +42,16 @@ namespace Dapper.Extensions.Expression
             getter = DelegateGenerator.CreateValueGetter(memberInfo);
             Cache.GetOrAdd(memberInfo, getter);
             return getter(obj);
+        }
+
+        internal static bool IsNotMapped(this MemberInfo member)
+        {
+            return member.IsDefined(typeof(NotMappedAttribute), true);
+        }
+
+        internal static bool IsColumnAlias(this MemberInfo memberInfo)
+        {
+            return memberInfo.IsDefined(typeof(ColumnAttribute), true);
         }
 
         internal static bool IsNullable(this Type type)

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Linq.Expressions;
@@ -38,7 +40,7 @@ namespace Dapper.Expression.UnitTests
 
             Console.WriteLine(test.NodeType);
 
-            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("")));
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySql.Data.MySqlClient.MySqlConnection("")));
 
 
             IQuery<Log> query = new Query<Log>(ctx, null, LockType.Unspecified);
@@ -179,11 +181,130 @@ namespace Dapper.Expression.UnitTests
         /// 更新测试
         /// </summary>
         [TestMethod]
-        public void DateTimeDiffTest()
+        public void HasValueTest()
         {
             DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
-            var list = ctx.Query<Log>().Where(f => (DateTime.Now - f.Logged).TotalDays > 1000).ToList();
+            var list = ctx.Query<Log>().Where(f => f.UpdateTime.HasValue).ToList();
             Assert.IsFalse(list.Any());
+        }
+
+        /// <summary>
+        /// 更新测试
+        /// </summary>
+        [TestMethod]
+        public void JoinTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            var list = ctx.Query<Log>().LeftJoin<Log>((a, b) => a.Id == b.Id).Where((f, b) => f.UpdateTime.HasValue).Select((a, b) => a).ToList();
+            Assert.IsFalse(list.Any());
+        }
+
+        [TestMethod]
+        public void EnumListContainsTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            IList<TestType> testTypes = new List<TestType> { TestType.Latest };
+            var list = ctx.Query<Log>().Where(f => testTypes.Contains(f.TestType)).ToList();
+            Assert.IsTrue(list.Any());
+        }
+
+        [TestMethod]
+        public void SelectTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            IList<TestType> testTypes = new List<TestType> { TestType.Latest };
+            var list = ctx.Query<Log>().Where(f => testTypes.Contains(f.TestType)).Select(f => new { M = TestType.Later, Name = (f.ThreadId ?? 0).ToString() }).ToList();
+            Assert.IsTrue(list.Any());
+        }
+
+        [TestMethod]
+        public void NullableEnumEqualTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            var list = ctx.Query<Log>().Where(f => f.ThreadId == 10).ToList();
+            Assert.IsTrue(list.Any());
+        }
+
+        [TestMethod]
+        public void ExistTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            var list = ctx.Query<Log>().Where(f => ctx.Query<Log>().Where(x => x.Id == f.Id).Any()).ToList();
+            Assert.IsTrue(list.Any());
+        }
+
+        [TestMethod]
+        public void ConvertTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            var list = ctx.Query<Log>().Where(f => ctx.Query<Log>().Where(x => x.ThreadId == new Random().Next() * 100).Any()).ToList();
+            Assert.IsTrue(list.Any());
+        }
+
+        [TestMethod]
+        public void BinaryTest()
+        {
+            Log log = new Log
+            {
+                Version = 123,
+                Id = Guid.NewGuid()
+            };
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            var list = ctx.Update<Log>(f => f.Id == log.Id && f.Version == log.Version - 1, f => new Log
+            {
+                Version = f.Version + 1,
+                Logged = DateTime.Now
+            });
+            Assert.IsTrue(list > 0);
+        }
+
+        [TestMethod]
+        public void Segregate4Test()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            ctx.Query<Order>().Where(f => (f.Status == Status.Running || f.IsDelete) && (f.CreateTime > DateTime.Now && f.SerialNo.Contains("abc") || f.Remark.Contains("abc")))
+                .Select(f => f.Id)
+                .ToList();
+            //string expectSql =
+            //    "SELECT `t1`.`Id` from `order` AS `t1` WHERE (`t1`.`Status`=@w_p_1 OR `t1`.`IsDelete`=@w_p_2) AND `t1`.`CreateTime`=NOW() OR (`t1`.`Number` LIKE @w_p_3 OR `t1`.`Remark` LIKE @w_p_4)";
+            //Debug.WriteLine(sql);
+            //Debug.WriteLine(expectSql);
+            //Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);
+        }
+
+
+        /// <summary>
+        /// 更新测试
+        /// </summary>
+        [TestMethod]
+        public async Task UpdateNullablePropertyAsyncTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            Order order = new Order { DocId = null };
+            Assert.IsNotNull(order);
+            Guid docId = Guid.NewGuid();
+            int updated = await ctx.UpdateAsync<Order>(f => f.DocId == order.DocId, f => new Order
+            {
+                Version = f.Version + 1,
+                DocId = docId
+            });
+            Assert.IsTrue(updated > 0);
+        }
+
+        /// <summary>
+        /// 更新测试
+        /// </summary>
+        [TestMethod]
+        public async Task UpdateEmptyListTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            Order order = new Order { DocId = null };
+            IEnumerable<Guid> ids = Enumerable.Empty<Guid>();
+            int updated = await ctx.UpdateAsync<Order>(f => ids.Contains(f.Id), f => new Order
+            {
+                Version = f.Version + 1
+            });
+            Assert.IsTrue(updated > 0);
         }
     }
 
@@ -212,10 +333,65 @@ namespace Dapper.Expression.UnitTests
 
         public TestType TestType { get; set; }
 
-        public int ThreadId { get; set; }
+        public int? ThreadId { get; set; }
 
         public bool IsDelete { get; set; }
 
         public DateTime? UpdateTime { get; set; }
+
+        public int Version { get; set; }
+    }
+
+    [Table("order")]
+    public class Order
+    {
+        public Guid Id { get; set; }
+
+        public Guid BuyerId { get; set; }
+
+        [Column("Number")]
+        public string SerialNo { get; set; }
+
+        public string Remark { get; set; }
+
+        public Status Status { get; set; }
+
+        public SignState? SignState { get; set; }
+
+        public decimal Amount { get; set; }
+        public decimal? Freight { get; set; }
+
+        public Guid? DocId { get; set; }
+
+        public bool IsDelete { get; set; }
+
+        public bool? IsActive { get; set; }
+
+        public DateTime CreateTime { get; set; }
+
+        public DateTime? UpdateTime { get; set; }
+
+        /// <summary>
+        /// 序号
+        /// </summary>
+        public int Index { get; set; }
+
+        /// <summary>
+        /// 版本号
+        /// </summary>
+        public int Version { get; set; }
+    }
+
+    public enum Status
+    {
+        Draft,
+        Running,
+        Stop
+    }
+
+    public enum SignState
+    {
+        UnSign,
+        Signed
     }
 }

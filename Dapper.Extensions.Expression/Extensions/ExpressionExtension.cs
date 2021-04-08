@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace Dapper.Extensions.Expression
+namespace Dapper.Extensions.Expression.Extensions
 {
     internal static class ExpressionExtension
     {
@@ -30,22 +30,6 @@ namespace Dapper.Extensions.Expression
 
             throw new ArgumentException();
         }
-
-        //internal static LambdaExpression And(this LambdaExpression a, LambdaExpression b)
-        //{
-        //    if (a == null)
-        //        return b;
-        //    if (b == null)
-        //        return a;
-
-        //    Type rootType = a.Parameters[0].Type;
-        //    var memberParam = System.Linq.Expressions.Expression.Parameter(rootType, "root");
-        //    var aNewBody = ParameterExpressionReplacer.Replace(a.Body, memberParam);
-        //    var bNewBody = ParameterExpressionReplacer.Replace(b.Body, memberParam);
-        //    var newBody = System.Linq.Expressions.Expression.And(aNewBody, bNewBody);
-        //    var lambda = System.Linq.Expressions.Expression.Lambda(a.Type, newBody, memberParam);
-        //    return lambda;
-        //}
 
         internal static bool IsDerivedFromParameter(this MemberExpression exp)
         {

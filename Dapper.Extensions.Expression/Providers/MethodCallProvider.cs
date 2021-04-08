@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace Dapper.Extensions.Expression.Providers
@@ -29,21 +30,21 @@ namespace Dapper.Extensions.Expression.Providers
             }
         }
 
-        public static AbstractMethodCallHandler GetCallHandler(MethodInfo methodInfo)
+        public static AbstractMethodCallHandler GetCallHandler(MethodCallExpression exp)
         {
-            if (MethodCallHandlers.TryGetValue(methodInfo.MethodHandle, out AbstractMethodCallHandler handler))
+            if (MethodCallHandlers.TryGetValue(exp.Method.MethodHandle, out AbstractMethodCallHandler handler))
             {
                 return handler;
             }
             Initialize();
-            foreach (AbstractMethodCallHandler unAssignHandler in MethodCallHandlerInstances.Where(f => f.MethodName == methodInfo.Name))
+            foreach (AbstractMethodCallHandler unAssignHandler in MethodCallHandlerInstances.Where(f => f.MethodName == exp.Method.Name))
             {
-                if (!unAssignHandler.IsMatch(methodInfo))
+                if (!unAssignHandler.IsMatch(exp))
                 {
                     continue;
                 }
                 handler = unAssignHandler;
-                MethodCallHandlers.Add(methodInfo.MethodHandle, handler);
+                MethodCallHandlers.Add(exp.Method.MethodHandle, handler);
                 break;
             }
             return handler;

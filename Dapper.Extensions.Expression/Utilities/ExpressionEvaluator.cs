@@ -2,8 +2,9 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using Dapper.Extensions.Expression.Extensions;
 
-namespace Dapper.Extensions.Expression
+namespace Dapper.Extensions.Expression.Utilities
 {
     internal static class ExpressionEvaluator
     {
@@ -16,12 +17,12 @@ namespace Dapper.Extensions.Expression
             switch (exp.NodeType)
             {
                 case ExpressionType.Not:
-                    return VisitUnary_Not((UnaryExpression)exp);
+                    return VisitUnaryNot((UnaryExpression)exp);
                 case ExpressionType.Convert:
                 case ExpressionType.ConvertChecked:
-                    return VisitUnary_Convert((UnaryExpression)exp);
+                    return VisitUnaryConvert((UnaryExpression)exp);
                 case ExpressionType.Quote:
-                    return VisitUnary_Quote((UnaryExpression)exp);
+                    return VisitUnaryQuote((UnaryExpression)exp);
                 //case ExpressionType.Negate:
                 //case ExpressionType.NegateChecked:
                 //    return VisitUnary_Negate((UnaryExpression)exp);
@@ -34,9 +35,9 @@ namespace Dapper.Extensions.Expression
                 //case ExpressionType.Subtract:
                 //case ExpressionType.SubtractChecked:
                 //    return VisitBinary_Subtract((BinaryExpression)exp);
-                //case ExpressionType.Multiply:
-                //case ExpressionType.MultiplyChecked:
-                //    return VisitBinary_Multiply((BinaryExpression)exp);
+                case ExpressionType.Multiply:
+                case ExpressionType.MultiplyChecked:
+                    return VisitBinaryMultiply((BinaryExpression)exp);
                 //case ExpressionType.Divide:
                 //    return VisitBinary_Divide((BinaryExpression)exp);
                 //case ExpressionType.Modulo:
@@ -98,11 +99,6 @@ namespace Dapper.Extensions.Expression
             }
         }
 
-        internal static object Evaluate(System.Linq.Expressions.Expression exp)
-        {
-            return Visit(exp);
-        }
-
         private static object VisitMemberAccess(MemberExpression exp)
         {
             object instance = null;
@@ -116,7 +112,7 @@ namespace Dapper.Extensions.Expression
                     {
                         return false;
                     }
-                    throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Expression.ToString()}'.");
+                    throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Expression}'.");
                 }
             }
 
@@ -129,13 +125,30 @@ namespace Dapper.Extensions.Expression
             return System.Linq.Expressions.Expression.Constant(value);
         }
 
-        private static object VisitUnary_Not(UnaryExpression exp)
+        private static object VisitUnaryNot(UnaryExpression exp)
         {
-            var operandValue = Visit(exp.Operand);
+            object operandValue = Visit(exp.Operand);
 
             return (bool)operandValue != true;
         }
-        private static object VisitUnary_Convert(UnaryExpression exp)
+
+        private static object VisitBinaryMultiply(BinaryExpression exp)
+        {
+            object leftVal = Visit(exp.Left);
+
+            object rightVal = Visit(exp.Right);
+
+            System.Linq.Expressions.Expression multiplyExpr = System.Linq.Expressions.Expression.Multiply(System.Linq.Expressions.Expression.Constant(leftVal), System.Linq.Expressions.Expression.Constant(rightVal));
+
+
+            Delegate action = System.Linq.Expressions.Expression.Lambda(exp.Type, multiplyExpr).Compile();
+
+            object v = action.DynamicInvoke();
+
+            return v;
+        }
+
+        private static object VisitUnaryConvert(UnaryExpression exp)
         {
             object operandValue = Visit(exp.Operand);
 
@@ -156,24 +169,19 @@ namespace Dapper.Extensions.Expression
                 return operandValue;
             }
 
-            Type underlyingType;
-
-            if (exp.Type.IsNullable(out underlyingType))
+            if (exp.Type.IsNullable(out Type underlyingType))
             {
                 //(int?)int
                 if (underlyingType == operandValueType)
                 {
-                    var constructor = exp.Type.GetConstructor(new Type[] { operandValueType });
-                    var val = constructor.Invoke(new object[] { operandValue });
+                    ConstructorInfo constructor = exp.Type.GetConstructor(new[] { operandValueType });
+                    object val = constructor?.Invoke(new[] { operandValue });
                     return val;
                 }
-                else
-                {
-                    //如果不等，则诸如：(long?)int / (long?)int?  -->  (long?)((long)int) / (long?)((long)int?)
-                    var c = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, System.Linq.Expressions.Expression.Constant(operandValue), underlyingType);
-                    var cc = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, c, exp.Type);
-                    return Visit(cc);
-                }
+                //如果不等，则诸如：(long?)int / (long?)int?  -->  (long?)((long)int) / (long?)((long)int?)
+                UnaryExpression c = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, System.Linq.Expressions.Expression.Constant(operandValue), underlyingType);
+                UnaryExpression cc = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, c, exp.Type);
+                return Visit(cc);
             }
 
             //(int)int?
@@ -181,17 +189,14 @@ namespace Dapper.Extensions.Expression
             {
                 if (underlyingType == exp.Type)
                 {
-                    var pro = operandValueType.GetProperty("Value");
-                    var val = pro.GetValue(operandValue, null);
+                    PropertyInfo pro = operandValueType.GetProperty("Value");
+                    object val = pro?.GetValue(operandValue, null);
                     return val;
                 }
-                else
-                {
-                    //如果不等，则诸如：(long)int?  -->  (long)((long)int)
-                    var c = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, System.Linq.Expressions.Expression.Constant(operandValue), underlyingType);
-                    var cc = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, c, exp.Type);
-                    return Visit(cc);
-                }
+                //如果不等，则诸如：(long)int?  -->  (long)((long)int)
+                UnaryExpression c = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, System.Linq.Expressions.Expression.Constant(operandValue), underlyingType);
+                UnaryExpression cc = System.Linq.Expressions.Expression.MakeUnary(ExpressionType.Convert, c, exp.Type);
+                return Visit(cc);
             }
 
             if (exp.Type.IsEnum)
@@ -205,11 +210,11 @@ namespace Dapper.Extensions.Expression
                 return Convert.ChangeType(operandValue, exp.Type);
             }
 
-            throw new NotSupportedException(string.Format("Does not support the type '{0}' converted to type '{1}'.", operandValueType.FullName, exp.Type.FullName));
+            throw new NotSupportedException($"Does not support the type '{operandValueType.FullName}' converted to type '{exp.Type.FullName}'.");
         }
-        private static object VisitUnary_Quote(UnaryExpression exp)
+        private static object VisitUnaryQuote(UnaryExpression exp)
         {
-            var e = exp.StripQuotes();
+            System.Linq.Expressions.Expression e = exp.StripQuotes();
             return e;
         }
         private static object VisitConstant(ConstantExpression exp)
@@ -231,17 +236,17 @@ namespace Dapper.Extensions.Expression
 
                 if (instance == null)
                 {
-                    throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Object.ToString()}'.");
+                    throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Object}'.");
                 }
             }
 
-            object[] arguments = exp.Arguments.Select(a => Visit(a)).ToArray();
+            object[] arguments = exp.Arguments.Select(Visit).ToArray();
 
             return exp.Method.Invoke(instance, arguments);
         }
         private static object VisitNew(NewExpression exp)
         {
-            object[] arguments = exp.Arguments.Select(a => Visit(a)).ToArray();
+            object[] arguments = exp.Arguments.Select(Visit).ToArray();
 
             return exp.Constructor.Invoke(arguments);
         }
@@ -250,7 +255,7 @@ namespace Dapper.Extensions.Expression
             Array arr = Array.CreateInstance(exp.Type.GetElementType(), exp.Expressions.Count);
             for (int i = 0; i < exp.Expressions.Count; i++)
             {
-                var e = exp.Expressions[i];
+                System.Linq.Expressions.Expression e = exp.Expressions[i];
                 arr.SetValue(Visit(e), i);
             }
 
@@ -260,7 +265,7 @@ namespace Dapper.Extensions.Expression
         {
             object instance = Visit(exp.NewExpression);
 
-            foreach (var binding in exp.Bindings)
+            foreach (MemberBinding binding in exp.Bindings)
             {
                 if (binding.BindingType != MemberBindingType.Assignment)
                 {
@@ -279,7 +284,7 @@ namespace Dapper.Extensions.Expression
         {
             object instance = Visit(exp.NewExpression);
 
-            foreach (var initializer in exp.Initializers)
+            foreach (ElementInit initializer in exp.Initializers)
             {
                 foreach (System.Linq.Expressions.Expression argument in initializer.Arguments)
                 {
