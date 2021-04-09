@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Extensions;
+using System;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using Dapper.Extensions.Expression.Extensions;
 
 namespace Dapper.Extensions.Expression.Utilities
 {
@@ -23,62 +23,11 @@ namespace Dapper.Extensions.Expression.Utilities
                     return VisitUnaryConvert((UnaryExpression)exp);
                 case ExpressionType.Quote:
                     return VisitUnaryQuote((UnaryExpression)exp);
-                //case ExpressionType.Negate:
-                //case ExpressionType.NegateChecked:
-                //    return VisitUnary_Negate((UnaryExpression)exp);
-                //case ExpressionType.ArrayLength:
-                //case ExpressionType.TypeAs:
-                //    return VisitUnary((UnaryExpression)exp);
-                //case ExpressionType.Add:
-                //case ExpressionType.AddChecked:
-                //    return VisitBinary_Add((BinaryExpression)exp);
-                //case ExpressionType.Subtract:
-                //case ExpressionType.SubtractChecked:
-                //    return VisitBinary_Subtract((BinaryExpression)exp);
                 case ExpressionType.Multiply:
                 case ExpressionType.MultiplyChecked:
                     return VisitBinaryMultiply((BinaryExpression)exp);
-                //case ExpressionType.Divide:
-                //    return VisitBinary_Divide((BinaryExpression)exp);
-                //case ExpressionType.Modulo:
-                //    return VisitBinary_Modulo((BinaryExpression)exp);
-                //case ExpressionType.And:
-                //    return VisitBinary_And((BinaryExpression)exp);
-                //case ExpressionType.AndAlso:
-                //    return VisitBinary_AndAlso((BinaryExpression)exp);
-                //case ExpressionType.Or:
-                //    return VisitBinary_Or((BinaryExpression)exp);
-                //case ExpressionType.OrElse:
-                //    return VisitBinary_OrElse((BinaryExpression)exp);
-                //case ExpressionType.LessThan:
-                //    return VisitBinary_LessThan((BinaryExpression)exp);
-                //case ExpressionType.LessThanOrEqual:
-                //    return VisitBinary_LessThanOrEqual((BinaryExpression)exp);
-                //case ExpressionType.GreaterThan:
-                //    return VisitBinary_GreaterThan((BinaryExpression)exp);
-                //case ExpressionType.GreaterThanOrEqual:
-                //    return VisitBinary_GreaterThanOrEqual((BinaryExpression)exp);
-                //case ExpressionType.Equal:
-                //    return VisitBinary_Equal((BinaryExpression)exp);
-                //case ExpressionType.NotEqual:
-                //    return VisitBinary_NotEqual((BinaryExpression)exp);
-                //case ExpressionType.Coalesce:
-                //return VisitBinary_Coalesce((BinaryExpression)exp);
-                //case ExpressionType.ArrayIndex:
-                //case ExpressionType.RightShift:
-                //case ExpressionType.LeftShift:
-                //case ExpressionType.ExclusiveOr:
-                //return VisitBinary((BinaryExpression)exp);
-                //case ExpressionType.Lambda:
-                //return VisitLambda((LambdaExpression)exp);
-                //case ExpressionType.TypeIs:
-                //    return this.VisitTypeIs((TypeBinaryExpression)exp);
-                //case ExpressionType.Conditional:
-                //return VisitConditional((ConditionalExpression)exp);
                 case ExpressionType.Constant:
                     return VisitConstant((ConstantExpression)exp);
-                //case ExpressionType.Parameter:
-                //return VisitParameter((ParameterExpression)exp);
                 case ExpressionType.MemberAccess:
                     return VisitMemberAccess((MemberExpression)exp);
                 case ExpressionType.Call:
@@ -86,10 +35,7 @@ namespace Dapper.Extensions.Expression.Utilities
                 case ExpressionType.New:
                     return VisitNew((NewExpression)exp);
                 case ExpressionType.NewArrayInit:
-                    //case ExpressionType.NewArrayBounds:
                     return VisitNewArray((NewArrayExpression)exp);
-                //case ExpressionType.Invoke:
-                //    return this.VisitInvocation((InvocationExpression)exp);
                 case ExpressionType.MemberInit:
                     return VisitMemberInit((MemberInitExpression)exp);
                 case ExpressionType.ListInit:
@@ -222,11 +168,6 @@ namespace Dapper.Extensions.Expression.Utilities
             return exp.Value;
         }
 
-        internal static object VisitParameter(ParameterExpression exp)
-        {
-            return exp;
-        }
-
         private static object VisitMethodCall(MethodCallExpression exp)
         {
             object instance = null;
@@ -239,7 +180,6 @@ namespace Dapper.Extensions.Expression.Utilities
                     throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Object}'.");
                 }
             }
-
             object[] arguments = exp.Arguments.Select(Visit).ToArray();
 
             return exp.Method.Invoke(instance, arguments);

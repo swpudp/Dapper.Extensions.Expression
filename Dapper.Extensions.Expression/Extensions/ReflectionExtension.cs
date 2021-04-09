@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Utilities;
+using System;
 using System.Collections.Concurrent;
 using System.Reflection;
-using Dapper.Extensions.Expression.Utilities;
 
 namespace Dapper.Extensions.Expression.Extensions
 {
@@ -86,16 +86,5 @@ namespace Dapper.Extensions.Expression.Extensions
             }
             throw new ArgumentException();
         }
-
-        //internal static unsafe string ToCamelCase(this string value)
-        //{
-        //    if (value == null) return null;
-        //    string ret = string.Copy(value);
-        //    fixed (char* ptr = ret)
-        //    {
-        //        *ptr = char.ToLower(*ptr);
-        //    }
-        //    return ret;
-        //}
     }
 }

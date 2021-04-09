@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using Dapper.Extensions.Expression.Extensions;
 
 namespace Dapper.Extensions.Expression.Utilities
 {
@@ -10,32 +9,10 @@ namespace Dapper.Extensions.Expression.Utilities
 
     internal delegate object MemberValueGetter(object instance);
 
-    internal delegate void MemberValueSetter(object instance, object value);
-
     internal static class DelegateGenerator
     {
         private static readonly object[] EmptyArray = new object[0];
 
-        internal static MemberValueSetter CreateValueSetter(MemberInfo propertyOrField)
-        {
-            ParameterExpression p = System.Linq.Expressions.Expression.Parameter(typeof(object), "instance");
-            ParameterExpression pValue = System.Linq.Expressions.Expression.Parameter(typeof(object), "value");
-            System.Linq.Expressions.Expression instance = null;
-            if (!propertyOrField.IsStaticMember())
-            {
-                instance = System.Linq.Expressions.Expression.Convert(p, propertyOrField.DeclaringType);
-            }
-
-            var value = System.Linq.Expressions.Expression.Convert(pValue, propertyOrField.GetMemberType());
-            var setValue = ExpressionExtension.Assign(propertyOrField, instance, value);
-
-            System.Linq.Expressions.Expression body = setValue;
-
-            var lambda = System.Linq.Expressions.Expression.Lambda<MemberValueSetter>(body, p, pValue);
-            MemberValueSetter ret = lambda.Compile();
-
-            return ret;
-        }
         internal static MemberValueGetter CreateValueGetter(MemberInfo propertyOrField)
         {
             ParameterExpression p = System.Linq.Expressions.Expression.Parameter(typeof(object), "a");

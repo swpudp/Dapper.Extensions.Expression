@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
+using Dapper.Extensions.Expression.Extensions;
 
 namespace Dapper.Extensions.Expression
 {
@@ -182,9 +183,9 @@ namespace Dapper.Extensions.Expression
                 parameterList.Append("(");
                 for (int i = 0; i < propertyInfos.Count; i++)
                 {
-                    PropertyInfo property = propertyInfos[i];
+                    MemberInfo property = propertyInfos[i];
                     string parameterName = $"@{property.Name}_{index}";
-                    parameters.Add(parameterName, property.GetValue(entity, null));
+                    parameters.Add(parameterName, property.GetValue(entity));
                     parameterList.Append(parameterName);
                     if (i < propertyInfos.Count - 1)
                     {
@@ -233,7 +234,7 @@ namespace Dapper.Extensions.Expression
             parameters = new DynamicParameters();
             for (int i = 0; i < nonIdProps.Count; i++)
             {
-                PropertyInfo property = nonIdProps[i];
+                MemberInfo property = nonIdProps[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 parameters.Add("@" + columnName, property.GetValue(entity));
                 if (i < nonIdProps.Count - 1)
@@ -242,7 +243,7 @@ namespace Dapper.Extensions.Expression
             sb.Append(" where ");
             for (int i = 0; i < keyProperties.Count; i++)
             {
-                PropertyInfo property = keyProperties[i];
+                MemberInfo property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 parameters.Add("@" + columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
@@ -369,7 +370,7 @@ namespace Dapper.Extensions.Expression
             parameters = new DynamicParameters();
             for (int i = 0; i < keyProperties.Count; i++)
             {
-                PropertyInfo property = keyProperties[i];
+                MemberInfo property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 parameters.Add("@" + columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)

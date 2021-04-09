@@ -3,13 +3,13 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.0.3</Version>
+		<Version>1.0.0.4</Version>
 		<Description>将表达式翻译为sql语句</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Copyright>swpudp</Copyright>
 		<Company>swpudp</Company>
 		<Authors>swpudp@163.com</Authors>
-		<PackageReleaseNotes>取消sql语句缓存</PackageReleaseNotes>
+		<PackageReleaseNotes>bug fix</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
