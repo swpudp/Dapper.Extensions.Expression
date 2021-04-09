@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
-using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,11 +15,10 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public void DeleteTest()
         {
-            using IDbConnection connection = CreateConnection();
             Log log = CreateLogs(1).First();
-            int value = connection.Insert(log);
+            int value = Execute(connection => connection.Insert(log));
             Assert.AreEqual(1, value);
-            int deleted = connection.Delete(log);
+            int deleted = Execute(connection => connection.Delete(log));
             Assert.IsTrue(deleted > 0);
         }
 
@@ -30,13 +28,12 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public async Task DeleteAsyncTest()
         {
-            using IDbConnection connection = CreateConnection();
             Log log = CreateLogs(1).First();
-            int deleted = await connection.DeleteAsync(log);
+            int deleted = await Execute(connection => connection.DeleteAsync(log));
             Assert.IsFalse(deleted > 0);
-            int result = await connection.InsertAsync(log);
+            int result = await Execute(connection => connection.InsertAsync(log));
             Assert.IsTrue(result > 0);
-            deleted = await connection.DeleteAsync(log);
+            deleted = await Execute(connection => connection.DeleteAsync(log));
             Assert.IsTrue(deleted > 0);
         }
 
@@ -46,12 +43,11 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public void DeleteAllTest()
         {
-            using IDbConnection connection = CreateConnection();
             IList<Log> data = CreateLogs(100).ToList();
-            connection.InsertBulk(data);
-            int deleted = connection.DeleteAll<Log>();
+            Execute(connection => connection.InsertBulk(data));
+            int deleted = Execute(connection => connection.DeleteAll<Log>());
             Assert.IsTrue(deleted > 0);
-            int total = connection.GetCount<Log>();
+            int total = Execute(connection => connection.GetCount<Log>());
             Assert.AreEqual(0, total);
         }
 
@@ -61,12 +57,11 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public async Task DeleteAllAsyncTest()
         {
-            using IDbConnection connection = CreateConnection();
             IList<Log> data = CreateLogs(10).ToList();
-            await connection.InsertBulkAsync(data);
-            int deleted = await connection.DeleteAllAsync<Log>();
+            await Execute(connection => connection.InsertBulkAsync(data));
+            int deleted = await Execute(connection => connection.DeleteAllAsync<Log>());
             Assert.IsTrue(deleted > 0);
-            int total = await connection.GetCountAsync<Log>();
+            int total = await Execute(connection => connection.GetCountAsync<Log>());
             Assert.AreEqual(0, total);
         }
 
@@ -76,10 +71,9 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public void DeleteByExpressionTest()
         {
-            using IDbConnection connection = CreateConnection();
             IList<Log> data = CreateLogs(100).ToList();
-            connection.InsertBulk(data);
-            int deleted = connection.Delete<Log>(f => f.LogType == LogType.Trace);
+            Execute(connection => connection.InsertBulk(data));
+            int deleted = Execute(connection => connection.Delete<Log>(f => f.LogType == LogType.Trace));
             Assert.IsTrue(deleted > 0);
         }
 
@@ -89,10 +83,9 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public async Task DeleteByExpressionAsyncTest()
         {
-            using IDbConnection connection = CreateConnection();
             IList<Log> data = CreateLogs(100).ToList();
-            await connection.InsertBulkAsync(data);
-            int deleted = await connection.DeleteAsync<Log>(f => f.LogType == LogType.Trace);
+            await Execute(connection => connection.InsertBulkAsync(data));
+            int deleted = await Execute(connection => connection.DeleteAsync<Log>(f => f.LogType == LogType.Trace));
             Assert.IsTrue(deleted > 0);
         }
     }

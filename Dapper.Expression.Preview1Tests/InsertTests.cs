@@ -23,11 +23,10 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Order> orders = CreateOrders(100, 10, buyer).ToList();
             IList<Item> items = CreateItems(orders).ToList();
             IList<Attachment> attachments = CreateAttachments(orders).ToList();
-            using IDbConnection connection = CreateConnection();
-            connection.Insert(buyer);
-            int orderCount = connection.InsertBulk(orders);
-            int itemCount = connection.InsertBulk(items);
-            int attachmentCount = connection.InsertBulk(attachments);
+            Execute(connection => connection.Insert(buyer));
+            int orderCount = Execute(connection => connection.InsertBulk(orders));
+            int itemCount = Execute(connection => connection.InsertBulk(items));
+            int attachmentCount = Execute(connection => connection.InsertBulk(attachments));
             stopwatch.Stop();
             Console.WriteLine("InsertBulk写入value1={0}条,耗时{1}", orderCount + itemCount + attachmentCount, stopwatch.Elapsed);
             Assert.AreEqual(orderCount, orders.Count);
@@ -45,15 +44,14 @@ namespace Dapper.Extensions.Expression.UnitTests
                     Id = Guid.NewGuid(),
                     IsDelete = false
                 }).ToList();
-                using IDbConnection connection = CreateConnection();
-                return connection.InsertBulk(orders);
+                return Execute(connection => connection.InsertBulk(orders));
             });
         }
 
         [TestMethod]
         public void InsertBulkPartFailWithDbTransactionTest()
         {
-            using IDbConnection connection = CreateConnection();
+            IDbConnection connection = CreateConnection();
             connection.Open();
             IDbTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
             Buyer buyer = CreateBuyer();
@@ -74,10 +72,10 @@ namespace Dapper.Extensions.Expression.UnitTests
             {
                 transaction.Rollback();
             }
-            bool exist = connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            bool exist = Execute(c => c.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsFalse(exist);
             IEnumerable<Guid> ids = orders.Select(f => f.Id);
-            bool existOrder = connection.Query<Order>().Where(f => ids.Contains(f.Id)).Any();
+            bool existOrder = Execute(c => c.Query<Order>().Where(f => ids.Contains(f.Id)).Any());
             Assert.IsFalse(existOrder);
         }
 
@@ -88,17 +86,15 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Order> orders = CreateOrders(50, 50, buyer).ToList();
             Assert.ThrowsException<MySqlException>(() =>
             {
-                using IDbConnection connection = CreateConnection();
                 using var trans = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted });
-                connection.Insert(buyer);
-                connection.InsertBulk(orders);
+                Execute(connection => connection.Insert(buyer));
+                Execute(connection => connection.InsertBulk(orders));
                 trans.Complete();
             });
-            using IDbConnection connection1 = CreateConnection();
-            bool exist = connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsFalse(exist);
             IEnumerable<Guid> ids = orders.Select(f => f.Id);
-            bool existOrder = connection1.Query<Order>().Where(f => ids.Contains(f.Id)).Any();
+            bool existOrder = Execute(connection => connection.Query<Order>().Where(f => ids.Contains(f.Id)).Any());
             Assert.IsFalse(existOrder);
         }
 
@@ -109,11 +105,10 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public void InsertOneTest()
         {
-            using IDbConnection connection = CreateConnection();
             Buyer buyer = CreateBuyer();
-            connection.Insert(buyer);
+            Execute(connection => connection.Insert(buyer));
             Order insertEntity = CreateOrders(1, 1, buyer).First();
-            int value = connection.Insert(insertEntity);
+            int value = Execute(connection => connection.Insert(insertEntity));
             Assert.AreEqual(1, value);
         }
 
@@ -123,11 +118,10 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public void InsertManyTest()
         {
-            using IDbConnection connection = CreateConnection();
             Buyer buyer = CreateBuyer();
-            connection.Insert(buyer);
+            Execute(connection => connection.Insert(buyer));
             IList<Order> orders = CreateOrders(100, 10, buyer).ToList();
-            int values = connection.Insert(orders);
+            int values = Execute(connection => connection.Insert(orders));
             Assert.AreEqual(values, orders.Count);
         }
 
@@ -141,15 +135,13 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Order> orders = CreateOrders(100, 100, buyer).ToList();
             Assert.ThrowsException<MySqlException>(() =>
             {
-                using IDbConnection connection = CreateConnection();
-                connection.Insert(buyer);
-                return connection.Insert(orders);
+                Execute(connection => connection.Insert(buyer));
+                return Execute(connection => connection.Insert(orders));
             });
-            using IDbConnection connection1 = CreateConnection();
-            bool exist = connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
             IEnumerable<Guid> ids = orders.Select(f => f.Id);
-            bool existOrder = connection1.Query<Order>().Where(f => ids.Contains(f.Id)).Any();
+            bool existOrder = Execute(connection => connection.Query<Order>().Where(f => ids.Contains(f.Id)).Any());
             Assert.IsTrue(existOrder);
         }
 
@@ -159,27 +151,13 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public void InsertManyPartFailUseDbTransactionTest()
         {
-            using IDbConnection connection = CreateConnection();
-            connection.Open();
-            IDbTransaction transaction = connection.BeginTransaction();
             Buyer buyer = CreateBuyer();
             IList<Order> orders = CreateOrders(100, 100, buyer).ToList();
-            try
-            {
-                connection.Insert(buyer, transaction);
-                var values = connection.InsertBulk(orders, transaction);
-                transaction.Commit();
-                Assert.IsTrue(values > 0);
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e);
-                transaction.Rollback();
-            }
-            bool exist = connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            Assert.ThrowsException<MySqlException>(() => ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.InsertBulk(orders, transaction) }));
+            bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsFalse(exist);
             IEnumerable<Guid> ids = orders.Select(f => f.Id);
-            bool existOrder = connection.Query<Order>().Where(f => ids.Contains(f.Id)).Any();
+            bool existOrder = Execute(connection => connection.Query<Order>().Where(f => ids.Contains(f.Id)).Any());
             Assert.IsFalse(existOrder);
         }
 
@@ -193,17 +171,15 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Order> orders = CreateOrders(100, 100, buyer).ToList();
             Assert.ThrowsException<MySqlException>(() =>
             {
-                using IDbConnection connection = CreateConnection();
                 using TransactionScope trans = new TransactionScope();
-                connection.Insert(buyer);
-                connection.Insert(orders);
+                Execute(connection => connection.Insert(buyer));
+                Execute(connection => connection.Insert(orders));
                 trans.Complete();
             });
-            using IDbConnection connection1 = CreateConnection();
-            bool exist = connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            bool exist = Execute(connection1 => connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsFalse(exist);
             IEnumerable<Guid> ids = orders.Select(f => f.Id);
-            bool existOrder = connection1.Query<Order>().Where(f => ids.Contains(f.Id)).Any();
+            bool existOrder = Execute(connection1 => connection1.Query<Order>().Where(f => ids.Contains(f.Id)).Any());
             Assert.IsFalse(existOrder);
         }
 
@@ -216,27 +192,15 @@ namespace Dapper.Extensions.Expression.UnitTests
             Buyer buyer = CreateBuyer();
             IList<Order> orders = CreateOrders(100, 10, buyer).ToList();
             IList<Item> items = CreateItems(orders).ToList();
-            using IDbConnection connection = CreateConnection();
-            connection.Open();
-            IDbTransaction transaction = connection.BeginTransaction();
-            try
-            {
-                connection.Insert(buyer, transaction);
-                connection.Insert(orders, transaction);
-                connection.Insert(items, transaction);
-                transaction.Commit();
-            }
-            catch
-            {
-                transaction.Rollback();
-            }
-            bool exist = connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            int values = ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.Insert(orders, transaction), connection.Insert(items, transaction) });
+            Assert.IsTrue(values > 0);
+            bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
             IEnumerable<Guid> orderIds = orders.Select(f => f.Id);
-            int count = connection.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count();
+            int count = Execute(connection => connection.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count());
             Assert.AreEqual(orders.Count, count);
             IEnumerable<Guid> itemIds = items.Select(f => f.Id);
-            count = connection.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count();
+            count = Execute(connection => connection.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count());
             Assert.AreEqual(items.Count, count);
         }
 
@@ -251,20 +215,18 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Item> items = CreateItems(orders).ToList();
             using (TransactionScope trans = new TransactionScope())
             {
-                using IDbConnection connection = CreateConnection();
-                connection.Insert(buyer);
-                connection.Insert(orders);
-                connection.Insert(items);
+                Execute(connection => connection.Insert(buyer));
+                Execute(connection => connection.Insert(orders));
+                Execute(connection => connection.Insert(items));
                 trans.Complete();
             }
-            using IDbConnection connection1 = CreateConnection();
-            bool exist = connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            bool exist = Execute(connection1 => connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
             IEnumerable<Guid> orderIds = orders.Select(f => f.Id);
-            int count = connection1.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count();
+            int count = Execute(connection1 => connection1.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count());
             Assert.AreEqual(orders.Count, count);
             IEnumerable<Guid> itemIds = items.Select(f => f.Id);
-            count = connection1.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count();
+            count = Execute(connection1 => connection1.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count());
             Assert.AreEqual(items.Count, count);
         }
 
@@ -277,27 +239,14 @@ namespace Dapper.Extensions.Expression.UnitTests
             Buyer buyer = CreateBuyer();
             IList<Order> orders = CreateOrders(100, 10, buyer).ToList();
             IList<Item> items = CreateItems(orders).ToList();
-            using IDbConnection connection = CreateConnection();
-            connection.Open();
-            IDbTransaction transaction = connection.BeginTransaction();
-            try
-            {
-                connection.Insert(buyer, transaction);
-                connection.InsertBulk(orders, transaction);
-                connection.InsertBulk(items, transaction);
-                transaction.Commit();
-            }
-            catch
-            {
-                transaction.Rollback();
-            }
-            bool exist = connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.InsertBulk(orders, transaction), connection.InsertBulk(items, transaction) });
+            bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
             IEnumerable<Guid> orderIds = orders.Select(f => f.Id);
-            int count = connection.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count();
+            int count = Execute(connection => connection.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count());
             Assert.AreEqual(orders.Count, count);
             IEnumerable<Guid> itemIds = items.Select(f => f.Id);
-            count = connection.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count();
+            count = Execute(connection => connection.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count());
             Assert.AreEqual(items.Count, count);
         }
 
@@ -312,20 +261,18 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Item> items = CreateItems(orders).ToList();
             using (TransactionScope trans = new TransactionScope())
             {
-                using IDbConnection connection = CreateConnection();
-                connection.Insert(buyer);
-                connection.InsertBulk(orders);
-                connection.InsertBulk(items);
+                Execute(connection => connection.Insert(buyer));
+                Execute(connection => connection.InsertBulk(orders));
+                Execute(connection => connection.InsertBulk(items));
                 trans.Complete();
             }
-            using IDbConnection connection1 = CreateConnection();
-            bool exist = connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any();
+            bool exist = Execute(connection1 => connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
             IEnumerable<Guid> orderIds = orders.Select(f => f.Id);
-            int count = connection1.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count();
+            int count = Execute(connection1 => connection1.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count());
             Assert.AreEqual(orders.Count, count);
             IEnumerable<Guid> itemIds = items.Select(f => f.Id);
-            count = connection1.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count();
+            count = Execute(connection1 => connection1.Query<Item>().Where(f => itemIds.Contains(f.Id)).Count());
             Assert.AreEqual(items.Count, count);
         }
 
@@ -336,9 +283,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public async Task InsertOneAsyncTest()
         {
-            using IDbConnection connection = CreateConnection();
             Buyer buyer = CreateBuyer();
-            int result = await connection.InsertAsync(buyer);
+            int result = await Execute(connection => connection.InsertAsync(buyer));
             Assert.IsTrue(result > 0);
         }
 
@@ -349,9 +295,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public async Task InsertManyAsyncTest()
         {
-            using IDbConnection connection = CreateConnection();
             IEnumerable<Buyer> buyers = Enumerable.Range(0, 100).Select(f => CreateBuyer());
-            int result = await connection.InsertAsync(buyers);
+            int result = await Execute(connection => connection.InsertAsync(buyers));
             Assert.IsTrue(result > 0);
         }
 
@@ -362,9 +307,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         [TestMethod]
         public async Task InsertBulkAsyncTest()
         {
-            using IDbConnection connection = CreateConnection();
             IList<Buyer> buyers = Enumerable.Range(0, 100).Select(f => CreateBuyer()).ToList();
-            int result = await connection.InsertBulkAsync(buyers);
+            int result = await Execute(connection => connection.InsertBulkAsync(buyers));
             Assert.IsTrue(result > 0);
         }
     }

@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Dapper.Extensions.Expression.UnitTests
 {
@@ -14,6 +15,58 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_extension;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8");
             return connection;
+        }
+
+        protected static async Task Execute(Func<IDbConnection, Task> action)
+        {
+            using (IDbConnection connection = CreateConnection())
+            {
+                await action(connection);
+            }
+        }
+
+        protected static void Execute(Action<IDbConnection> action)
+        {
+            using (IDbConnection connection = CreateConnection())
+            {
+                action(connection);
+            }
+        }
+
+        protected static async Task<T> Execute<T>(Func<IDbConnection, Task<T>> action)
+        {
+            using (IDbConnection connection = CreateConnection())
+            {
+                return await action(connection);
+            }
+        }
+
+        protected static T Execute<T>(Func<IDbConnection, T> action)
+        {
+            using (IDbConnection connection = CreateConnection())
+            {
+                return action(connection);
+            }
+        }
+
+        protected static int ExecuteTransaction(Func<IDbConnection, IDbTransaction, IEnumerable<int>> actions)
+        {
+            using (IDbConnection connection = CreateConnection())
+            {
+                connection.Open();
+                IDbTransaction transaction = connection.BeginTransaction();
+                try
+                {
+                    IEnumerable<int> total = actions(connection, transaction);
+                    transaction.Commit();
+                    return total.Sum();
+                }
+                catch
+                {
+                    transaction.Rollback();
+                    throw;
+                }
+            }
         }
 
         protected static string GetRandomString(int length)
