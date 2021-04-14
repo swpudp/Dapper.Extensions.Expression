@@ -8,6 +8,7 @@ namespace Dapper.Extensions.Expression.Visitors
 {
     /// <summary>
     /// 参数替换
+    /// 将第一个参数替换成t1,第二个参数替换成t2...
     /// </summary>
     internal class ReplaceParameterVisitor : ExpressionVisitor
     {
