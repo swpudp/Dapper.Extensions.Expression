@@ -189,6 +189,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         protected void Test()
         {
             Trace.WriteLine(nameof(Test) + "16点58分");
+            Trace.WriteLine(nameof(Test) + "17点04分");
         }
     }
 }
