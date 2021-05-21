@@ -184,5 +184,10 @@ namespace Dapper.Extensions.Expression.UnitTests
                 };
             }
         }
+
+        protected void Test()
+        {
+
+        }
     }
 }
