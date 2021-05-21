@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -187,7 +188,7 @@ namespace Dapper.Extensions.Expression.UnitTests
 
         protected void Test()
         {
-
+            Trace.WriteLine(nameof(Test) + "16点58分");
         }
     }
 }
