@@ -366,11 +366,12 @@ namespace Dapper.Extensions.Expression
                     {
                         continue;
                     }
-                    if (parameter.Name == bodyParameter.Name)
+                    if (parameter.Name != bodyParameter.Name)
                     {
-                        p = onExpression.Parameters[index];
-                        return true;
+                        continue;
                     }
+                    p = onExpression.Parameters[index];
+                    return true;
                 }
             }
             return false;

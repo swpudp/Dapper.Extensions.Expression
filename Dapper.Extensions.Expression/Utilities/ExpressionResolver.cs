@@ -97,11 +97,7 @@ namespace Dapper.Extensions.Expression.Utilities
         private static ElementInit VisitElementInitializer(ElementInit initializer)
         {
             ReadOnlyCollection<System.Linq.Expressions.Expression> arguments = VisitExpressionList(initializer.Arguments);
-            if (arguments != initializer.Arguments)
-            {
-                return System.Linq.Expressions.Expression.ElementInit(initializer.AddMethod, arguments);
-            }
-            return initializer;
+            return arguments != initializer.Arguments ? System.Linq.Expressions.Expression.ElementInit(initializer.AddMethod, arguments) : initializer;
         }
 
         private static System.Linq.Expressions.Expression VisitUnary(UnaryExpression u)
@@ -132,11 +128,7 @@ namespace Dapper.Extensions.Expression.Utilities
                 return System.Linq.Expressions.Expression.Equal(left, right);
             }
             System.Linq.Expressions.Expression operand = Visit(u.Operand);
-            if (operand != u.Operand)
-            {
-                return System.Linq.Expressions.Expression.MakeUnary(u.NodeType, operand, u.Type, u.Method);
-            }
-            return u;
+            return operand != u.Operand ? System.Linq.Expressions.Expression.MakeUnary(u.NodeType, operand, u.Type, u.Method) : u;
         }
 
         private static System.Linq.Expressions.Expression VisitBinary(BinaryExpression b)
@@ -144,24 +136,16 @@ namespace Dapper.Extensions.Expression.Utilities
             System.Linq.Expressions.Expression left = Visit(b.Left);
             System.Linq.Expressions.Expression right = Visit(b.Right);
             System.Linq.Expressions.Expression conversion = Visit(b.Conversion);
-            if (left != b.Left || right != b.Right || conversion != b.Conversion)
-            {
-                if (b.NodeType == ExpressionType.Coalesce && b.Conversion != null)
-                    return System.Linq.Expressions.Expression.Coalesce(left, right, conversion as LambdaExpression);
-                else
-                    return System.Linq.Expressions.Expression.MakeBinary(b.NodeType, left, right, b.IsLiftedToNull, b.Method);
-            }
-            return b;
+            if (left == b.Left && right == b.Right && conversion == b.Conversion) return b;
+            if (b.NodeType == ExpressionType.Coalesce && b.Conversion != null)
+                return System.Linq.Expressions.Expression.Coalesce(left, right, conversion as LambdaExpression);
+            return System.Linq.Expressions.Expression.MakeBinary(b.NodeType, left, right, b.IsLiftedToNull, b.Method);
         }
 
         private static System.Linq.Expressions.Expression VisitTypeIs(TypeBinaryExpression b)
         {
             System.Linq.Expressions.Expression expr = Visit(b.Expression);
-            if (expr != b.Expression)
-            {
-                return System.Linq.Expressions.Expression.TypeIs(expr, b.TypeOperand);
-            }
-            return b;
+            return expr != b.Expression ? System.Linq.Expressions.Expression.TypeIs(expr, b.TypeOperand) : b;
         }
 
         private static System.Linq.Expressions.Expression VisitConstant(ConstantExpression c)
@@ -191,32 +175,28 @@ namespace Dapper.Extensions.Expression.Utilities
             if (m.Type != ConstantDefined.TypeOfBoolean)
             {
                 System.Linq.Expressions.Expression exp = Visit(m.Expression);
-                if (exp != m.Expression)
-                {
-                    return System.Linq.Expressions.Expression.MakeMemberAccess(exp, m.Member);
-                }
-                return m;
+                return exp != m.Expression ? System.Linq.Expressions.Expression.MakeMemberAccess(exp, m.Member) : m;
             }
             System.Linq.Expressions.Expression left;
             ConstantExpression right;
             ExpressionType type;
-            if (m.Member.Name == ConstantDefined.MemberNameHasValue)
+            switch (m.Member.Name)
             {
-                right = TypeProvider.GetNullExpression(m.Expression.Type);
-                type = ExpressionType.NotEqual;
-                left = m.Expression;
-            }
-            else if (m.Member.Name == ConstantDefined.MemberNameValue)
-            {
-                right = TypeProvider.GetTrueExpression(m.Expression.Type);
-                type = ExpressionType.Equal;
-                left = m.Expression;
-            }
-            else
-            {
-                right = ConstantDefined.BooleanTrue;
-                type = ExpressionType.Equal;
-                left = m;
+                case ConstantDefined.MemberNameHasValue:
+                    right = TypeProvider.GetNullExpression(m.Expression.Type);
+                    type = ExpressionType.NotEqual;
+                    left = m.Expression;
+                    break;
+                case ConstantDefined.MemberNameValue:
+                    right = TypeProvider.GetTrueExpression(m.Expression.Type);
+                    type = ExpressionType.Equal;
+                    left = m.Expression;
+                    break;
+                default:
+                    right = ConstantDefined.BooleanTrue;
+                    type = ExpressionType.Equal;
+                    left = m;
+                    break;
             }
             return System.Linq.Expressions.Expression.MakeBinary(type, left, right);
         }
@@ -252,44 +232,28 @@ namespace Dapper.Extensions.Expression.Utilities
                     list.Add(p);
                 }
             }
-            if (list != null)
-            {
-                return list.AsReadOnly();
-            }
-            return original;
+            return list != null ? list.AsReadOnly() : original;
         }
 
         private static MemberAssignment VisitMemberAssignment(MemberAssignment assignment)
         {
             System.Linq.Expressions.Expression e = Visit(assignment.Expression);
-            if (e != assignment.Expression)
-            {
-                return System.Linq.Expressions.Expression.Bind(assignment.Member, e);
-            }
-            return assignment;
+            return e != assignment.Expression ? System.Linq.Expressions.Expression.Bind(assignment.Member, e) : assignment;
         }
 
         private static MemberMemberBinding VisitMemberMemberBinding(MemberMemberBinding binding)
         {
             IEnumerable<MemberBinding> bindings = VisitBindingList(binding.Bindings);
-            if (!Equals(bindings, binding.Bindings))
-            {
-                return System.Linq.Expressions.Expression.MemberBind(binding.Member, bindings);
-            }
-            return binding;
+            return !Equals(bindings, binding.Bindings) ? System.Linq.Expressions.Expression.MemberBind(binding.Member, bindings) : binding;
         }
 
         private static MemberListBinding VisitMemberListBinding(MemberListBinding binding)
         {
             IEnumerable<ElementInit> initializers = VisitElementInitializerList(binding.Initializers);
-            if (Equals(initializers, binding.Initializers))
-            {
-                return System.Linq.Expressions.Expression.ListBind(binding.Member, initializers);
-            }
-            return binding;
+            return Equals(initializers, binding.Initializers) ? System.Linq.Expressions.Expression.ListBind(binding.Member, initializers) : binding;
         }
 
-        private static IEnumerable<MemberBinding> VisitBindingList(ReadOnlyCollection<MemberBinding> original)
+        private static IEnumerable<MemberBinding> VisitBindingList(IReadOnlyList<MemberBinding> original)
         {
             List<MemberBinding> list = null;
             for (int i = 0, n = original.Count; i < n; i++)
@@ -309,12 +273,10 @@ namespace Dapper.Extensions.Expression.Utilities
                     list.Add(b);
                 }
             }
-            if (list != null)
-                return list;
-            return original;
+            return list ?? original;
         }
 
-        private static IEnumerable<ElementInit> VisitElementInitializerList(ReadOnlyCollection<ElementInit> original)
+        private static IEnumerable<ElementInit> VisitElementInitializerList(IReadOnlyList<ElementInit> original)
         {
             List<ElementInit> list = null;
             for (int i = 0, n = original.Count; i < n; i++)
@@ -342,11 +304,7 @@ namespace Dapper.Extensions.Expression.Utilities
         private static System.Linq.Expressions.Expression VisitLambda(LambdaExpression lambda)
         {
             System.Linq.Expressions.Expression body = Visit(lambda.Body);
-            if (body != lambda.Body)
-            {
-                return System.Linq.Expressions.Expression.Lambda(lambda.Type, body, lambda.Parameters);
-            }
-            return lambda;
+            return body != lambda.Body ? System.Linq.Expressions.Expression.Lambda(lambda.Type, body, lambda.Parameters) : lambda;
         }
 
         private static NewExpression VisitNew(NewExpression nex)
@@ -384,15 +342,8 @@ namespace Dapper.Extensions.Expression.Utilities
         private static System.Linq.Expressions.Expression VisitNewArray(NewArrayExpression na)
         {
             IEnumerable<System.Linq.Expressions.Expression> expressions = VisitExpressionList(na.Expressions);
-            if (Equals(expressions, na.Expressions))
-            {
-                if (na.NodeType == ExpressionType.NewArrayInit)
-                {
-                    return System.Linq.Expressions.Expression.NewArrayInit(na.Type.GetElementType(), expressions);
-                }
-                return System.Linq.Expressions.Expression.NewArrayBounds(na.Type.GetElementType(), expressions);
-            }
-            return na;
+            if (!Equals(expressions, na.Expressions)) return na;
+            return na.NodeType == ExpressionType.NewArrayInit ? System.Linq.Expressions.Expression.NewArrayInit(na.Type.GetElementType(), expressions) : System.Linq.Expressions.Expression.NewArrayBounds(na.Type.GetElementType(), expressions);
         }
 
         private static System.Linq.Expressions.Expression VisitInvocation(InvocationExpression iv)

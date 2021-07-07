@@ -56,7 +56,7 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        private static IEnumerable<Task<int>> CreateInsertTasks<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
+        private static IEnumerable<Task<int>> CreateInsertTasks<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, ICollection<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             int total = entities.Count;
             const int maxSize = 4000;
@@ -84,7 +84,7 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        private static Task<int> InternalInsertBulkAsync<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
+        private static Task<int> InternalInsertBulkAsync<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, IEnumerable<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             StringBuilder parameterList = BuildInsertBulkSql(entities, propertyInfos, out DynamicParameters parameters);
             string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";

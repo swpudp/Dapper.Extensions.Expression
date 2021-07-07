@@ -134,22 +134,26 @@ namespace Dapper.Extensions.Expression.Visitors
         /// <returns></returns>
         private static bool RetValueIsNull(System.Linq.Expressions.Expression exp)
         {
-            if (exp.NodeType == ExpressionType.Constant)
+            switch (exp.NodeType)
             {
-                ConstantExpression c = (ConstantExpression)exp;
-                return c.Value == null || c.Value == DBNull.Value;
-            }
-            if (exp.NodeType == ExpressionType.MemberAccess)
-            {
-                MemberExpression m = (MemberExpression)exp;
-                if (m.Expression?.NodeType == ExpressionType.Parameter)
+                case ExpressionType.Constant:
                 {
-                    return false;
+                    ConstantExpression c = (ConstantExpression)exp;
+                    return c.Value == null || c.Value == DBNull.Value;
                 }
-                object value = ExpressionEvaluator.Visit(exp);
-                return value == null;
+                case ExpressionType.MemberAccess:
+                {
+                    MemberExpression m = (MemberExpression)exp;
+                    if (m.Expression?.NodeType == ExpressionType.Parameter)
+                    {
+                        return false;
+                    }
+                    object value = ExpressionEvaluator.Visit(exp);
+                    return value == null;
+                }
+                default:
+                    return false;
             }
-            return false;
         }
 
         private static void VisitMember(System.Linq.Expressions.Expression e, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -175,7 +179,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             if (memberExpression.Expression.NodeType == ExpressionType.Parameter)
             {
-                //todo 访问参数，无法从父类获取子类特性
+                //访问参数，无法从父类获取子类特性
                 InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
                 MemberInfo columnProperty = TypeProvider.GetColumnProperty(memberExpression.Expression.Type, member);
                 adapter.AppendColumnName(sqlBuilder, columnProperty);
@@ -190,15 +194,14 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             if (memberExpression.Expression.Type.IsNullable())
             {
-                if (member.Name == ConstantDefined.MemberNameValue)
+                switch (member.Name)
                 {
-                    InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
-                    return;
-                }
-                if (member.Name == ConstantDefined.MemberNameHasValue)
-                {
-                    adapter.AppendColumnName(sqlBuilder, memberExpression.Member);
-                    return;
+                    case ConstantDefined.MemberNameValue:
+                        InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
+                        return;
+                    case ConstantDefined.MemberNameHasValue:
+                        adapter.AppendColumnName(sqlBuilder, memberExpression.Member);
+                        return;
                 }
             }
             System.Linq.Expressions.Expression memberNewExpression = ExpressionEvaluator.MakeExpression(memberExpression);
@@ -386,7 +389,7 @@ namespace Dapper.Extensions.Expression.Visitors
         /// 拆分表达式
         /// 将xx && (xxx || xx)、(xxx || xxx) && (xxx || xxx)等这类表达式拆分开，使翻译SQL形式是：xxx AND (xxx OR xxx)、(xxx OR xxx) AND (xxx OR xxx)
         /// </summary>
-        private static void Segregate(BinaryExpression ex, ExpressionType nodeType, IList<System.Linq.Expressions.Expression> nodeExpressions)
+        private static void Segregate(BinaryExpression ex, ExpressionType nodeType, ICollection<System.Linq.Expressions.Expression> nodeExpressions)
         {
             if (nodeType == ex.Left.NodeType)
             {

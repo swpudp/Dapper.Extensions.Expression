@@ -1,7 +1,7 @@
-﻿using Dapper.Extensions.Expression.Utilities;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using Dapper.Extensions.Expression.Utilities;
 
 namespace Dapper.Extensions.Expression.Extensions
 {
@@ -79,12 +79,8 @@ namespace Dapper.Extensions.Expression.Extensions
                 ((PropertyInfo)propertyOrField).SetValue(obj, value, null);
                 return;
             }
-            if (propertyOrField.MemberType == MemberTypes.Field)
-            {
-                ((FieldInfo)propertyOrField).SetValue(obj, value);
-                return;
-            }
-            throw new ArgumentException();
+            if (propertyOrField.MemberType != MemberTypes.Field) throw new ArgumentException();
+            ((FieldInfo)propertyOrField).SetValue(obj, value);
         }
     }
 }

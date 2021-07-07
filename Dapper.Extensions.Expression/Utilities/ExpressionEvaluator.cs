@@ -47,22 +47,15 @@ namespace Dapper.Extensions.Expression.Utilities
 
         private static object VisitMemberAccess(MemberExpression exp)
         {
-            object instance = null;
-            if (exp.Expression != null)
+            if (exp.Expression == null) return exp.Member.GetValue(null);
+            var instance = Visit(exp.Expression);
+            if (instance != null) return exp.Member.GetValue(instance);
+            if (exp.Member.Name == "HasValue" && exp.Member.DeclaringType.IsNullable())
             {
-                instance = Visit(exp.Expression);
-
-                if (instance == null)
-                {
-                    if (exp.Member.Name == "HasValue" && exp.Member.DeclaringType.IsNullable())
-                    {
-                        return false;
-                    }
-                    throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Expression}'.");
-                }
+                return false;
             }
+            throw new NullReferenceException($"There is an object reference not set to an instance in expression tree. Associated expression: '{exp.Expression}'.");
 
-            return exp.Member.GetValue(instance);
         }
 
         internal static System.Linq.Expressions.Expression MakeExpression(System.Linq.Expressions.Expression exp)
@@ -192,7 +185,7 @@ namespace Dapper.Extensions.Expression.Utilities
         }
         private static object VisitNewArray(NewArrayExpression exp)
         {
-            Array arr = Array.CreateInstance(exp.Type.GetElementType(), exp.Expressions.Count);
+            Array arr = Array.CreateInstance(exp.Type.GetElementType() ?? throw new InvalidOperationException(), exp.Expressions.Count);
             for (int i = 0; i < exp.Expressions.Count; i++)
             {
                 System.Linq.Expressions.Expression e = exp.Expressions[i];

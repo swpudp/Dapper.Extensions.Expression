@@ -359,11 +359,12 @@ namespace Dapper.Extensions.Expression
             foreach (ParameterExpression parameter in lambda.Parameters)
             {
                 int index = lambda.Parameters.IndexOf(parameter);
-                if (parameter.Name == bodyParameter.Name)
+                if (parameter.Name != bodyParameter.Name)
                 {
-                    p = _on.Parameters[index];
-                    return true;
+                    continue;
                 }
+                p = _on.Parameters[index];
+                return true;
             }
             return false;
         }

@@ -27,7 +27,7 @@ namespace Dapper.Extensions.Expression.Providers
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ColumnProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
 
 
-        private static IList<PropertyInfo> GetComputedProperties(Type type)
+        private static IEnumerable<PropertyInfo> GetComputedProperties(Type type)
         {
             if (ComputedProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
@@ -135,7 +135,7 @@ namespace Dapper.Extensions.Expression.Providers
             }
             IList<PropertyInfo> allProperties = GetAllProperties(type);
             IEnumerable<PropertyInfo> keyProperties = GetKeyProperties(type);
-            IList<PropertyInfo> computedProperties = GetComputedProperties(type);
+            IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
             IList<PropertyInfo> canWriteProperties = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
             CanWriteProperties[type.TypeHandle] = canWriteProperties;
@@ -155,7 +155,7 @@ namespace Dapper.Extensions.Expression.Providers
             }
             IList<PropertyInfo> keyProperties = GetUpdateKeyProperties(type);
             IList<PropertyInfo> allProperties = GetAllProperties(type);
-            IList<PropertyInfo> computedProperties = GetComputedProperties(type);
+            IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
             List<PropertyInfo> nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
             CanUpdateProperties[type.TypeHandle] = nonIdProps;
@@ -197,19 +197,15 @@ namespace Dapper.Extensions.Expression.Providers
             {
                 throw new InvalidOperationException();
             }
-            if (type.IsGenericType)
-            {
-                TypeInfo typeInfo = type.GetTypeInfo();
-                bool isEnumerable =
-                    typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
-                    typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
-                if (isEnumerable)
-                {
-                    eleType = type.GetGenericArguments()[0];
-                    return true;
-                }
-            }
-            return false;
+
+            if (!type.IsGenericType) return false;
+            TypeInfo typeInfo = type.GetTypeInfo();
+            bool isEnumerable =
+                typeInfo.ImplementedInterfaces.Any(ti => ti.IsGenericType && ti.GetGenericTypeDefinition() == typeof(IEnumerable<>)) ||
+                typeInfo.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+            if (!isEnumerable) return false;
+            eleType = type.GetGenericArguments()[0];
+            return true;
         }
 
         /// <summary>

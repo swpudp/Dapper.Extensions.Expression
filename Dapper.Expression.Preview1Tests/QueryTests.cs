@@ -1211,8 +1211,7 @@ namespace Dapper.Extensions.Expression.UnitTests
             string sql = connection.Query<Order>().Where(f => f.Status == Status.Running || f.IsDelete && (f.SerialNo.Contains("abc") || f.Remark.Contains("abc")))
                 .Select(f => f.Id)
                 .GetCommandText();
-            string expectSql =
-                "SELECT `t1`.`Id` from `order` AS `t1` WHERE (`t1`.`Status`=@w_p_1 OR (`t1`.`IsDelete`=@w_p_2 AND (`t1`.`Number` LIKE @w_p_3 OR `t1`.`Remark` LIKE @w_p_4)))";
+            var expectSql = "SELECT `t1`.`Id` from `order` AS `t1` WHERE (`t1`.`Status`=@w_p_1 OR (`t1`.`IsDelete`=@w_p_2 AND (`t1`.`Number` LIKE @w_p_3 OR `t1`.`Remark` LIKE @w_p_4)))";
             Debug.WriteLine(sql);
             Debug.WriteLine(expectSql);
             Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);

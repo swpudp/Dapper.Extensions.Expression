@@ -935,5 +935,56 @@ namespace Dapper.Extensions.Expression.UnitTests
             IList<Order> orders = query.Where((f, d) => statusList.Contains(f.Status)).Between((a, b) => a.Amount, 10m, 20m).ToList<Order>();
             Assert.IsTrue(orders.Any());
         }
+        
+         /// <summary>
+        /// whereif测试
+        /// </summary>
+        [TestMethod]
+        public void WhereIfEmptyParamTest()
+        {
+            QueryParam queryParam = new QueryParam();
+            using IDbConnection connection = CreateConnection();
+            IQuery query = connection.JoinQuery<Order,Item>(JoinType.Left,(a,b)=>a.Id==b.OrderId)
+                  .WhereIf(queryParam.CreateTime.HasValue, (f,g) => f.CreateTime > queryParam.CreateTime)
+                  .WhereIf(queryParam.IsDelete == true, (f,i) => f.IsDelete)
+                  .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), (f,k) => f.Remark.Contains(queryParam.Key))
+                  .Select((g,l) => g.Id);
+            string commandText = query.GetCommandText();
+            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` LEFT JOIN `items` AS `t2` ON `t1`.`Id` = `t2`.`OrderId`", commandText.Trim(), true);
+        }
+
+        /// <summary>
+        /// whereif测试
+        /// </summary>
+        [TestMethod]
+        public void WhereIfFullParamTest()
+        {
+            QueryParam queryParam = new QueryParam { CreateTime = DateTime.Now.AddDays(-10), IsDelete = true, Key = "1234" };
+            using IDbConnection connection = CreateConnection();
+            IQuery query = connection.JoinQuery<Order,Item>(JoinType.Left,(x,y)=>x.Id==y.OrderId)
+                  .WhereIf(queryParam.CreateTime.HasValue, (f,f1) => f.CreateTime > queryParam.CreateTime)
+                  .WhereIf(queryParam.IsDelete == true, (f,f2) => f.IsDelete)
+                  .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), (f,f3) => f.Remark.Contains(queryParam.Key))
+                  .Select((g,g1) => g.Id);
+            string commandText = query.GetCommandText();
+            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` LEFT JOIN `items` AS `t2` ON `t1`.`Id` = `t2`.`OrderId` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2 AND `t1`.`Remark` LIKE @w_p_3", commandText.Trim(), true);
+        }
+
+        /// <summary>
+        /// whereif测试
+        /// </summary>
+        [TestMethod]
+        public void WhereIfPartialParamTest()
+        {
+            QueryParam queryParam = new QueryParam { CreateTime = DateTime.Now.AddDays(-10), IsDelete = true };
+            using IDbConnection connection = CreateConnection();
+            IQuery query = connection.JoinQuery<Order,Item>(JoinType.Left,(x,y)=>x.Id==y.OrderId)
+                .WhereIf(queryParam.CreateTime.HasValue, (f,f1) => f.CreateTime > queryParam.CreateTime)
+                .WhereIf(queryParam.IsDelete == true, (f,f2) => f.IsDelete)
+                .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), (f,f3) => f.Remark.Contains(queryParam.Key))
+                .Select((g,g1) => g.Id);
+            string commandText = query.GetCommandText();
+            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` LEFT JOIN `items` AS `t2` ON `t1`.`Id` = `t2`.`OrderId` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2", commandText.Trim(), true);
+        }
     }
 }
