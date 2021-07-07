@@ -125,6 +125,17 @@ namespace Dapper.Extensions.Expression
             return this;
         }
 
+        /// <summary>
+        /// 带条件筛选
+        /// </summary>
+        /// <param name="condition">是否进入筛选</param>
+        /// <param name="ex">表达式</param>
+        /// <returns></returns>
+        public Query<T1, T2, T3> WhereIf(bool condition, Expression<Func<T1, T2, T3, bool>> ex)
+        {
+            return condition ? Where(ex) : this;
+        }
+
         public Query<T1, T2, T3> Exist<T4>(Expression<Func<T1, T2, T3, T4, bool>> where)
         {
             if (_whereBuilder == null)

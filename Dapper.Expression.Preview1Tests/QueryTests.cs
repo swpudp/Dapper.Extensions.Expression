@@ -1302,6 +1302,57 @@ namespace Dapper.Extensions.Expression.UnitTests
             Assert.AreEqual(result, 0);
         }
 
+        /// <summary>
+        /// whereif测试
+        /// </summary>
+        [TestMethod]
+        public void WhereIfEmptyParamTest()
+        {
+            QueryParam queryParam = new QueryParam();
+            using IDbConnection connection = CreateConnection();
+            IQuery query = connection.Query<Order>()
+                  .WhereIf(queryParam.CreateTime.HasValue, f => f.CreateTime > queryParam.CreateTime)
+                  .WhereIf(queryParam.IsDelete == true, f => f.IsDelete)
+                  .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), f => f.Remark.Contains(queryParam.Key))
+                  .Select(g => g.Id);
+            string commandText = query.GetCommandText();
+            Assert.AreEqual("select `t1`.`Id` from `order` AS `t1`", commandText, true);
+        }
+
+        /// <summary>
+        /// whereif测试
+        /// </summary>
+        [TestMethod]
+        public void WhereIfFullParamTest()
+        {
+            QueryParam queryParam = new QueryParam { CreateTime = DateTime.Now.AddDays(-10), IsDelete = true, Key = "1234" };
+            using IDbConnection connection = CreateConnection();
+            IQuery query = connection.Query<Order>()
+                  .WhereIf(queryParam.CreateTime.HasValue, f => f.CreateTime > queryParam.CreateTime)
+                  .WhereIf(queryParam.IsDelete == true, f => f.IsDelete)
+                  .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), f => f.Remark.Contains(queryParam.Key))
+                  .Select(g => g.Id);
+            string commandText = query.GetCommandText();
+            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2 AND `t1`.`Remark` LIKE @w_p_3", commandText, true);
+        }
+
+        /// <summary>
+        /// whereif测试
+        /// </summary>
+        [TestMethod]
+        public void WhereIfPartialParamTest()
+        {
+            QueryParam queryParam = new QueryParam { CreateTime = DateTime.Now.AddDays(-10), IsDelete = true };
+            using IDbConnection connection = CreateConnection();
+            IQuery query = connection.Query<Order>()
+                  .WhereIf(queryParam.CreateTime.HasValue, f => f.CreateTime > queryParam.CreateTime)
+                  .WhereIf(queryParam.IsDelete == true, f => f.IsDelete)
+                  .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), f => f.Remark.Contains(queryParam.Key))
+                  .Select(g => g.Id);
+            string commandText = query.GetCommandText();
+            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2", commandText, true);
+        }
+
 
         private static string TrimAllEmpty(string content)
         {
