@@ -141,7 +141,7 @@ namespace Dapper.Extensions.Expression
                     parameterList.Append(parameterName);
                 }
                 parameterList.Append(")");
-                if (parameters.Count() > 1000 || index + 1 == entities.Count)
+                if (parameters.Count() > MaxParameterCount || index + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += connection.Execute(cmd, parameters, transaction, commandTimeout);

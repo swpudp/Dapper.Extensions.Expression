@@ -76,7 +76,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         {
             using (var trans = new TransactionScope())
             {
-                var buyers = Enumerable.Range(0, 5000).Select(f => CreateBuyer()).ToList();
+                var buyers = Enumerable.Range(0, 10000).Select(f => CreateBuyer()).ToList();
                 IDbConnection connection = CreateConnection();
                 int result = await connection.InsertBulkAsync(buyers);
                 trans.Complete();
@@ -89,7 +89,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         {
             using (var trans = new TransactionScope())
             {
-                var buyers = Enumerable.Range(0, 5000).Select(f => CreateBuyer()).ToList();
+                var buyers = Enumerable.Range(0, 10000).Select(f => CreateBuyer()).ToList();
                 IDbConnection connection = CreateConnection();
                 int result = connection.InsertBulk(buyers);
                 trans.Complete();
