@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Dapper.Extensions.Expression.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -11,6 +12,11 @@ namespace Dapper.Extensions.Expression
 {
     public static partial class QueryExtensions
     {
+        /// <summary>
+        /// 最大参数个数
+        /// </summary>
+        private const int MaxParameterCount = 4000;
+
         /// <summary>
         /// 当写入多条数据时，实质是循环写入
         /// </summary>
@@ -39,56 +45,62 @@ namespace Dapper.Extensions.Expression
         public static async Task<int> InsertBulkAsync<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
-            IEnumerable<Task<int>> tasks = CreateInsertTasks(connection, tableName, columnList, validPropertyInfos, entities, transaction, commandTimeout);
-            int[] result = await Task.WhenAll(tasks);
-            return result.Sum();
-        }
-
-        /// <summary>
-        /// 创建写入任务
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
-        /// <param name="tableName"></param>
-        /// <param name="columnList"></param>
-        /// <param name="propertyInfos"></param>
-        /// <param name="entities"></param>
-        /// <param name="transaction"></param>
-        /// <param name="commandTimeout"></param>
-        /// <returns></returns>
-        private static IEnumerable<Task<int>> CreateInsertTasks<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            int total = entities.Count;
-            const int maxSize = 4000;
-            int batchSize = Math.DivRem(total, maxSize, out int result);
-            if (result != 0)
+            StringBuilder parameterList = new StringBuilder();
+            var parameters = new Dictionary<string, object>();
+            int index = 0;
+            int count = 0;
+            foreach (T entity in entities)
             {
-                batchSize += 1;
-            }
-            for (int i = 0; i < batchSize; i++)
-            {
-                IList<T> toInsertList = entities.Skip(i * maxSize).Take(maxSize).ToList();
-                yield return InternalInsertBulkAsync(connection, tableName, columnList, propertyInfos, toInsertList, transaction, commandTimeout);
-            }
-        }
+                if (parameterList.Length > 0)
+                {
+                    parameterList.Append(",");
+                }
+                parameterList.Append("(");
+                for (int i = 0; i < validPropertyInfos.Count; i++)
+                {
+                    if (i > 0 && i < validPropertyInfos.Count)
+                    {
+                        parameterList.Append(", ");
+                    }
+                    MemberInfo property = validPropertyInfos[i];
+                    var value = property.GetValue(entity);
 
-        /// <summary>
-        /// 批量写入实现
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
-        /// <param name="tableName"></param>
-        /// <param name="columnList"></param>
-        /// <param name="propertyInfos"></param>
-        /// <param name="entities"></param>
-        /// <param name="transaction"></param>
-        /// <param name="commandTimeout"></param>
-        /// <returns></returns>
-        private static Task<int> InternalInsertBulkAsync<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            StringBuilder parameterList = BuildInsertBulkSql(entities, propertyInfos, out DynamicParameters parameters);
-            string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
-            return connection.ExecuteAsync(cmd, parameters, transaction, commandTimeout);
+                    if (value == null)
+                    {
+                        parameterList.Append("NULL");
+                        continue;
+                    }
+                    if (value is bool v)
+                    {
+                        parameterList.Append(v ? "1" : "0");
+                        continue;
+                    }
+                    Type valType = value.GetType();
+                    if (valType.IsEnum)
+                    {
+                        value = Convert.ChangeType(value, Enum.GetUnderlyingType(valType));
+                        valType = valType.GetType();
+                    }
+                    if (value.GetType().IsNumericType())
+                    {
+                        parameterList.Append(value.ToString());
+                        continue;
+                    }
+                    string parameterName = $"@{property.Name}_{index}";
+                    parameters.Add(parameterName, value);
+                    parameterList.Append(parameterName);
+                }
+                parameterList.Append(")");
+                if (parameters.Count() > MaxParameterCount || index + 1 == entities.Count)
+                {
+                    string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
+                    count += await connection.ExecuteAsync(cmd, parameters, transaction, commandTimeout);
+                    parameterList.Clear();
+                    parameters.Clear();
+                }
+                index++;
+            }
+            return count;
         }
 
         /// <summary>
@@ -137,7 +149,6 @@ namespace Dapper.Extensions.Expression
             string sql = BuildUpdateSql(connection, condition, content, out DynamicParameters parameters);
             return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
-
 
         /// <summary>
         /// Delete entity in table "Ts".

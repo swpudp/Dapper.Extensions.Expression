@@ -7,6 +7,7 @@ using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper.Extensions.Expression.Extensions;
+using System.Transactions;
 
 namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
@@ -70,9 +71,54 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             return result > 0;
         }
 
+        [HttpGet("TransactionAsync")]
+        public async Task<int> TransactionAsync()
+        {
+            using (var trans = new TransactionScope())
+            {
+                var buyers = Enumerable.Range(0, 5000).Select(f => CreateBuyer()).ToList();
+                IDbConnection connection = CreateConnection();
+                int result = await connection.InsertBulkAsync(buyers);
+                trans.Complete();
+                return result;
+            }
+        }
+
+        [HttpGet("Transaction")]
+        public async Task<int> Transaction()
+        {
+            using (var trans = new TransactionScope())
+            {
+                var buyers = Enumerable.Range(0, 5000).Select(f => CreateBuyer()).ToList();
+                IDbConnection connection = CreateConnection();
+                int result = connection.InsertBulk(buyers);
+                trans.Complete();
+                return await Task.FromResult(result);
+            }
+        }
+
+        private static Buyer CreateBuyer()
+        {
+            string id = Guid.NewGuid().ToString().Replace("-", string.Empty).ToUpper();
+            Buyer buyer = new Buyer
+            {
+                Id = Guid.NewGuid(),
+                Code = id.Substring(0, 4),
+                CreateTime = DateTime.Now,
+                Email = id.Substring(4, 8) + "@" + id.Substring(10, 2) + ".com",
+                Identity = id.Substring(10, 10),
+                IsActive = true,
+                IsDelete = false,
+                Mobile = "13900000000",
+                Name = id.Substring(20, 4),
+                Type = BuyerType.Company,
+            };
+            return buyer;
+        }
+
         private static IDbConnection CreateConnection()
         {
-            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8");
+            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_extension;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8");
             return connection;
         }
 
@@ -107,6 +153,45 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
 
         [NotMapped]
         public IList<Item> Items { get; set; }
+    }
+
+    [Table("buyer")]
+    public class Buyer : IEntity
+    {
+        [ExplicitKey] public Guid Id { get; set; }
+
+        public string Name { get; set; }
+
+        public BuyerType Type { get; set; }
+
+        public string Code { get; set; }
+
+        public string Identity { get; set; }
+
+        public string Email { get; set; }
+
+        public string Mobile { get; set; }
+
+        public bool IsDelete { get; set; }
+
+        public bool? IsActive { get; set; }
+
+        public DateTime CreateTime { get; set; }
+
+        public DateTime? UpdateTime { get; set; }
+
+        /// <summary>
+        /// 版本号
+        /// </summary>
+        public int Version { get; set; }
+    }
+
+
+    public enum BuyerType
+    {
+        Person,
+        Company,
+        Other
     }
 
     public interface IEntity

@@ -1,6 +1,7 @@
 ﻿using Dapper.Extensions.Expression.Utilities;
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Dapper.Extensions.Expression.Extensions
@@ -11,6 +12,24 @@ namespace Dapper.Extensions.Expression.Extensions
         /// 成员方法执行
         /// </summary>
         private static readonly ConcurrentDictionary<MemberInfo, MethodInvoker> MethodInvokerCache = new ConcurrentDictionary<MemberInfo, MethodInvoker>();
+
+        /// <summary>
+        /// 数字类型
+        /// </summary>
+        private static readonly HashSet<Type> NumericTypes = new HashSet<Type>();
+
+        static ReflectionExtension()
+        {
+            NumericTypes.Add(typeof(byte));
+            NumericTypes.Add(typeof(sbyte));
+            NumericTypes.Add(typeof(short));
+            NumericTypes.Add(typeof(ushort));
+            NumericTypes.Add(typeof(int));
+            NumericTypes.Add(typeof(uint));
+            NumericTypes.Add(typeof(long));
+            NumericTypes.Add(typeof(ulong));
+            NumericTypes.TrimExcess();
+        }
 
         /// <summary>
         /// 执行方法
@@ -85,6 +104,17 @@ namespace Dapper.Extensions.Expression.Extensions
                 return;
             }
             throw new ArgumentException();
+        }
+
+        /// <summary>
+        /// 是否数字类型
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        internal static bool IsNumericType(this Type type)
+        {
+            type = GetUnderlyingType(type);
+            return NumericTypes.Contains(type);
         }
     }
 }

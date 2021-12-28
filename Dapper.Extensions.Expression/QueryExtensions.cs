@@ -95,20 +95,62 @@ namespace Dapper.Extensions.Expression
         public static int InsertBulk<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
         {
             string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
-            int total = entities.Count;
-            const int maxSize = 4000;
-            int batchSize = Math.DivRem(total, maxSize, out int result);
-            if (result != 0)
+            StringBuilder parameterList = new StringBuilder();
+            var parameters = new Dictionary<string, object>();
+            int index = 0;
+            int count = 0;
+            foreach (T entity in entities)
             {
-                batchSize += 1;
+                if (parameterList.Length > 0)
+                {
+                    parameterList.Append(",");
+                }
+                parameterList.Append("(");
+                for (int i = 0; i < validPropertyInfos.Count; i++)
+                {
+                    if (i > 0 && i < validPropertyInfos.Count)
+                    {
+                        parameterList.Append(", ");
+                    }
+                    MemberInfo property = validPropertyInfos[i];
+                    var value = property.GetValue(entity);
+
+                    if (value == null)
+                    {
+                        parameterList.Append("NULL");
+                        continue;
+                    }
+                    if (value is bool v)
+                    {
+                        parameterList.Append(v ? "1" : "0");
+                        continue;
+                    }
+                    Type valType = value.GetType();
+                    if (valType.IsEnum)
+                    {
+                        value = Convert.ChangeType(value, Enum.GetUnderlyingType(valType));
+                        valType = valType.GetType();
+                    }
+                    if (value.GetType().IsNumericType())
+                    {
+                        parameterList.Append(value.ToString());
+                        continue;
+                    }
+                    string parameterName = $"@{property.Name}_{index}";
+                    parameters.Add(parameterName, value);
+                    parameterList.Append(parameterName);
+                }
+                parameterList.Append(")");
+                if (parameters.Count() > 1000 || index + 1 == entities.Count)
+                {
+                    string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
+                    count += connection.Execute(cmd, parameters, transaction, commandTimeout);
+                    parameterList.Clear();
+                    parameters.Clear();
+                }
+                index++;
             }
-            int insertCount = 0;
-            for (int i = 0; i < batchSize; i++)
-            {
-                IList<T> toInsertList = entities.Skip(i * maxSize).Take(maxSize).ToList();
-                insertCount += InternalInsertBulk(connection, tableName, columnList, validPropertyInfos, toInsertList, transaction, commandTimeout);
-            }
-            return insertCount;
+            return count;
         }
 
         /// <summary>
@@ -140,62 +182,6 @@ namespace Dapper.Extensions.Expression
             }
             string tableName = TypeProvider.GetTableName(type);
             return adapter.GetQuoteName(tableName);
-        }
-
-        /// <summary>
-        /// 批量写入数据内部实现
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
-        /// <param name="tableName"></param>
-        /// <param name="columnList"></param>
-        /// <param name="propertyInfos"></param>
-        /// <param name="entities"></param>
-        /// <param name="transaction"></param>
-        /// <param name="commandTimeout"></param>
-        /// <returns></returns>
-        private static int InternalInsertBulk<T>(IDbConnection connection, string tableName, StringBuilder columnList, IList<PropertyInfo> propertyInfos, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
-        {
-            StringBuilder parameterList = BuildInsertBulkSql(entities, propertyInfos, out DynamicParameters parameters);
-            string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
-            return connection.Execute(cmd, parameters, transaction, commandTimeout);
-        }
-
-        /// <summary>
-        /// 创建写入sql和参数等
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="entities"></param>
-        /// <param name="propertyInfos"></param>
-        /// <param name="parameters"></param>
-        /// <returns></returns>
-        private static StringBuilder BuildInsertBulkSql<T>(IEnumerable<T> entities, IList<PropertyInfo> propertyInfos, out DynamicParameters parameters)
-        {
-            StringBuilder parameterList = new StringBuilder();
-            parameters = new DynamicParameters();
-            int index = 0;
-            foreach (T entity in entities)
-            {
-                if (index > 0)
-                {
-                    parameterList.Append(",");
-                }
-                parameterList.Append("(");
-                for (int i = 0; i < propertyInfos.Count; i++)
-                {
-                    MemberInfo property = propertyInfos[i];
-                    string parameterName = $"@{property.Name}_{index}";
-                    parameters.Add(parameterName, property.GetValue(entity));
-                    parameterList.Append(parameterName);
-                    if (i < propertyInfos.Count - 1)
-                    {
-                        parameterList.Append(", ");
-                    }
-                }
-                parameterList.Append(")");
-                index++;
-            }
-            return parameterList;
         }
 
         /// <summary>
