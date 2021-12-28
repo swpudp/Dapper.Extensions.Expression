@@ -128,6 +128,17 @@ namespace Dapper.Extensions.Expression
         }
 
         /// <summary>
+        /// 带条件筛选
+        /// </summary>
+        /// <param name="condition">是否进入筛选</param>
+        /// <param name="ex">表达式</param>
+        /// <returns></returns>
+        public Query<T> WhereIf(bool condition, Expression<Func<T, bool>> ex)
+        {
+            return condition ? Where(ex) : this;
+        }
+
+        /// <summary>
         /// 设置分页信息
         /// </summary>
         /// <param name="page"></param>

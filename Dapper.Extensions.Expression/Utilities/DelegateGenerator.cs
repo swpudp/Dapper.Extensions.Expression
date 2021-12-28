@@ -56,7 +56,7 @@ namespace Dapper.Extensions.Expression.Utilities
             ParameterInfo[] parameters = method.GetParameters();
             List<System.Linq.Expressions.Expression> argExpressions = new List<System.Linq.Expressions.Expression>(parameters.Length);
 
-            var getItemMethod = typeof(object[]).GetMethod("GetValue", new Type[] { typeof(int) });
+            var getItemMethod = typeof(object[]).GetMethod("GetValue", new[] { typeof(int) });
 
             for (int i = 0; i < parameters.Length; i++)
             {
@@ -107,29 +107,31 @@ namespace Dapper.Extensions.Expression.Utilities
             return Ret;
         }
 
-        internal static bool IsStaticMember(this MemberInfo propertyOrField)
+        private static bool IsStaticMember(this MemberInfo propertyOrField)
         {
-            if (propertyOrField.MemberType == MemberTypes.Property)
+            switch (propertyOrField.MemberType)
             {
-                MethodInfo getter = ((PropertyInfo)propertyOrField).GetMethod;
-                return getter.IsStatic;
+                case MemberTypes.Property:
+                    MethodInfo getter = ((PropertyInfo)propertyOrField).GetMethod;
+                    return getter.IsStatic;
+                case MemberTypes.Field when propertyOrField is FieldInfo field && field.IsStatic:
+                    return true;
+                default:
+                    return false;
             }
-
-            if (propertyOrField.MemberType == MemberTypes.Field && propertyOrField is FieldInfo field && field.IsStatic)
-                return true;
-
-            return false;
         }
 
-        internal static Type GetMemberType(this MemberInfo propertyOrField)
+        private static Type GetMemberType(this MemberInfo propertyOrField)
         {
-            if (propertyOrField.MemberType == MemberTypes.Property)
-                return ((PropertyInfo)propertyOrField).PropertyType;
-
-            if (propertyOrField.MemberType == MemberTypes.Field)
-                return ((FieldInfo)propertyOrField).FieldType;
-
-            throw new ArgumentException();
+            switch (propertyOrField.MemberType)
+            {
+                case MemberTypes.Property:
+                    return ((PropertyInfo)propertyOrField).PropertyType;
+                case MemberTypes.Field:
+                    return ((FieldInfo)propertyOrField).FieldType;
+                default:
+                    throw new ArgumentException();
+            }
         }
     }
 }

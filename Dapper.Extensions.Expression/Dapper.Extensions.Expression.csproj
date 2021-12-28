@@ -9,7 +9,7 @@
 		<Copyright>swpudp</Copyright>
 		<Company>swpudp</Company>
 		<Authors>swpudp@163.com</Authors>
-		<PackageReleaseNotes>bug fix</PackageReleaseNotes>
+		<PackageReleaseNotes>add method 'whereif '</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>

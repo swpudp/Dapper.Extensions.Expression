@@ -124,6 +124,17 @@ namespace Dapper.Extensions.Expression
             return this;
         }
 
+        /// <summary>
+        /// 带条件筛选
+        /// </summary>
+        /// <param name="condition">是否进入筛选</param>
+        /// <param name="ex">表达式</param>
+        /// <returns></returns>
+        public Query<T1, T2> WhereIf(bool condition, Expression<Func<T1, T2, bool>> ex)
+        {
+            return condition ? Where(ex) : this;
+        }
+
         public Query<T1, T2> Exist<T3>(Expression<Func<T1, T2, T3, bool>> where)
         {
             if (_whereBuilder == null)
@@ -348,11 +359,12 @@ namespace Dapper.Extensions.Expression
             foreach (ParameterExpression parameter in lambda.Parameters)
             {
                 int index = lambda.Parameters.IndexOf(parameter);
-                if (parameter.Name == bodyParameter.Name)
+                if (parameter.Name != bodyParameter.Name)
                 {
-                    p = _on.Parameters[index];
-                    return true;
+                    continue;
                 }
+                p = _on.Parameters[index];
+                return true;
             }
             return false;
         }

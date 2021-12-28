@@ -444,7 +444,7 @@ namespace Dapper.Extensions.Expression
         public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
             string sql = BuildGetQuerySql<T>(connection, id, out DynamicParameters dynParams);
-            return connection.QueryFirstOrDefault<T>(sql, dynParams, transaction, commandTimeout: commandTimeout);
+            return connection.QueryFirstOrDefault<T>(sql, dynParams, transaction, commandTimeout);
         }
 
         /// <summary>
@@ -516,30 +516,31 @@ namespace Dapper.Extensions.Expression
         {
             Type type = typeof(T);
             Type cacheType = typeof(List<T>);
-            if (!GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
+            if (GetQueries.TryGetValue(cacheType.TypeHandle, out string sql))
             {
-                ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
-                IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
-                StringBuilder sqlBuilder = new StringBuilder();
-                sqlBuilder.Append("SELECT ");
-                foreach (PropertyInfo propertyInfo in queryProperties)
-                {
-                    bool isAlias = sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
-                    if (isAlias)
-                    {
-                        sqlBuilder.Append(" AS ");
-                        sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
-                    }
-                    if (queryProperties.IndexOf(propertyInfo) < queryProperties.Count - 1)
-                    {
-                        sqlBuilder.Append(",");
-                    }
-                }
-                string tableName = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
-                sqlBuilder.AppendFormat(" FROM {0}", tableName);
-                sql = sqlBuilder.ToString();
-                GetQueries[cacheType.TypeHandle] = sql;
+                return sql;
             }
+            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
+            IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
+            StringBuilder sqlBuilder = new StringBuilder();
+            sqlBuilder.Append("SELECT ");
+            foreach (PropertyInfo propertyInfo in queryProperties)
+            {
+                bool isAlias = sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                if (isAlias)
+                {
+                    sqlBuilder.Append(" AS ");
+                    sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
+                }
+                if (queryProperties.IndexOf(propertyInfo) < queryProperties.Count - 1)
+                {
+                    sqlBuilder.Append(",");
+                }
+            }
+            string tableName = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
+            sqlBuilder.AppendFormat(" FROM {0}", tableName);
+            sql = sqlBuilder.ToString();
+            GetQueries[cacheType.TypeHandle] = sql;
             return sql;
         }
 
@@ -569,13 +570,14 @@ namespace Dapper.Extensions.Expression
         private static string BuildGetCountQuerySql<T>(IDbConnection connection)
         {
             Type type = typeof(T);
-            if (!CountQueries.TryGetValue(type.TypeHandle, out string sql))
+            if (CountQueries.TryGetValue(type.TypeHandle, out string sql))
             {
-                ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
-                string name = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
-                sql = $"select count(*) from {name}";
-                CountQueries[type.TypeHandle] = sql;
+                return sql;
             }
+            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
+            string name = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
+            sql = $"select count(*) from {name}";
+            CountQueries[type.TypeHandle] = sql;
             return sql;
         }
 

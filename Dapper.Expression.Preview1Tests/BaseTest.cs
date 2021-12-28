@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -183,6 +184,15 @@ namespace Dapper.Extensions.Expression.UnitTests
                     Logged = DateTime.Now
                 };
             }
+        }
+
+        protected void Test()
+        {
+            Trace.WriteLine(nameof(Test) + "16点58分");
+            Trace.WriteLine(nameof(Test) + "17点04分");
+            Trace.WriteLine(nameof(Test) + "17点38分");
+            Trace.WriteLine(nameof(Test) + "17点40分");
+            Trace.WriteLine(nameof(Test) + "17点41分");
         }
     }
 }
