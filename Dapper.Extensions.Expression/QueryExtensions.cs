@@ -125,6 +125,11 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(v ? "1" : "0");
                         continue;
                     }
+                    if (value is Guid v1)
+                    {
+                        parameterList.Append("'").Append(v1.ToString()).Append("'");
+                        continue;
+                    }
                     Type valType = value.GetType();
                     if (valType.IsEnum)
                     {
