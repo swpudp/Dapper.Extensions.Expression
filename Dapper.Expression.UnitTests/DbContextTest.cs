@@ -306,6 +306,18 @@ namespace Dapper.Expression.UnitTests
             });
             Assert.IsTrue(updated > 0);
         }
+
+        /// <summary>
+        /// SqlFunction≤‚ ‘
+        /// </summary>
+        [TestMethod]
+        public async Task SqlFunctionTest()
+        {
+            DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+            ctx.Query<Order>().Where(f => f.Status == Status.Running)
+                .Select(f => new { f.Id, Max = Sql.Max(f.Amount), Count = Sql.Count(), X = Sql.Average(f.Version) })
+                .ToList();
+        }
     }
 
     public enum TestType

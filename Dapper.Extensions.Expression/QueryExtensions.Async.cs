@@ -1,4 +1,5 @@
 ﻿using Dapper.Extensions.Expression.Extensions;
+using Dapper.Extensions.Expression.Queries;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -30,6 +31,22 @@ namespace Dapper.Extensions.Expression
         {
             string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
+            return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
+        }
+
+        /// <summary>
+        /// 唯一写入，支持批量
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="connection"></param>
+        /// <param name="entity"></param>
+        /// <param name="transaction"></param>
+        /// <param name="commandTimeout"></param>
+        /// <returns></returns>
+        public static Task<int> UniqueInsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        {
+            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string cmd = $"insert ignore into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
 

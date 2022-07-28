@@ -4,6 +4,8 @@ using System.Reflection;
 using System.Text;
 using Dapper.Extensions.Expression.Adapters;
 using Dapper.Extensions.Expression.Extensions;
+using Dapper.Extensions.Expression.MethodCalls;
+using Dapper.Extensions.Expression.Providers;
 
 namespace Dapper.Extensions.Expression.Visitors
 {
@@ -153,6 +155,12 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitCall(MethodCallExpression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
         {
+            if (e.Method.DeclaringType == typeof(Function))
+            {
+                AbstractMethodCallHandler handler = MethodCallProvider.GetCallHandler(e);
+                handler.Handle(e, adapter, builder, null, appendParameter);
+                return;
+            }
             if (e.Object == null)
             {
                 return;

@@ -11,6 +11,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using Dapper.Extensions.Expression.Extensions;
+using Dapper.Extensions.Expression.Queries;
+using Dapper.Extensions.Expression.Queries.JoinQueries;
 
 namespace Dapper.Extensions.Expression
 {
@@ -663,21 +665,48 @@ namespace Dapper.Extensions.Expression
         }
 
         /// <summary>
-        /// 两表联合查询
+        /// 2表联合查询
         /// </summary>
         /// <returns></returns>
-        public static Query<T1, T2> JoinQuery<T1, T2>(this IDbConnection connection, JoinType joinType, Expression<Func<T1, T2, bool>> predicate)
+        public static JoinQuery<T1, T2> JoinQuery<T1, T2>(this IDbConnection connection)
         {
-            return new Query<T1, T2>(connection, joinType, predicate);
+            return new JoinQuery<T1, T2>(connection);
         }
 
         /// <summary>
-        /// 三表联合查询
+        /// 3表联合查询
         /// </summary>
         /// <returns></returns>
-        public static Query<T1, T2, T3> JoinQuery<T1, T2, T3>(this IDbConnection connection, JoinType joinType, Expression<Func<T1, T2, bool>> predicate, JoinType joinType1, Expression<Func<T1, T2, T3, bool>> predicate1)
+        public static JoinQuery<T1, T2, T3> JoinQuery<T1, T2, T3>(this IDbConnection connection)
         {
-            return new Query<T1, T2, T3>(connection, joinType, predicate, joinType1, predicate1);
+            return new JoinQuery<T1, T2, T3>(connection);
+        }
+
+        /// <summary>
+        /// 4表联合查询
+        /// </summary>
+        /// <returns></returns>
+        public static JoinQuery<T1, T2, T3, T4> JoinQuery<T1, T2, T3, T4>(this IDbConnection connection)
+        {
+            return new JoinQuery<T1, T2, T3, T4>(connection);
+        }
+
+        /// <summary>
+        /// 5表联合查询
+        /// </summary>
+        /// <returns></returns>
+        public static JoinQuery<T1, T2, T3, T4, T5> JoinQuery<T1, T2, T3, T4, T5>(this IDbConnection connection)
+        {
+            return new JoinQuery<T1, T2, T3, T4, T5>(connection);
+        }
+
+        /// <summary>
+        /// 6表联合查询
+        /// </summary>
+        /// <returns></returns>
+        public static JoinQuery<T1, T2, T3, T4, T5, T6> JoinQuery<T1, T2, T3, T4, T5, T6>(this IDbConnection connection)
+        {
+            return new JoinQuery<T1, T2, T3, T4, T5, T6>(connection);
         }
     }
 }
