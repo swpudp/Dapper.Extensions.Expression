@@ -37,9 +37,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static int Insert<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int Insert<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, namingPolicy, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.Execute(cmd, entity, transaction, commandTimeout);
         }
@@ -52,7 +52,7 @@ namespace Dapper.Extensions.Expression
         /// <param name="columnList"></param>
         /// <param name="parameterList"></param>
         /// <returns></returns>
-        private static string BuildInsertSql<T>(IDbConnection connection, out StringBuilder columnList, out StringBuilder parameterList)
+        private static string BuildInsertSql<T>(IDbConnection connection, NamingPolicy namingPolicy, out StringBuilder columnList, out StringBuilder parameterList)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
@@ -61,7 +61,7 @@ namespace Dapper.Extensions.Expression
             }
             columnList = new StringBuilder();
             IList<PropertyInfo> canWriteProperties = TypeProvider.GetCanWriteProperties(type);
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
@@ -94,9 +94,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static int InsertBulk<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static int InsertBulk<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null)
         {
-            string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
+            string tableName = GetEntityPropertyInfos<T>(connection, namingPolicy, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
             StringBuilder parameterList = new StringBuilder();
             var parameters = new Dictionary<string, object>();
             int index = 0;
@@ -168,7 +168,7 @@ namespace Dapper.Extensions.Expression
         /// <param name="columnList"></param>
         /// <param name="canWriteProperties"></param>
         /// <returns></returns>
-        private static string GetEntityPropertyInfos<T>(IDbConnection connection, out StringBuilder columnList, out IList<PropertyInfo> canWriteProperties)
+        private static string GetEntityPropertyInfos<T>(IDbConnection connection, NamingPolicy namingPolicy, out StringBuilder columnList, out IList<PropertyInfo> canWriteProperties)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
@@ -177,7 +177,7 @@ namespace Dapper.Extensions.Expression
             }
             columnList = new StringBuilder();
             canWriteProperties = TypeProvider.GetCanWriteProperties(type);
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
@@ -200,9 +200,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static int Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int Update<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql(connection, entityToUpdate, out DynamicParameters parameters);
+            string sql = BuildUpdateSql(connection, entityToUpdate, namingPolicy, out DynamicParameters parameters);
             return connection.Execute(sql, parameters, transaction, commandTimeout);
         }
 
@@ -210,14 +210,14 @@ namespace Dapper.Extensions.Expression
         /// 创建更新sql语句
         /// </summary>
         /// <returns></returns>
-        private static string BuildUpdateSql<T>(IDbConnection connection, T entity, out DynamicParameters parameters)
+        private static string BuildUpdateSql<T>(IDbConnection connection, T entity, NamingPolicy namingPolicy, out DynamicParameters parameters)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
             {
                 type = eleType;
             }
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             string name = TypeProvider.GetTableName(type);
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
@@ -255,9 +255,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static int Update<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, object>> content, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int Update<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, object>> content, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql(connection, condition, content, out DynamicParameters parameters);
+            string sql = BuildUpdateSql(connection, condition, content, namingPolicy, out DynamicParameters parameters);
             return connection.Execute(sql, parameters, transaction, commandTimeout);
         }
 
@@ -270,9 +270,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="content"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private static string BuildUpdateSql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, object>> content, out DynamicParameters parameters)
+        private static string BuildUpdateSql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, object>> content, NamingPolicy namingPolicy, out DynamicParameters parameters)
         {
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
 
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
@@ -297,9 +297,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static int Update<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, T>> content, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int Update<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, T>> content, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql(connection, condition, content, out DynamicParameters parameters);
+            string sql = BuildUpdateSql(connection, condition, content, namingPolicy, out DynamicParameters parameters);
             return connection.Execute(sql, parameters, transaction, commandTimeout);
         }
 
@@ -312,9 +312,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="content"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private static string BuildUpdateSql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, T>> content, out DynamicParameters parameters)
+        private static string BuildUpdateSql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, T>> content, NamingPolicy namingPolicy, out DynamicParameters parameters)
         {
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
 
@@ -337,9 +337,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if not found</returns>
-        public static int Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int Delete<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildDeleteSql(connection, entityToDelete, out DynamicParameters parameters);
+            string sql = BuildDeleteSql(connection, entityToDelete, namingPolicy, out DynamicParameters parameters);
             return connection.Execute(sql, parameters, transaction, commandTimeout);
         }
 
@@ -347,7 +347,7 @@ namespace Dapper.Extensions.Expression
         /// 创建删除sql
         /// </summary>
         /// <returns></returns>
-        private static string BuildDeleteSql<T>(IDbConnection connection, T entity, out DynamicParameters parameters)
+        private static string BuildDeleteSql<T>(IDbConnection connection, T entity, NamingPolicy namingPolicy, out DynamicParameters parameters)
         {
             Type type = typeof(T);
 
@@ -356,7 +356,7 @@ namespace Dapper.Extensions.Expression
                 type = eleType;
             }
             IList<PropertyInfo> keyProperties = TypeProvider.GetUpdateKeyProperties(type);
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             string name = adapter.GetQuoteName(TypeProvider.GetTableName(type));
             StringBuilder sb = new StringBuilder();
             sb.AppendFormat("delete from {0} where ", name);
@@ -380,9 +380,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if none found</returns>
-        public static int DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int DeleteAll<T>(this IDbConnection connection, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string statement = BuildDeleteAllSql<T>(connection);
+            string statement = BuildDeleteAllSql<T>(connection, namingPolicy);
             return connection.Execute(statement, null, transaction, commandTimeout);
         }
 
@@ -392,11 +392,11 @@ namespace Dapper.Extensions.Expression
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
         /// <returns></returns>
-        private static string BuildDeleteAllSql<T>(IDbConnection connection)
+        private static string BuildDeleteAllSql<T>(IDbConnection connection, NamingPolicy namingPolicy)
         {
             Type type = typeof(T);
             string name = TypeProvider.GetTableName(type);
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             string statement = $"delete from {adapter.GetQuoteName(name)}";
             return statement;
         }
@@ -410,9 +410,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static int Delete<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int Delete<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string statement = BuildDeleteSql(connection, condition, out DynamicParameters parameters);
+            string statement = BuildDeleteSql(connection, condition, namingPolicy, out DynamicParameters parameters);
             int updated = connection.Execute(statement, parameters, transaction, commandTimeout);
             return updated;
         }
@@ -425,9 +425,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="condition"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private static string BuildDeleteSql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, out DynamicParameters parameters)
+        private static string BuildDeleteSql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, NamingPolicy namingPolicy, out DynamicParameters parameters)
         {
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
             string name = TypeProvider.GetTableName(typeof(T));
@@ -448,9 +448,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static T Get<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static T Get<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildGetQuerySql<T>(connection, id, out DynamicParameters dynParams);
+            string sql = BuildGetQuerySql<T>(connection, condition, namingPolicy, out DynamicParameters dynParams);
             return connection.QueryFirstOrDefault<T>(sql, dynParams, transaction, commandTimeout);
         }
 
@@ -462,12 +462,13 @@ namespace Dapper.Extensions.Expression
         /// <param name="id"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        private static string BuildGetQuerySql<T>(IDbConnection connection, dynamic id, out DynamicParameters parameters)
+        private static string BuildGetQuerySql<T>(IDbConnection connection, Expression<Func<T, bool>> condition, NamingPolicy namingPolicy, out DynamicParameters parameters)
         {
+            parameters = new DynamicParameters();
             Type type = typeof(T);
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
-                ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
+                ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection, namingPolicy);
                 PropertyInfo key = TypeProvider.GetSingleKey<T>(nameof(Get));
                 string tableName = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
                 string keyName = sqlAdapter.GetQuoteName(key.Name);
@@ -487,12 +488,21 @@ namespace Dapper.Extensions.Expression
                         sqlBuilder.Append(",");
                     }
                 }
-                sqlBuilder.AppendFormat(" FROM {0} WHERE {1} = @id", tableName, keyName);
+                sqlBuilder.AppendFormat(" FROM {0} WHERE ", tableName);
+
+
+                //ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
+                //StringBuilder sb = new StringBuilder();
+                //string name = TypeProvider.GetTableName(typeof(T));
+                //sb.AppendFormat("delete from {0} where ", adapter.GetQuoteName(name));
+                WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters, false);
+                //return sb.ToString();
+
                 sql = sqlBuilder.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
-            parameters = new DynamicParameters();
-            parameters.Add("@id", id);
+            //parameters = new DynamicParameters();
+            //parameters.Add("@id", id);
             return sql;
         }
 
@@ -507,9 +517,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static IEnumerable<T> GetAll<T>(this IDbConnection connection, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildGetAllSql<T>(connection);
+            string sql = BuildGetAllSql<T>(connection, namingPolicy);
             return connection.Query<T>(sql, null, transaction, commandTimeout: commandTimeout);
         }
 
@@ -519,7 +529,7 @@ namespace Dapper.Extensions.Expression
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
         /// <returns></returns>
-        private static string BuildGetAllSql<T>(IDbConnection connection)
+        private static string BuildGetAllSql<T>(IDbConnection connection, NamingPolicy namingPolicy)
         {
             Type type = typeof(T);
             Type cacheType = typeof(List<T>);
@@ -527,7 +537,7 @@ namespace Dapper.Extensions.Expression
             {
                 return sql;
             }
-            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection, namingPolicy);
             IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
             StringBuilder sqlBuilder = new StringBuilder();
             sqlBuilder.Append("SELECT ");
@@ -562,9 +572,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static int GetCount<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static int GetCount<T>(this IDbConnection connection, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildGetCountQuerySql<T>(connection);
+            string sql = BuildGetCountQuerySql<T>(connection, namingPolicy);
             return connection.QueryFirst<int>(sql, null, transaction, commandTimeout);
         }
 
@@ -574,14 +584,14 @@ namespace Dapper.Extensions.Expression
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
         /// <returns></returns>
-        private static string BuildGetCountQuerySql<T>(IDbConnection connection)
+        private static string BuildGetCountQuerySql<T>(IDbConnection connection, NamingPolicy namingPolicy)
         {
             Type type = typeof(T);
             if (CountQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 return sql;
             }
-            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection, namingPolicy);
             string name = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
             sql = $"select count(*) from {name}";
             CountQueries[type.TypeHandle] = sql;
@@ -594,9 +604,9 @@ namespace Dapper.Extensions.Expression
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
         /// <returns></returns>
-        public static Query<T> Query<T>(this IDbConnection connection)
+        public static Query<T> Query<T>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            return new Query<T>(connection);
+            return new Query<T>(connection, namingPolicy);
         }
 
         /// <summary>
@@ -657,10 +667,10 @@ namespace Dapper.Extensions.Expression
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
         /// <returns></returns>
-        public static string GetTableName<T>(this IDbConnection connection)
+        public static string GetTableName<T>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
             string name = TypeProvider.GetTableName(typeof(T));
-            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             return adapter.GetQuoteName(name);
         }
 
@@ -668,45 +678,45 @@ namespace Dapper.Extensions.Expression
         /// 2表联合查询
         /// </summary>
         /// <returns></returns>
-        public static JoinQuery<T1, T2> JoinQuery<T1, T2>(this IDbConnection connection)
+        public static JoinQuery<T1, T2> JoinQuery<T1, T2>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            return new JoinQuery<T1, T2>(connection);
+            return new JoinQuery<T1, T2>(connection, namingPolicy);
         }
 
         /// <summary>
         /// 3表联合查询
         /// </summary>
         /// <returns></returns>
-        public static JoinQuery<T1, T2, T3> JoinQuery<T1, T2, T3>(this IDbConnection connection)
+        public static JoinQuery<T1, T2, T3> JoinQuery<T1, T2, T3>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            return new JoinQuery<T1, T2, T3>(connection);
+            return new JoinQuery<T1, T2, T3>(connection, namingPolicy);
         }
 
         /// <summary>
         /// 4表联合查询
         /// </summary>
         /// <returns></returns>
-        public static JoinQuery<T1, T2, T3, T4> JoinQuery<T1, T2, T3, T4>(this IDbConnection connection)
+        public static JoinQuery<T1, T2, T3, T4> JoinQuery<T1, T2, T3, T4>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            return new JoinQuery<T1, T2, T3, T4>(connection);
+            return new JoinQuery<T1, T2, T3, T4>(connection, namingPolicy);
         }
 
         /// <summary>
         /// 5表联合查询
         /// </summary>
         /// <returns></returns>
-        public static JoinQuery<T1, T2, T3, T4, T5> JoinQuery<T1, T2, T3, T4, T5>(this IDbConnection connection)
+        public static JoinQuery<T1, T2, T3, T4, T5> JoinQuery<T1, T2, T3, T4, T5>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            return new JoinQuery<T1, T2, T3, T4, T5>(connection);
+            return new JoinQuery<T1, T2, T3, T4, T5>(connection, namingPolicy);
         }
 
         /// <summary>
         /// 6表联合查询
         /// </summary>
         /// <returns></returns>
-        public static JoinQuery<T1, T2, T3, T4, T5, T6> JoinQuery<T1, T2, T3, T4, T5, T6>(this IDbConnection connection)
+        public static JoinQuery<T1, T2, T3, T4, T5, T6> JoinQuery<T1, T2, T3, T4, T5, T6>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            return new JoinQuery<T1, T2, T3, T4, T5, T6>(connection);
+            return new JoinQuery<T1, T2, T3, T4, T5, T6>(connection, namingPolicy);
         }
     }
 }

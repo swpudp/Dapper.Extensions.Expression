@@ -24,7 +24,7 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
 
         protected override LambdaExpression DefaultSelector => _defaultSelector;
 
-        internal JoinQuery(IDbConnection connection) : base(connection, 5)
+        internal JoinQuery(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 5, namingPolicy)
         {
             Expression<Func<T1, T2, T3, T4, T5, T6, T1>> selector = (t1, t2, t3, t4, t5, t6) => t1;
             _defaultSelector = ReplaceParameterVisitor.Replace(selector, selector.Parameters);
@@ -56,7 +56,7 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
 
         public JoinQuery<T1, T2, T3, T4, T5, T6> On(JoinType joinType, Expression<Func<T1, T2, T3, T4, T5, T6, bool>> on)
         {
-            SetOn(joinType, on, 3);
+            SetOn(joinType, on, 4);
             return this;
         }
 

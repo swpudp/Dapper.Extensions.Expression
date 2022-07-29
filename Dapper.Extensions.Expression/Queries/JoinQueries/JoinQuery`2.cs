@@ -16,7 +16,7 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
         private readonly LambdaExpression _defaultSelector;
         protected override LambdaExpression DefaultSelector => _defaultSelector;
 
-        internal JoinQuery(IDbConnection connection) : base(connection, 1)
+        internal JoinQuery(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 1, namingPolicy)
         {
             Expression<Func<T1, T2, T1>> selector = (a, b) => a;
             _defaultSelector = ReplaceParameterVisitor.Replace(selector, selector.Parameters);

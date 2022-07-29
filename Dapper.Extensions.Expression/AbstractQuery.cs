@@ -96,11 +96,11 @@ namespace Dapper.Extensions.Expression
         /// </summary>
         private readonly JoinType[] _joinTypes;
 
-        internal AbstractQuery(IDbConnection connection, int onLength)
+        internal AbstractQuery(IDbConnection connection, int onLength, NamingPolicy namingPolicy)
         {
             _joinTypes = new JoinType[onLength];
             _onExpressions = new LambdaExpression[onLength];
-            _adapter = SqlProvider.GetFormatter(connection);
+            _adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             _selectBuilder = new StringBuilder();
             Parameters = new DynamicParameters();
             Connection = connection;

@@ -72,5 +72,10 @@ namespace Dapper.Extensions.Expression.Adapters
         /// 求字符串长度函数
         /// </summary>
         bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter);
+
+        /// <summary>
+        /// 命名策略
+        /// </summary>
+        NamingPolicy NamingPolicy { get; }
     }
 }

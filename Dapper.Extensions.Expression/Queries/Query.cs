@@ -14,7 +14,7 @@ namespace Dapper.Extensions.Expression.Queries
         private readonly LambdaExpression _defaultSelector;
         protected override LambdaExpression DefaultSelector => _defaultSelector;
 
-        internal Query(IDbConnection connection) : base(connection, 0)
+        internal Query(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 0, namingPolicy)
         {
             Expression<Func<T, T>> selector = t => t;
             _defaultSelector = ReplaceParameterVisitor.Replace(selector, selector.Parameters);

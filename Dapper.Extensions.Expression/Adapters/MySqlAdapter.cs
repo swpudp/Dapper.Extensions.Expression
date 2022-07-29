@@ -12,6 +12,20 @@ namespace Dapper.Extensions.Expression.Adapters
     internal class MySqlAdapter : ISqlAdapter
     {
         /// <summary>
+        /// 命名策略
+        /// </summary>
+        /// <param name="namingPolicy"></param>
+        public MySqlAdapter(NamingPolicy namingPolicy)
+        {
+            NamingPolicy = namingPolicy;
+        }
+
+        /// <summary>
+        /// 命名策略
+        /// </summary>
+        public NamingPolicy NamingPolicy { get; }
+
+        /// <summary>
         /// Adds the name of a column.
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>

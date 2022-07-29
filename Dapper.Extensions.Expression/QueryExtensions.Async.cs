@@ -27,9 +27,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<int> InsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> InsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, namingPolicy, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -43,9 +43,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static Task<int> UniqueInsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> UniqueInsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, namingPolicy, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert ignore into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -59,9 +59,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction"></param>
         /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public static async Task<int> InsertBulkAsync<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
+        public static async Task<int> InsertBulkAsync<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null)
         {
-            string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
+            string tableName = GetEntityPropertyInfos<T>(connection, namingPolicy, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
             StringBuilder parameterList = new StringBuilder();
             var parameters = new Dictionary<string, object>();
             int index = 0;
@@ -134,9 +134,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static Task<int> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> UpdateAsync<T>(this IDbConnection connection, T entityToUpdate, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql(connection, entityToUpdate, out DynamicParameters parameters);
+            string sql = BuildUpdateSql(connection, entityToUpdate, namingPolicy, out DynamicParameters parameters);
             return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
 
@@ -150,9 +150,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static Task<int> UpdateAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, object>> content, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> UpdateAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, object>> content, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql(connection, condition, content, out DynamicParameters parameters);
+            string sql = BuildUpdateSql(connection, condition, content, namingPolicy, out DynamicParameters parameters);
             return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
 
@@ -166,9 +166,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static Task<int> UpdateAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, T>> content, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> UpdateAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, Expression<Func<T, T>> content, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildUpdateSql(connection, condition, content, out DynamicParameters parameters);
+            string sql = BuildUpdateSql(connection, condition, content, namingPolicy, out DynamicParameters parameters);
             return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
 
@@ -181,9 +181,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if not found</returns>
-        public static Task<int> DeleteAsync<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> DeleteAsync<T>(this IDbConnection connection, T entityToDelete, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildDeleteSql(connection, entityToDelete, out DynamicParameters parameters);
+            string sql = BuildDeleteSql(connection, entityToDelete, namingPolicy, out DynamicParameters parameters);
             return connection.ExecuteAsync(sql, parameters, transaction, commandTimeout);
         }
 
@@ -195,9 +195,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if deleted, false if none found</returns>
-        public static Task<int> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> DeleteAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string statement = BuildDeleteAllSql<T>(connection);
+            string statement = BuildDeleteAllSql<T>(connection, namingPolicy);
             return connection.ExecuteAsync(statement, null, transaction, commandTimeout);
         }
 
@@ -210,9 +210,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>true if updated, false if not found or not modified (tracked entities)</returns>
-        public static Task<int> DeleteAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> DeleteAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string statement = BuildDeleteSql(connection, condition, out DynamicParameters parameters);
+            string statement = BuildDeleteSql(connection, condition, namingPolicy, out DynamicParameters parameters);
             return connection.ExecuteAsync(statement, parameters, transaction, commandTimeout);
         }
 
@@ -228,9 +228,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static Task<T> GetAsync<T>(this IDbConnection connection, dynamic id, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<T> GetAsync<T>(this IDbConnection connection, Expression<Func<T, bool>> condition, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildGetQuerySql<T>(connection, id, out DynamicParameters dynParams);
+            string sql = BuildGetQuerySql<T>(connection, condition, namingPolicy, out DynamicParameters dynParams);
             return connection.QueryFirstOrDefaultAsync<T>(sql, dynParams, transaction, commandTimeout);
         }
 
@@ -245,9 +245,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<IEnumerable<T>> GetAllAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildGetAllSql<T>(connection);
+            string sql = BuildGetAllSql<T>(connection, namingPolicy);
             return connection.QueryAsync<T>(sql, null, transaction, commandTimeout);
         }
 
@@ -262,9 +262,9 @@ namespace Dapper.Extensions.Expression
         /// <param name="transaction">The transaction to run under, null (the default) if none</param>
         /// <param name="commandTimeout">Number of seconds before command execution timeout</param>
         /// <returns>Entity of T</returns>
-        public static Task<int> GetCountAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
+        public static Task<int> GetCountAsync<T>(this IDbConnection connection, IDbTransaction transaction = null, NamingPolicy namingPolicy = NamingPolicy.None, int? commandTimeout = null) where T : class
         {
-            string sql = BuildGetCountQuerySql<T>(connection);
+            string sql = BuildGetCountQuerySql<T>(connection, namingPolicy);
             return connection.QueryFirstAsync<int>(sql, null, transaction, commandTimeout);
         }
 
