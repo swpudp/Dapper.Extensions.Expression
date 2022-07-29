@@ -1,4 +1,5 @@
 ﻿using BenchmarkDotNet.Attributes;
+using Dapper.Extensions.Expression.Queries;
 using MySql.Data.MySqlClient;
 using System;
 using System.Data;

@@ -311,5 +311,32 @@ namespace Dapper.Extensions.Expression.UnitTests
             int result = await Execute(connection => connection.InsertBulkAsync(buyers));
             Assert.IsTrue(result > 0);
         }
+
+        /// <summary>
+        /// 异步批量写入测试
+        /// </summary>
+        /// <returns></returns>
+        [TestMethod]
+        public async Task InsertBulkAsyncGivenTest()
+        {
+            Buyer buyer = CreateBuyer();
+            IList<Order> orders = CreateOrders(10, 50, buyer).ToList();
+            IList<string> serialNoList = new List<string> { "ABC", "BCD", "EFC", "C0A3", "A82639", "8064C0A3", "A8FD2639", "C0CDFA3" };
+            foreach (var no in serialNoList)
+            {
+                int idx = serialNoList.IndexOf(no);
+                orders[idx].SerialNo = no;
+            }
+            IList<Guid> idList = new List<Guid> { new Guid("001399e7-cacf-4323-8f18-75a9ef1480e0"), new Guid("009846a5-f96d-4583-bbac-d8c7056c1d2a") };
+            foreach (var id in idList)
+            {
+                orders[idList.IndexOf(id)].Id = id;
+            }
+            await Execute(ctx => ctx.DeleteAsync<Order>(f => serialNoList.Contains(f.SerialNo)));
+            await Execute(ctx => ctx.DeleteAsync<Order>(f => idList.Contains(f.Id)));
+            await Execute(ctx => ctx.InsertAsync(buyer));
+            int result = await Execute(connection => connection.InsertBulkAsync(orders));
+            Assert.IsTrue(result > 0);
+        }
     }
 }

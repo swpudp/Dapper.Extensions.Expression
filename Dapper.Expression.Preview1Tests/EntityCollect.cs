@@ -136,6 +136,20 @@ namespace Dapper.Extensions.Expression.UnitTests
         public int Version { get; set; }
     }
 
+    [Table("emit")]
+    public class Emit : IEntity
+    {
+        [ExplicitKey]
+        public Guid Id { get; set; }
+
+        public string Name { get; set; }
+
+        /// <summary>
+        /// 版本号
+        /// </summary>
+        public int Version { get; set; }
+    }
+
     public class OrderModel : IEntity
     {
         public Guid Id { get; set; }

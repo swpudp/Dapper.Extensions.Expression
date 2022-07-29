@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+<<<<<<< Updated upstream
 using System.Transactions;
 using System.Collections.Immutable;
 using System.ComponentModel;
@@ -14,6 +15,12 @@ using AutoFixture;
 using System.Globalization;
 using Chloe.Infrastructure;
 using Snowflake.Core;
+=======
+using Dapper.Extensions.Expression.Extensions;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text;
+using Dapper.Extensions.Expression.Queries;
+>>>>>>> Stashed changes
 
 namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
@@ -27,10 +34,13 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly IDistributedCache _cache;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IDistributedCache cache)
         {
             _logger = logger;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -162,11 +172,82 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
 
         private static IDbConnection CreateConnection()
         {
+<<<<<<< Updated upstream
             //IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_extension;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8");
             IDbConnection connection = new MySqlConnection("server=192.168.1.102;port=3306;database=dapper_extension;uid=root;pwd=Q1@we34r;charset=utf8");
+=======
+            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_exp;uid=root;pwd=Q1@we34r;charset=utf8");
+>>>>>>> Stashed changes
             return connection;
         }
 
+        [HttpGet("Upload")]
+        public async Task<int> Upload()
+        {
+            using (var connection = CreateConnection())
+            {
+                Attachment attachment = new Attachment
+                {
+                    Id = new Guid("FE995DA8-32AA-4383-9D86-53247FD5F243"),
+                    OrderId = Guid.NewGuid().ToString(),
+                    Name = "123.pdf",
+                    Extend = ".pdf"
+                };
+                return await connection.UniqueInsertAsync(attachment);
+            }
+        }
+
+        [HttpGet("ErrorUpload")]
+        public async Task<int> ErrorUpload()
+        {
+            using (var connection = CreateConnection())
+            {
+                Attachment attachment = new Attachment
+                {
+                    Id = new Guid("FE995DA8-32AA-4383-9D86-53247FD5F243"),
+                    OrderId = Guid.NewGuid().ToString(),
+                    Name = "123.pdf",
+                    Extend = ".pdf"
+                };
+                return await connection.InsertAsync(attachment);
+            }
+        }
+
+        [HttpGet("Cache")]
+        public async Task<object> Cache()
+        {
+            _cache.SetString("set_string_1", Guid.NewGuid().ToString());
+            await _cache.SetStringAsync("set_string_async_1", Guid.NewGuid().ToString());
+
+            string v1 = _cache.GetString("set_string_1");
+            string v2 = await _cache.GetStringAsync("set_string_async_1");
+
+            _cache.Set("set_byte_1", Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()), new DistributedCacheEntryOptions { AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(1) });
+            await _cache.SetAsync("set_byte_async_1", Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()), new DistributedCacheEntryOptions { AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(1) });
+
+            byte[] v3b = _cache.Get("set_byte_1");
+            string v3 = Encoding.UTF8.GetString(v3b);
+
+            byte[] v4b = await _cache.GetAsync("set_byte_async_1");
+            string v4 = Encoding.UTF8.GetString(v4b);
+
+            return new { v1, v2, v3, v4 };
+        }
+    }
+
+    [Table("attachment")]
+    public class Attachment : IEntity
+    {
+        [ExplicitKey]
+        public Guid Id { get; set; }
+
+        public string OrderId { get; set; }
+
+        public string Name { get; set; }
+
+        public string Extend { get; set; }
+
+        public int Version { get; set; }
     }
 
     [Table("testentity")]

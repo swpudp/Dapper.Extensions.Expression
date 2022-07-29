@@ -1,4 +1,5 @@
-﻿using Dapper.Extensions.Expression.Utilities;
+﻿using Dapper.Extensions.Expression.Queries;
+using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -184,9 +185,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void QueryArrayContainsTest()
         {
             using IDbConnection connection = CreateConnection();
-            Query<Order> query = connection.Query<Order>();
-            string[] values = { "5E", "DD" };
-            query.Where(v => values.Contains(v.Remark));
+            string[] values = { "ABC", "BCD" };
+            Query<Order> query = connection.Query<Order>().Where(v => values.Contains(v.Remark));
             IEnumerable<Order> data = query.ToList<Order>();
             Assert.IsTrue(data.Any());
             Assert.IsTrue(data.All(d => values.Any(f => f == d.SerialNo)));
@@ -199,9 +199,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void QueryIEnumerableContainsTest()
         {
             using IDbConnection connection = CreateConnection();
-            Query<Order> query = connection.Query<Order>();
-            IEnumerable<string> values = new[] { "EFC3", "8064C0A3" };
-            query.Where(v => values.Contains(v.SerialNo));
+            IEnumerable<string> values = new[] { "EFC", "C0A3" };
+            Query<Order> query = connection.Query<Order>().Where(v => values.Contains(v.SerialNo));
             IEnumerable<Order> data = query.ToList<Order>();
             Assert.IsTrue(data.Any());
             Assert.IsTrue(data.All(d => values.Any(f => f == d.SerialNo)));
@@ -280,7 +279,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void QueryConditionBlock1Test()
         {
             using IDbConnection connection = CreateConnection();
-            Expression<Func<Order, bool>> where = v => v.Status == Status.Draft && (v.IsDelete == false || v.Remark.Contains("ab")) && (v.SerialNo.Contains("abc") || v.SerialNo == "ab") && (v.CreateTime > new DateTime(2021, 3, 12) || v.UpdateTime < DateTime.Now.Date);
+            Expression<Func<Order, bool>> where = v => v.Status == Status.Draft && (v.IsDelete == false || v.Remark.Contains("FD")) && (v.SerialNo.Contains("FD") || v.SerialNo == "FD") && (v.CreateTime > new DateTime(2021, 3, 12) || v.UpdateTime < DateTime.Now.Date);
             Query<Order> query = connection.Query<Order>();
             query.Where(where);
             IEnumerable<Order> data = query.ToList<Order>();
@@ -308,7 +307,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void GetTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order testEntity = connection.Get<Order>(Guid.Parse("00aa7c19-8e03-4f54-a38c-b36d20ccadeb"));
+            Order testEntity = connection.Get<Order>(Guid.Parse("001399e7-cacf-4323-8f18-75a9ef1480e0"));
             Assert.IsNotNull(testEntity);
         }
 
@@ -319,7 +318,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task GetAsyncTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order order = await connection.GetAsync<Order>(Guid.Parse("00aa7c19-8e03-4f54-a38c-b36d20ccadeb"));
+            Order order = await connection.GetAsync<Order>(Guid.Parse("001399e7-cacf-4323-8f18-75a9ef1480e0"));
             Assert.IsNotNull(order);
         }
 
@@ -421,7 +420,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void GetCountNoDataTest()
         {
             using IDbConnection connection = CreateConnection();
-            int total = connection.GetCount<Item>();
+            int total = connection.GetCount<Emit>();
             Assert.IsFalse(total > 0);
             Assert.AreEqual(0, total);
         }
@@ -444,7 +443,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task GetCountAsyncNoDataTest()
         {
             using IDbConnection connection = CreateConnection();
-            int total = await connection.GetCountAsync<Item>();
+            int total = await connection.GetCountAsync<Emit>();
             Assert.IsFalse(total > 0);
             Assert.AreEqual(0, total);
         }
@@ -493,7 +492,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            query.TakePage(1, 10).OrderBy("CreateTime", "DESC");
+            query.TakePage(1, 10).OrderByDescending(f => f.CreateTime);
             IList<Order> result = await query.ToListAsync<Order>();
             Assert.IsTrue(result.Any());
         }
@@ -505,7 +504,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task QueryGroupTest()
         {
             using IDbConnection connection = CreateConnection();
-            Query<Order> query = connection.Query<Order>().TakePage(1, 10).GroupBy("Status");
+            Query<Order> query = connection.Query<Order>().TakePage(1, 10).GroupBy(f => f.Status);
             IList<Order> result = await query.ToListAsync<Order>();
             Assert.IsTrue(result.Any());
         }
@@ -542,7 +541,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            query.TakePage(1, 10).OrderBy("CreateTime", "desc").OrderBy("Number", "asc");
+            query.TakePage(1, 10).OrderByDescending(f => f.CreateTime).OrderBy(f => f.SerialNo);
             IEnumerable<Order> result = await query.ToListAsync<Order>();
             Assert.IsTrue(result.Any());
         }
@@ -554,10 +553,9 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task QueryMultiOrderAndGroupTest()
         {
             using IDbConnection connection = CreateConnection();
-            Query<Order> query = connection.Query<Order>();
-            query.TakePage(1, 10).OrderBy("CreateTime", "desc").OrderBy("Number", "asc").GroupBy("CreateTime");
-            IEnumerable<Order> result = await query.ToListAsync<Order>();
-            Assert.IsTrue(result.Any());
+            Query<Order> query = connection.Query<Order>().TakePage(1, 10).OrderByDescending(f => f.CreateTime).OrderBy(f => f.SerialNo).GroupBy(f => new { f.CreateTime, f.SerialNo });
+            IList<OrderModel> result = await query.Select(f => new { f.CreateTime, f.SerialNo, Count = Function.Count(), Max = Function.Max(f.Amount) }).ToListAsync<OrderModel>();
+            Assert.IsTrue(result.Count > 0);
         }
 
         [TestMethod]
@@ -741,7 +739,12 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> models = query.Where(f => f.Version > 10).OrderBy(f => new { f.CreateTime }).GroupBy(f => f.SerialNo).GroupBy(f => new { f.IsDelete }).GroupBy(f => new Order { SerialNo = f.SerialNo }).ToList<Order>();
+            IList<Order> models = query.Where(f => f.Version > 10)
+                .OrderBy(f => new { f.CreateTime })
+                .GroupBy(f => f.SerialNo)
+                .GroupBy(f => new { f.IsDelete })
+                .GroupBy(f => new Order { SerialNo = f.SerialNo })
+                .ToList<Order>();
             Assert.IsNotNull(models);
             Assert.IsTrue(models.Any());
         }
@@ -751,7 +754,12 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> models = query.Where(f => f.Version > 10).GroupBy(f => f.SerialNo).Having(f => f.Version > 10).ToList<Order>();
+            IList<Order> models = query.Where(f => f.Version > 10)
+                .GroupBy(f => new { f.SerialNo, f.Version })
+                .Having(f => f.Version > 30)
+                .Select(f => new { f.Version, f.SerialNo, Total = Function.Count() })
+                .ToList<Order>();
+
             Assert.IsNotNull(models);
             Assert.IsTrue(models.Any());
         }
@@ -802,7 +810,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            int? max = query.Where(f => f.DocId != null).Max(f => (int?)f.Version);
+            int? max = query.Where(f => f.Version < 0).Max(f => (int?)f.Version);
             Assert.IsFalse(max.HasValue);
         }
 
@@ -811,7 +819,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            string max = query.Where(f => f.DocId != null).Max(f => f.SerialNo);
+            string max = query.Where(f => f.Version < 0).Max(f => f.SerialNo);
             Assert.IsNull(max);
         }
 
@@ -830,8 +838,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
 
             using IDbConnection connection = CreateConnection();
-            Query<Order> query = connection.Query<Order>();
-            int? max = await query.Where(f => f.DocId != null).MaxAsync(f => (int?)f.Version);
+            Query<Emit> query = connection.Query<Emit>();
+            int? max = await query.Where(f => f.Version > 10).MaxAsync(f => (int?)f.Version);
             Assert.IsFalse(max > 0);
         }
 
@@ -841,11 +849,9 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            int max = query.Where(f => f.DocId != null).Min(f => f.Version);
-            Assert.IsTrue(max > 0);
-            Console.WriteLine(max);
+            int min = query.Where(f => !f.IsDelete).Min(f => f.Version);
+            Assert.IsTrue(min > 0);
         }
-
 
         [TestMethod]
         public void MinNullableTest()
@@ -853,6 +859,15 @@ namespace Dapper.Extensions.Expression.UnitTests
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             DateTime? max = query.Where(f => f.DocId != null).Min(f => f.UpdateTime);
+            Assert.IsFalse(max.HasValue);
+        }
+
+        [TestMethod]
+        public void MinNullableHasValueTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            Query<Order> query = connection.Query<Order>();
+            DateTime? max = query.Where(f => f.DocId.HasValue).Min(f => f.UpdateTime);
             Assert.IsFalse(max.HasValue);
         }
 
@@ -871,9 +886,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            decimal? max = query.Where(f => f.Status != Status.Running && f.SerialNo == "11111111").Sum(f => f.Freight);
-            Assert.IsTrue(max > 0);
-            Console.WriteLine(max);
+            decimal? max = query.Where(f => f.Status == Status.Running).Sum(f => f.Freight);
+            Assert.IsTrue(max.HasValue);
         }
 
 
@@ -882,7 +896,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            int? max = query.Where(f => f.DocId != null).Sum(f => (int?)f.Version);
+            int? max = query.Where(f => f.Version < 0).Sum(f => (int?)f.Version);
             Assert.IsFalse(max > 0);
         }
 
@@ -1087,7 +1101,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.Freight == 19.60479319m).ToList<Order>();
+            IList<Order> entities = query.Where(f => f.Freight > 1.60479319m).ToList<Order>();
             Assert.IsTrue(entities.Any());
         }
 
@@ -1096,7 +1110,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.Freight > 15).ToList<Order>();
+            IList<Order> entities = query.Where(f => f.Freight > 1).ToList<Order>();
             Assert.IsTrue(entities.Any());
         }
 
@@ -1105,7 +1119,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.Freight > 15m).ToList<Order>();
+            IList<Order> entities = query.Where(f => f.Freight > 1m).ToList<Order>();
             Assert.IsTrue(entities.Any());
         }
 
