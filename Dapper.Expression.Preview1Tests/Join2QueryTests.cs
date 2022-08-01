@@ -32,6 +32,19 @@ namespace Dapper.Extensions.Expression.UnitTests
         /// 查询测试
         /// </summary>
         [TestMethod]
+        public void QuerySegregateTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            JoinQuery<Order, Item> query = connection.JoinQuery<Order, Item>().On(JoinType.Left, (a, b) => a.Id == b.OrderId);
+            query.Where((v, w) => (v.SignState == SignState.Signed || (v.SignState == SignState.UnSign && w.Price > 20m)) && v.IsActive.Value);
+            IEnumerable<Order> data = query.ToList<Order>();
+            Assert.IsTrue(data.Any());
+        }
+
+        /// <summary>
+        /// 查询测试
+        /// </summary>
+        [TestMethod]
         public void JoinLoopGetCommandTextTest()
         {
             for (int i = 0; i < 10; i++)

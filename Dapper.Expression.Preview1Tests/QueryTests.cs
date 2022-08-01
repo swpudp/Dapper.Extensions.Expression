@@ -1053,7 +1053,7 @@ namespace Dapper.Extensions.Expression.UnitTests
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             IList<Status> testTypes = new List<Status> { Status.Running };
-            IList<Order> entities = query.Where(f => testTypes.Contains(f.Status) && f.IsDelete && !f.IsActive.Value).ToList<Order>();
+            IList<Order> entities = query.Where(f => testTypes.Contains(f.Status) && f.DocId.HasValue && !f.IsDelete && f.IsActive.Value).ToList<Order>();
             Assert.IsTrue(entities.Any());
         }
 

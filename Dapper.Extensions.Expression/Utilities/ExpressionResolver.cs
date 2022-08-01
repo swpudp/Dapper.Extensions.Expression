@@ -6,6 +6,7 @@ using System.Linq.Expressions;
 
 namespace Dapper.Extensions.Expression.Utilities
 {
+    [Obsolete("unnecessary", true)]
     public static class ExpressionResolver
     {
         public static System.Linq.Expressions.Expression Visit(System.Linq.Expressions.Expression exp)

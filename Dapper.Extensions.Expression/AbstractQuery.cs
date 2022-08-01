@@ -133,7 +133,7 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(ex), ex.Parameters), _adapter, _whereBuilder, Parameters, true);
+            WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ex, ex.Parameters), _adapter, _whereBuilder, Parameters, true);
         }
 
         /// <summary>
@@ -160,7 +160,7 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            LambdaExpression ex = ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(where), where.Parameters);
+            LambdaExpression ex = ReplaceParameterVisitor.Replace(where, where.Parameters);
             ParameterExpression p = ex.Parameters.Last();
             string tableName = TypeProvider.GetTableName(p.Type);
             _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", _adapter.GetQuoteName(tableName), _adapter.GetQuoteName(p.Name));
@@ -251,7 +251,7 @@ namespace Dapper.Extensions.Expression
             {
                 _having = new StringBuilder();
             }
-            WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(keySelector), keySelector.Parameters), _adapter, _having, Parameters, true);
+            WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, _having, Parameters, true);
         }
 
         protected TResult Max<TResult>(LambdaExpression keySelector)

@@ -137,20 +137,20 @@ namespace Dapper.Extensions.Expression.Visitors
             switch (exp.NodeType)
             {
                 case ExpressionType.Constant:
-                {
-                    ConstantExpression c = (ConstantExpression)exp;
-                    return c.Value == null || c.Value == DBNull.Value;
-                }
-                case ExpressionType.MemberAccess:
-                {
-                    MemberExpression m = (MemberExpression)exp;
-                    if (m.Expression?.NodeType == ExpressionType.Parameter)
                     {
-                        return false;
+                        ConstantExpression c = (ConstantExpression)exp;
+                        return c.Value == null || c.Value == DBNull.Value;
                     }
-                    object value = ExpressionEvaluator.Visit(exp);
-                    return value == null;
-                }
+                case ExpressionType.MemberAccess:
+                    {
+                        MemberExpression m = (MemberExpression)exp;
+                        if (m.Expression?.NodeType == ExpressionType.Parameter)
+                        {
+                            return false;
+                        }
+                        object value = ExpressionEvaluator.Visit(exp);
+                        return value == null;
+                    }
                 default:
                     return false;
             }
@@ -166,7 +166,7 @@ namespace Dapper.Extensions.Expression.Visitors
             MemberInfo member = memberExpression.Member;
             if (member.IsNotMapped())
             {
-                throw new NotSupportedException($"NotMappedAttribute marked on property:{ member.Name} of type:{member.DeclaringType?.FullName}");
+                throw new NotSupportedException($"NotMappedAttribute marked on property:{member.Name} of type:{member.DeclaringType?.FullName}");
             }
             if (member.DeclaringType == ConstantDefined.TypeOfDateTime)
             {
@@ -231,16 +231,18 @@ namespace Dapper.Extensions.Expression.Visitors
         /// </summary>
         private static void VisitUnaryNot(System.Linq.Expressions.Expression e, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
-            Debug.WriteLine(nameof(VisitUnaryNot) + sqlBuilder);
-            if (!(e is UnaryExpression unaryExpression))
-            {
-                return;
-            }
-            if (unaryExpression.Operand.NodeType == ExpressionType.MemberAccess)
-            {
-                BinaryExpression binaryExpression = System.Linq.Expressions.Expression.MakeBinary(ExpressionType.Equal, unaryExpression.Operand, ConstantDefined.BooleanFalse);
-                InternalVisit(binaryExpression, adapter, sqlBuilder, parameters, appendParameter);
-            }
+            throw new NotImplementedException();
+            //Debug.WriteLine(nameof(VisitUnaryNot) + sqlBuilder);
+            //if (!(e is UnaryExpression unaryExpression))
+            //{
+            //    return;
+            //}
+
+            //ConstantExpression right = um.Member.Name == ConstantDefined.MemberNameHasValue ? TypeProvider.GetNullExpression(um.Expression.Type) : TypeProvider.GetFalseExpression(um.Expression.Type);
+            //BinaryExpression binaryExpression = System.Linq.Expressions.Expression.Equal(um, ConstantDefined.BooleanFalse);
+
+            //BinaryExpression binaryExpression = PreProcessUnaryNot(unaryExpression);
+            //InternalVisit(binaryExpression, adapter, sqlBuilder, parameters, appendParameter);
         }
 
         /// <summary>
@@ -439,32 +441,21 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     sqlBuilder.AppendFormat(" {0} ", BinaryTypes[b.NodeType]);
                 }
-                if (e.NodeType == ExpressionType.AndAlso || e.NodeType == ExpressionType.OrElse)
+                switch (e.NodeType)
                 {
-                    IList<System.Linq.Expressions.Expression> children = new List<System.Linq.Expressions.Expression>();
-                    Segregate((BinaryExpression)e, e.NodeType, children);
-                    foreach (System.Linq.Expressions.Expression child in children)
-                    {
-                        int childIndex = children.IndexOf(child);
-                        if (childIndex == 0)
-                        {
-                            sqlBuilder.Append("(");
-                        }
-                        bool isChildLast = childIndex >= children.Count - 1;
-                        Visit(child, sqlBuilder, adapter, parameters, appendParameter);
-                        if (isChildLast)
-                        {
-                            sqlBuilder.Append(")");
-                        }
-                        else
-                        {
-                            sqlBuilder.AppendFormat(" {0} ", BinaryTypes[e.NodeType]);
-                        }
-                    }
-                }
-                else
-                {
-                    Visit(e, sqlBuilder, adapter, parameters, appendParameter);
+                    case ExpressionType.AndAlso:
+                    case ExpressionType.OrElse:
+                        PreProcessBinary((BinaryExpression)e, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
+                    case ExpressionType.Not:
+                        PreProcessUnaryNot((UnaryExpression)e, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
+                    case ExpressionType.MemberAccess:
+                        PreProcessMemberAccess((MemberExpression)e, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
+                    default:
+                        Visit(e, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
                 }
             }
             sqlBuilder.Append(")");
@@ -485,5 +476,89 @@ namespace Dapper.Extensions.Expression.Visitors
                 InternalVisit(e, adapter, sqlBuilder, parameters, appendParameter);
             }
         }
+
+
+        #region PreProcessExpression
+
+        private static void PreProcessBinary(System.Linq.Expressions.BinaryExpression e, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
+        {
+            IList<System.Linq.Expressions.Expression> children = new List<System.Linq.Expressions.Expression>();
+            Segregate(e, e.NodeType, children);
+            foreach (System.Linq.Expressions.Expression child in children)
+            {
+                int childIndex = children.IndexOf(child);
+                if (childIndex == 0)
+                {
+                    sqlBuilder.Append("(");
+                }
+                bool isChildLast = childIndex >= children.Count - 1;
+                Visit(child, sqlBuilder, adapter, parameters, appendParameter);
+                if (isChildLast)
+                {
+                    sqlBuilder.Append(")");
+                }
+                else
+                {
+                    sqlBuilder.AppendFormat(" {0} ", BinaryTypes[e.NodeType]);
+                }
+            }
+        }
+
+        private static void PreProcessUnaryNot(System.Linq.Expressions.UnaryExpression u, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
+        {
+            if (!(u.Operand is MemberExpression um))
+            {
+                throw new NotSupportedException($"can not supported node type '{u.Operand.NodeType}'");
+            }
+            System.Linq.Expressions.Expression left;
+            ConstantExpression right;
+            if (um.Expression == null || um.Expression.NodeType == ExpressionType.Parameter)
+            {
+                left = um;
+                right = ConstantDefined.BooleanFalse;
+            }
+            else
+            {
+                left = um.Expression;
+                right = um.Member.Name == ConstantDefined.MemberNameHasValue ? TypeProvider.GetNullExpression(um.Expression.Type) : TypeProvider.GetFalseExpression(um.Expression.Type);
+            }
+            BinaryExpression ub = System.Linq.Expressions.Expression.Equal(left, right);
+            Visit(ub, sqlBuilder, adapter, parameters, appendParameter);
+        }
+
+        private static void PreProcessMemberAccess(System.Linq.Expressions.MemberExpression m, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
+        {
+            if (m.Type != ConstantDefined.TypeOfBoolean)
+            {
+                Visit(m, sqlBuilder, adapter, parameters, appendParameter);
+                return;
+            }
+            System.Linq.Expressions.Expression left;
+            ConstantExpression right;
+            ExpressionType type;
+            switch (m.Member.Name)
+            {
+                case ConstantDefined.MemberNameHasValue:
+                    right = TypeProvider.GetNullExpression(m.Expression.Type);
+                    type = ExpressionType.NotEqual;
+                    left = m.Expression;
+                    break;
+                case ConstantDefined.MemberNameValue:
+                    right = TypeProvider.GetTrueExpression(m.Expression.Type);
+                    type = ExpressionType.Equal;
+                    left = m.Expression;
+                    break;
+                default:
+                    right = ConstantDefined.BooleanTrue;
+                    type = ExpressionType.Equal;
+                    left = m;
+                    break;
+            }
+            BinaryExpression mb = System.Linq.Expressions.Expression.MakeBinary(type, left, right);
+            Visit(mb, sqlBuilder, adapter, parameters, appendParameter);
+        }
+
+        #endregion
+
     }
 }
