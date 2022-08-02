@@ -16,13 +16,18 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
     /// <typeparam name="T5"></typeparam>
     public sealed class JoinQuery<T1, T2, T3, T4, T5> : AbstractQuery, IQuery
     {
-        private readonly LambdaExpression _defaultSelector;
-        protected override LambdaExpression DefaultSelector => _defaultSelector;
+        /// <summary>
+        /// 默认select选择器
+        /// </summary>
+        private static readonly Expression<Func<T1, T2, T3, T4, T5, T1>> FirstSelector = (t1, t2, t3, t4, t5) => t1;
 
-        internal JoinQuery(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 4,namingPolicy)
+        /// <summary>
+        /// 默认select选择器
+        /// </summary>
+        protected override LambdaExpression DefaultSelector => FirstSelector;
+
+        internal JoinQuery(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 4, namingPolicy)
         {
-            Expression<Func<T1, T2, T3, T4, T5, T1>> selector = (i, j, k, l, m) => i;
-            _defaultSelector = ReplaceParameterVisitor.Replace(selector, selector.Parameters);
         }
 
         public JoinQuery<T1, T2, T3, T4, T5> On(JoinType joinType, Expression<Func<T1, T2, bool>> on)

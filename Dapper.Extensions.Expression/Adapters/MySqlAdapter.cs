@@ -165,7 +165,7 @@ namespace Dapper.Extensions.Expression.Adapters
             {
                 sqlBuilder.Append("DATE(");
                 WhereExpressionVisitor.InternalVisit(exp.Expression, this, sqlBuilder, parameters, appendParameter);
-                sqlBuilder.Append(")");
+                sqlBuilder.Append(')');
                 return;
             }
             if (member == ConstantDefined.PropertyDateTimeYear)
@@ -201,7 +201,7 @@ namespace Dapper.Extensions.Expression.Adapters
             /* MySql is not supports MILLISECOND */
             if (member == ConstantDefined.PropertyDateTimeDayOfWeek)
             {
-                sqlBuilder.Append("(");
+                sqlBuilder.Append('(');
                 AppendDatePart(exp, sqlBuilder, parameters, "DAYOFWEEK", appendParameter);
                 sqlBuilder.Append(" - 1)");
             }
@@ -210,9 +210,9 @@ namespace Dapper.Extensions.Expression.Adapters
         private void AppendDatePart(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, string functionName, bool appendParameter)
         {
             sqlBuilder.Append(functionName);
-            sqlBuilder.Append("(");
+            sqlBuilder.Append('(');
             WhereExpressionVisitor.InternalVisit(exp.Expression, this, sqlBuilder, parameters, appendParameter);
-            sqlBuilder.Append(")");
+            sqlBuilder.Append(')');
         }
 
         /// <summary>
@@ -225,7 +225,7 @@ namespace Dapper.Extensions.Expression.Adapters
             sqlBuilder.Append(",INTERVAL ");
             WhereExpressionVisitor.InternalVisit(e.Arguments[0], this, sqlBuilder, parameters, appendParameter);
             sqlBuilder.AppendFormat(" {0} ", function);
-            sqlBuilder.Append(")");
+            sqlBuilder.Append(')');
         }
 
         public bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -236,7 +236,7 @@ namespace Dapper.Extensions.Expression.Adapters
             }
             sqlBuilder.Append("LENGTH(");
             WhereExpressionVisitor.InternalVisit(memberExpression.Expression, this, sqlBuilder, parameters, appendParameter);
-            sqlBuilder.Append(")");
+            sqlBuilder.Append(')');
             return true;
         }
     }

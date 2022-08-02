@@ -40,7 +40,8 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, string order, StringBuilder builder, bool appendParameter)
         {
-            Visit(lambda.Body, adapter, order, builder, appendParameter);
+            var newExp = new ReplaceExpressionVisitor(lambda.Parameters, true).Visit(lambda) as LambdaExpression;
+            Visit(newExp.Body, adapter, order, builder, appendParameter);
         }
 
         private static void VisitNew(NewExpression nex, ISqlAdapter adapter, string order, StringBuilder builder, bool appendParameter)
@@ -53,12 +54,12 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 if (member.Member.IsNotMapped())
                 {
-                    throw new NotSupportedException($"NotMappedAttribute marked on property:{ member.Member.Name} of type:{member.Member.DeclaringType?.FullName}");
+                    throw new NotSupportedException($"NotMappedAttribute marked on property:{member.Member.Name} of type:{member.Member.DeclaringType?.FullName}");
                 }
                 int index = nex.Arguments.IndexOf(e);
                 if (index > 0 && index < nex.Arguments.Count)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                 }
                 if (appendParameter)
                 {
@@ -91,12 +92,12 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 if (member.Member.IsNotMapped())
                 {
-                    throw new NotSupportedException($"NotMappedAttribute marked on property:{ member.Member.Name} of type:{member.Member.DeclaringType?.FullName}");
+                    throw new NotSupportedException($"NotMappedAttribute marked on property:{member.Member.Name} of type:{member.Member.DeclaringType?.FullName}");
                 }
                 int index = init.Bindings.IndexOf(binding);
                 if (index > 0 && index < init.Bindings.Count)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                 }
                 if (appendParameter)
                 {
@@ -130,7 +131,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitParameter(ParameterExpression m, ISqlAdapter adapter, StringBuilder builder)
         {
-            builder.Append(adapter.GetQuoteName(m.Name)).Append(".");
+            builder.Append(adapter.GetQuoteName(m.Name)).Append('.');
         }
     }
 }

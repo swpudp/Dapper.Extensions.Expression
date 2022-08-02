@@ -52,7 +52,8 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
         {
-            Visit(lambda.Body, adapter, builder, appendParameter);
+            var newExp = new ReplaceExpressionVisitor(lambda.Parameters, true).Visit(lambda) as LambdaExpression;
+            Visit(newExp.Body, adapter, builder, appendParameter);
         }
 
         private static void VisitNew(NewExpression nex, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
@@ -65,7 +66,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     if (index > 0 && index < nex.Members.Count)
                     {
-                        builder.Append(",");
+                        builder.Append(',');
                     }
                     Visit(constant, builder);
                     builder.Append(" AS ").Append(adapter.GetQuoteName(member.Name));
@@ -75,7 +76,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     if (index > 0 && index < nex.Members.Count)
                     {
-                        builder.Append(",");
+                        builder.Append(',');
                     }
                     Visit(argExp, adapter, builder, appendParameter);
                     adapter.AppendColumnName(builder, member);
@@ -88,7 +89,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 if (index > 0 && index < nex.Members.Count)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                 }
                 if (appendParameter)
                 {
@@ -148,7 +149,7 @@ namespace Dapper.Extensions.Expression.Visitors
         {
             builder.Append("CAST(IFNULL(");
             Visit(e.Left, adapter, builder, appendParameter);
-            builder.Append(",");
+            builder.Append(',');
             Visit(e.Right, adapter, builder, appendParameter);
             builder.Append(") AS CHAR) AS ");
         }
@@ -191,7 +192,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     if (index > 0 && index < init.Bindings.Count)
                     {
-                        builder.Append(",");
+                        builder.Append(',');
                     }
                     Visit(constant, builder);
                     builder.Append(" AS ");
@@ -202,7 +203,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     if (index > 0 && index < init.Bindings.Count)
                     {
-                        builder.Append(",");
+                        builder.Append(',');
                     }
                     Visit(assignExp, adapter, builder, appendParameter);
                     adapter.AppendColumnName(builder, binding.Member);
@@ -214,7 +215,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 if (index > 0 && index < init.Bindings.Count)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                 }
                 if (appendParameter)
                 {
@@ -250,7 +251,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitParameter(ParameterExpression m, ISqlAdapter adapter, StringBuilder builder)
         {
-            builder.Append(adapter.GetQuoteName(m.Name)).Append(".");
+            builder.Append(adapter.GetQuoteName(m.Name)).Append('.');
         }
     }
 }

@@ -23,7 +23,7 @@ namespace Dapper.Extensions.Expression.MethodCalls
         public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
             WhereExpressionVisitor.InternalVisit(e.Arguments[0], sqlAdapter, builder, parameters, appendParameter);
-            builder.Append(">");
+            builder.Append('>');
             WhereExpressionVisitor.InternalVisit(e.Arguments[1], sqlAdapter, builder, parameters, appendParameter);
         }
     }

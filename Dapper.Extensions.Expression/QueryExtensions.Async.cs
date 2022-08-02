@@ -70,9 +70,9 @@ namespace Dapper.Extensions.Expression
             {
                 if (parameterList.Length > 0)
                 {
-                    parameterList.Append(",");
+                    parameterList.Append(',');
                 }
-                parameterList.Append("(");
+                parameterList.Append('(');
                 for (int i = 0; i < validPropertyInfos.Count; i++)
                 {
                     if (i > 0 && i < validPropertyInfos.Count)
@@ -94,7 +94,7 @@ namespace Dapper.Extensions.Expression
                     }
                     if (value is Guid v1)
                     {
-                        parameterList.Append("'").Append(v1.ToString()).Append("'");
+                        parameterList.Append('\'').Append(v1.ToString()).Append('\'');
                         continue;
                     }
                     Type valType = value.GetType();
@@ -112,7 +112,7 @@ namespace Dapper.Extensions.Expression
                     parameters.Add(parameterName, value);
                     parameterList.Append(parameterName);
                 }
-                parameterList.Append(")");
+                parameterList.Append(')');
                 if (parameters.Count() > MaxParameterCount || index + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";

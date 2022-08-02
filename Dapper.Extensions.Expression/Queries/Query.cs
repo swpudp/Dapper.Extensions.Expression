@@ -11,13 +11,16 @@ namespace Dapper.Extensions.Expression.Queries
         /// <summary>
         /// 默认select选择器
         /// </summary>
-        private readonly LambdaExpression _defaultSelector;
-        protected override LambdaExpression DefaultSelector => _defaultSelector;
+        private static readonly Expression<Func<T, T>> FirstSelector = t1 => t1;
+
+        /// <summary>
+        /// 默认select选择
+        /// </summary>
+        protected override LambdaExpression DefaultSelector => FirstSelector;
 
         internal Query(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 0, namingPolicy)
         {
-            Expression<Func<T, T>> selector = t => t;
-            _defaultSelector = ReplaceParameterVisitor.Replace(selector, selector.Parameters);
+            Expression<Func<T, T>> selector = t1 => t1;
         }
 
         /// <summary>

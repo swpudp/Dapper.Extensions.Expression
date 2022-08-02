@@ -84,6 +84,8 @@ namespace Dapper.Extensions.Expression.UnitTests
 
         public string Name { get; set; }
 
+        public int Enable { get; set; }
+
         public string Extend { get; set; }
 
         public int Version { get; set; }

@@ -141,7 +141,8 @@ namespace Dapper.Extensions.Expression.UnitTests
                         OrderId = order.Id,
                         Name = GetRandomString(8) + ext,
                         Version = i,
-                        Extend = ext
+                        Extend = ext,
+                        Enable = i
                     };
                 }
             }

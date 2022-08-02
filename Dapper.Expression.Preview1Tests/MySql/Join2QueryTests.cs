@@ -33,6 +33,19 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         /// 查询测试
         /// </summary>
         [TestMethod]
+        public void QuerySegregateTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            JoinQuery<Order, Item> query = connection.JoinQuery<Order, Item>().On(JoinType.Left, (a, b) => a.Id == b.OrderId);
+            query.Where((v, w) => (v.SignState == SignState.Signed || (v.SignState == SignState.UnSign && w.Price > 20m)) && v.IsActive.Value);
+            IEnumerable<Order> data = query.ToList<Order>();
+            Assert.IsTrue(data.Any());
+        }
+
+        /// <summary>
+        /// 查询测试
+        /// </summary>
+        [TestMethod]
         public void JoinLoopGetCommandTextTest()
         {
             for (int i = 0; i < 10; i++)
@@ -802,7 +815,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         {
             using IDbConnection connection = CreateConnection();
             JoinQuery<Order, Item> query = connection.JoinQuery<Order, Item>().On(JoinType.Left, (a, b) => a.Id == b.OrderId);
-            IList<Order> entities = query.Where((f, g) => !f.DocId.HasValue).ToList<Order>();
+            IList<Order> entities = query.Where((f, g) => !f.DocId.HasValue).Take(10).ToList<Order>();
             Assert.IsTrue(entities.Any());
             Assert.IsTrue(entities.All(f => !f.DocId.HasValue));
         }

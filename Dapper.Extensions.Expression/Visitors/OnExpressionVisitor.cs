@@ -28,7 +28,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     break;
                 case ExpressionType.Parameter:
                     ParameterExpression parameterExpression = (ParameterExpression)e;
-                    builder.Append(adapter.GetQuoteName(parameterExpression.Name)).Append(".");
+                    builder.Append(adapter.GetQuoteName(parameterExpression.Name)).Append('.');
                     break;
                 default:
                     throw new NotSupportedException($"不支持{e.NodeType}");
@@ -37,7 +37,8 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder)
         {
-            Visit(lambda.Body, adapter, builder);
+            var newExp = new ReplaceExpressionVisitor(lambda.Parameters, true).Visit(lambda) as LambdaExpression;
+            Visit(newExp.Body, adapter, builder);
         }
 
         private static void VisitBinary(BinaryExpression binary, ExpressionType nodeType, ISqlAdapter adapter, StringBuilder builder)

@@ -586,6 +586,16 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         }
 
         [TestMethod]
+        public void SelectParameterObjectTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            Query<Order> query = connection.Query<Order>();
+            IList<OrderAliasModel> models = query.Where(f => f.Remark.Contains("ABCD")).Select(f => new { f }).ToList<OrderAliasModel>();
+            Assert.IsNotNull(models);
+            Assert.IsTrue(models.Any(f => f.C.Contains("ABCD")));
+        }
+
+        [TestMethod]
         public void SelectAliasEntityTest()
         {
             using IDbConnection connection = CreateConnection();
@@ -1054,7 +1064,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             IList<Status> testTypes = new List<Status> { Status.Running };
-            IList<Order> entities = query.Where(f => testTypes.Contains(f.Status) && f.IsDelete && !f.IsActive.Value).ToList<Order>();
+            IList<Order> entities = query.Where(f => testTypes.Contains(f.Status) && f.DocId.HasValue && !f.IsDelete && f.IsActive.Value).ToList<Order>();
             Assert.IsTrue(entities.Any());
         }
 
