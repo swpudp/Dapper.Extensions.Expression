@@ -16,7 +16,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     [Table("buyer")]
     public class Buyer : IEntity
     {
-        [ExplicitKey] public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         public string Name { get; set; }
 
@@ -47,7 +47,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     [Table("items")]
     public class Item : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public Guid OrderId { get; set; }
@@ -77,7 +77,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     [Table("attachment")]
     public class Attachment : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public Guid OrderId { get; set; }
@@ -92,7 +92,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     [Table("order")]
     public class Order : IEntity
     {
-        [ExplicitKey] public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         public Guid BuyerId { get; set; }
 
@@ -113,6 +113,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         public bool IsDelete { get; set; }
 
         public bool? IsActive { get; set; }
+
+        public bool IsEnable { get; set; }
 
         public DateTime CreateTime { get; set; }
 
@@ -139,7 +141,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     [Table("emit")]
     public class Emit : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public string Name { get; set; }
@@ -239,7 +241,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     [Table("log")]
     public class Log : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public DateTime Logged { get; set; }
@@ -247,6 +249,21 @@ namespace Dapper.Extensions.Expression.UnitTests
         public LogType LogType { get; set; }
 
         public int Version { get; set; }
+    }
+
+    /// <summary>
+    /// 测试命名策略
+    /// </summary>
+    public class NamingPolicySnakeCase : IEntity
+    {
+        [Key]
+        public Guid Id { get; set; }
+
+        public int Version { get; set; }
+
+        public NamingPolicy NamingType { get; set; }
+
+        public DateTime CreateTime { get; set; }
     }
 
     public interface IEntity

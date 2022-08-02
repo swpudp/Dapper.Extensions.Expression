@@ -162,8 +162,8 @@ namespace Dapper.Extensions.Expression
             }
             LambdaExpression ex = ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(where), where.Parameters);
             ParameterExpression p = ex.Parameters.Last();
-            string tableName = TypeProvider.GetTableName(p.Type);
-            _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", _adapter.GetQuoteName(tableName), _adapter.GetQuoteName(p.Name));
+            string tableName = _adapter.GetTableName(p.Type);
+            _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", tableName, _adapter.GetQuoteName(p.Name));
             WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
             _whereBuilder.Append(") ");
         }
@@ -469,8 +469,8 @@ namespace Dapper.Extensions.Expression
 
         private void AddTable(StringBuilder sqlBuilder, ParameterExpression parameter)
         {
-            _adapter.AppendQuoteName(sqlBuilder, TypeProvider.GetTableName(parameter.Type));
-            sqlBuilder.Append(" AS ").Append(_adapter.GetQuoteName(parameter.Name));
+            string tableName = _adapter.GetTableName(parameter.Type);
+            sqlBuilder.Append(tableName).Append(" AS ").Append(_adapter.GetQuoteName(parameter.Name));
         }
 
         public virtual string GetCountCommandText()

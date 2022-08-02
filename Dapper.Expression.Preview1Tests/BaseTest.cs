@@ -1,4 +1,5 @@
-﻿using MySql.Data.MySqlClient;
+﻿using Dapper.Extensions.Expression;
+using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -12,13 +13,9 @@ namespace Dapper.Extensions.Expression.UnitTests
 {
     public abstract class BaseTest
     {
-        protected static IDbConnection CreateConnection()
-        {
-            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_exp;uid=root;pwd=Q1@we34r;charset=utf8");
-            return connection;
-        }
+        protected abstract IDbConnection CreateConnection();
 
-        protected static async Task Execute(Func<IDbConnection, Task> action)
+        protected async Task Execute(Func<IDbConnection, Task> action)
         {
             using (IDbConnection connection = CreateConnection())
             {
@@ -26,7 +23,7 @@ namespace Dapper.Extensions.Expression.UnitTests
             }
         }
 
-        protected static void Execute(Action<IDbConnection> action)
+        protected void Execute(Action<IDbConnection> action)
         {
             using (IDbConnection connection = CreateConnection())
             {
@@ -34,7 +31,7 @@ namespace Dapper.Extensions.Expression.UnitTests
             }
         }
 
-        protected static async Task<T> Execute<T>(Func<IDbConnection, Task<T>> action)
+        protected async Task<T> Execute<T>(Func<IDbConnection, Task<T>> action)
         {
             using (IDbConnection connection = CreateConnection())
             {
@@ -42,7 +39,7 @@ namespace Dapper.Extensions.Expression.UnitTests
             }
         }
 
-        protected static T Execute<T>(Func<IDbConnection, T> action)
+        protected T Execute<T>(Func<IDbConnection, T> action)
         {
             using (IDbConnection connection = CreateConnection())
             {
@@ -50,7 +47,7 @@ namespace Dapper.Extensions.Expression.UnitTests
             }
         }
 
-        protected static int ExecuteTransaction(Func<IDbConnection, IDbTransaction, IEnumerable<int>> actions)
+        protected int ExecuteTransaction(Func<IDbConnection, IDbTransaction, IEnumerable<int>> actions)
         {
             using (IDbConnection connection = CreateConnection())
             {
@@ -169,6 +166,17 @@ namespace Dapper.Extensions.Expression.UnitTests
                 SignState = index % 10 == 0 ? (SignState)(index % 2) : default(SignState?),
                 Version = index,
                 Index = index
+            }).ToList();
+        }
+
+        protected static IEnumerable<NamingPolicySnakeCase> CreateNamingPolicyTestList(int count, NamingPolicy namingPolicy)
+        {
+            return Enumerable.Range(0, count).Select((f, index) => new NamingPolicySnakeCase
+            {
+                Id = Guid.NewGuid(),
+                NamingType = namingPolicy,
+                CreateTime = DateTime.Now,
+                Version = index
             }).ToList();
         }
 

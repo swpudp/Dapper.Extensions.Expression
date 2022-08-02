@@ -137,20 +137,20 @@ namespace Dapper.Extensions.Expression.Visitors
             switch (exp.NodeType)
             {
                 case ExpressionType.Constant:
-                {
-                    ConstantExpression c = (ConstantExpression)exp;
-                    return c.Value == null || c.Value == DBNull.Value;
-                }
-                case ExpressionType.MemberAccess:
-                {
-                    MemberExpression m = (MemberExpression)exp;
-                    if (m.Expression?.NodeType == ExpressionType.Parameter)
                     {
-                        return false;
+                        ConstantExpression c = (ConstantExpression)exp;
+                        return c.Value == null || c.Value == DBNull.Value;
                     }
-                    object value = ExpressionEvaluator.Visit(exp);
-                    return value == null;
-                }
+                case ExpressionType.MemberAccess:
+                    {
+                        MemberExpression m = (MemberExpression)exp;
+                        if (m.Expression?.NodeType == ExpressionType.Parameter)
+                        {
+                            return false;
+                        }
+                        object value = ExpressionEvaluator.Visit(exp);
+                        return value == null;
+                    }
                 default:
                     return false;
             }
@@ -166,7 +166,7 @@ namespace Dapper.Extensions.Expression.Visitors
             MemberInfo member = memberExpression.Member;
             if (member.IsNotMapped())
             {
-                throw new NotSupportedException($"NotMappedAttribute marked on property:{ member.Name} of type:{member.DeclaringType?.FullName}");
+                throw new NotSupportedException($"NotMappedAttribute marked on property:{member.Name} of type:{member.DeclaringType?.FullName}");
             }
             if (member.DeclaringType == ConstantDefined.TypeOfDateTime)
             {
@@ -177,6 +177,7 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 throw new NotSupportedException();
             }
+
             if (memberExpression.Expression.NodeType == ExpressionType.Parameter)
             {
                 //访问参数，无法从父类获取子类特性
@@ -439,32 +440,38 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     sqlBuilder.AppendFormat(" {0} ", BinaryTypes[b.NodeType]);
                 }
-                if (e.NodeType == ExpressionType.AndAlso || e.NodeType == ExpressionType.OrElse)
+                switch (e.NodeType)
                 {
-                    IList<System.Linq.Expressions.Expression> children = new List<System.Linq.Expressions.Expression>();
-                    Segregate((BinaryExpression)e, e.NodeType, children);
-                    foreach (System.Linq.Expressions.Expression child in children)
-                    {
-                        int childIndex = children.IndexOf(child);
-                        if (childIndex == 0)
+                    case ExpressionType.AndAlso:
+                    case ExpressionType.OrElse:
+                        IList<System.Linq.Expressions.Expression> children = new List<System.Linq.Expressions.Expression>();
+                        Segregate((BinaryExpression)e, e.NodeType, children);
+                        foreach (System.Linq.Expressions.Expression child in children)
                         {
-                            sqlBuilder.Append("(");
+                            int childIndex = children.IndexOf(child);
+                            if (childIndex == 0)
+                            {
+                                sqlBuilder.Append("(");
+                            }
+                            bool isChildLast = childIndex >= children.Count - 1;
+                            Visit(child, sqlBuilder, adapter, parameters, appendParameter);
+                            if (isChildLast)
+                            {
+                                sqlBuilder.Append(")");
+                            }
+                            else
+                            {
+                                sqlBuilder.AppendFormat(" {0} ", BinaryTypes[e.NodeType]);
+                            }
                         }
-                        bool isChildLast = childIndex >= children.Count - 1;
-                        Visit(child, sqlBuilder, adapter, parameters, appendParameter);
-                        if (isChildLast)
-                        {
-                            sqlBuilder.Append(")");
-                        }
-                        else
-                        {
-                            sqlBuilder.AppendFormat(" {0} ", BinaryTypes[e.NodeType]);
-                        }
-                    }
-                }
-                else
-                {
-                    Visit(e, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
+                    case ExpressionType.MemberAccess:
+                        var newExp = System.Linq.Expressions.Expression.Equal(e, ConstantDefined.BooleanTrue);
+                        Visit(newExp, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
+                    default:
+                        Visit(e, sqlBuilder, adapter, parameters, appendParameter);
+                        break;
                 }
             }
             sqlBuilder.Append(")");

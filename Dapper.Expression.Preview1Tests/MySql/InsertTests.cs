@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Dapper.Extensions.Expression;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -9,10 +10,10 @@ using System.Threading.Tasks;
 using System.Transactions;
 using IsolationLevel = System.Data.IsolationLevel;
 
-namespace Dapper.Extensions.Expression.UnitTests
+namespace Dapper.Extensions.Expression.UnitTests.MySql
 {
     [TestClass]
-    public class InsertTests : BaseTest
+    public class InsertTests : MysqlBaseTest
     {
         [TestMethod]
         public void InsertBulkTest()

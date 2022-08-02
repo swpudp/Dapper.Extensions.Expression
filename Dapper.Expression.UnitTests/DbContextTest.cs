@@ -117,6 +117,13 @@ namespace Dapper.Expression.UnitTests
         public void UpdateTest()
         {
             DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
+
+            ctx.Update<Order>(f => f.IsDelete && !f.IsDelete && !f.IsActive.Value, f => new Order
+            {
+                Version = f.Version - 1,
+                UpdateTime = DateTime.Now
+            });
+
             ctx.Update<Log>(f => f.Id == Guid.NewGuid(), f => new Log { Name = "123" });
         }
 
@@ -258,6 +265,7 @@ namespace Dapper.Expression.UnitTests
             Assert.IsTrue(list > 0);
         }
 
+
         [TestMethod]
         public void Segregate4Test()
         {
@@ -313,6 +321,7 @@ namespace Dapper.Expression.UnitTests
         [TestMethod]
         public async Task SqlFunctionTest()
         {
+            await Task.CompletedTask;
             DbContext ctx = new MySqlContext(new DbConnectionFactory(() => new MySqlConnection("server=127.0.0.1;port=3306;database=invoicecloud;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8")));
             ctx.Query<Order>().Where(f => f.Status == Status.Running)
                 .Select(f => new { f.Id, Max = Sql.Max(f.Amount), Count = Sql.Count(), X = Sql.Average(f.Version) })

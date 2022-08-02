@@ -1,4 +1,5 @@
-﻿using Dapper.Extensions.Expression.Queries;
+﻿using Dapper.Extensions.Expression;
+using Dapper.Extensions.Expression.Queries;
 using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -11,10 +12,10 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 
-namespace Dapper.Extensions.Expression.UnitTests
+namespace Dapper.Extensions.Expression.UnitTests.MySql
 {
     [TestClass]
-    public class QueryTests : BaseTest
+    public class QueryTests : MysqlBaseTest
     {
         /// <summary>
         /// 查询测试
@@ -307,7 +308,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void GetTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order testEntity = connection.Get<Order>(Guid.Parse("001399e7-cacf-4323-8f18-75a9ef1480e0"));
+            Order testEntity = connection.Get<Order>(f => f.Id == Guid.Parse("001399e7-cacf-4323-8f18-75a9ef1480e0"));
             Assert.IsNotNull(testEntity);
         }
 
@@ -318,7 +319,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task GetAsyncTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order order = await connection.GetAsync<Order>(Guid.Parse("001399e7-cacf-4323-8f18-75a9ef1480e0"));
+            Order order = await connection.GetAsync<Order>(f => f.Id == Guid.Parse("001399e7-cacf-4323-8f18-75a9ef1480e0"));
             Assert.IsNotNull(order);
         }
 
@@ -329,7 +330,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task GetNewGuidAsyncTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order testEntity = await connection.GetAsync<Order>(Guid.NewGuid());
+            Order testEntity = await connection.GetAsync<Order>(f => f.Id == Guid.NewGuid());
             Assert.IsNull(testEntity);
         }
 

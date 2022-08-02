@@ -57,9 +57,9 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitNew(NewExpression nex, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
         {
-            foreach (MemberInfo alias in nex.Members)
+            foreach (MemberInfo member in nex.Members)
             {
-                int index = nex.Members.IndexOf(alias);
+                int index = nex.Members.IndexOf(member);
                 System.Linq.Expressions.Expression argExp = nex.Arguments[index];
                 if (argExp is ConstantExpression constant)
                 {
@@ -68,7 +68,7 @@ namespace Dapper.Extensions.Expression.Visitors
                         builder.Append(",");
                     }
                     Visit(constant, builder);
-                    builder.Append(" AS ").Append(adapter.GetQuoteName(alias.Name));
+                    builder.Append(" AS ").Append(adapter.GetQuoteName(member.Name));
                     continue;
                 }
                 if (!(argExp is MemberExpression memberExp))
@@ -78,11 +78,11 @@ namespace Dapper.Extensions.Expression.Visitors
                         builder.Append(",");
                     }
                     Visit(argExp, adapter, builder, appendParameter);
-                    adapter.AppendColumnName(builder, alias);
+                    adapter.AppendColumnName(builder, member);
                     continue;
                 }
-                MemberInfo memberInfo = memberExp.Member;
-                if (memberInfo.IsNotMapped())
+                MemberInfo expMember = memberExp.Member;
+                if (expMember.IsNotMapped())
                 {
                     continue;
                 }
@@ -94,16 +94,16 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     Visit(memberExp.Expression, adapter, builder, true);
                 }
-                if (alias.Name == memberInfo.Name)
+                if (member.Name == expMember.Name)
                 {
-                    bool isAlias = adapter.AppendColumnName(builder, memberInfo);
+                    bool isAlias = adapter.AppendColumnName(builder, expMember);
                     if (!isAlias) continue;
                     builder.Append(" AS ");
-                    adapter.AppendQuoteName(builder, alias.Name);
+                    adapter.AppendQuoteName(builder, member.Name);
                 }
                 else
                 {
-                    adapter.AppendAliasColumnName(builder, memberInfo, alias);
+                    adapter.AppendAliasColumnName(builder, expMember, member);
                 }
             }
         }

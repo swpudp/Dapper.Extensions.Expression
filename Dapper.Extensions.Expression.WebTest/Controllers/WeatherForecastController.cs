@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
-<<<<<<< Updated upstream
 using System.Transactions;
 using System.Collections.Immutable;
 using System.ComponentModel;
@@ -15,12 +14,10 @@ using AutoFixture;
 using System.Globalization;
 using Chloe.Infrastructure;
 using Snowflake.Core;
-=======
 using Dapper.Extensions.Expression.Extensions;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text;
 using Dapper.Extensions.Expression.Queries;
->>>>>>> Stashed changes
 
 namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
@@ -172,12 +169,9 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
 
         private static IDbConnection CreateConnection()
         {
-<<<<<<< Updated upstream
-            //IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_extension;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8");
-            IDbConnection connection = new MySqlConnection("server=192.168.1.102;port=3306;database=dapper_extension;uid=root;pwd=Q1@we34r;charset=utf8");
-=======
-            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_exp;uid=root;pwd=Q1@we34r;charset=utf8");
->>>>>>> Stashed changes
+            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_extension;uid=root;pwd=g~zatvcWLfm]yTa;charset=utf8");
+            //IDbConnection connection = new MySqlConnection("server=192.168.1.102;port=3306;database=dapper_extension;uid=root;pwd=Q1@we34r;charset=utf8");
+            //IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=dapper_exp;uid=root;pwd=Q1@we34r;charset=utf8");
             return connection;
         }
 

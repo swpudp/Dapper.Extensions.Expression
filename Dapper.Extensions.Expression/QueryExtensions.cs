@@ -81,8 +81,7 @@ namespace Dapper.Extensions.Expression
                     parameterList.Append(", ");
                 }
             }
-            string name = TypeProvider.GetTableName(type);
-            return adapter.GetQuoteName(name);
+            return adapter.GetTableName(type);
         }
 
         /// <summary>
@@ -187,8 +186,7 @@ namespace Dapper.Extensions.Expression
                     columnList.Append(", ");
                 }
             }
-            string tableName = TypeProvider.GetTableName(type);
-            return adapter.GetQuoteName(tableName);
+            return adapter.GetTableName(type);
         }
 
         /// <summary>
@@ -217,20 +215,27 @@ namespace Dapper.Extensions.Expression
             {
                 type = eleType;
             }
+            IList<PropertyInfo> keyProperties = TypeProvider.GetKeyProperties(type);
+            if (!keyProperties.Any())
+            {
+                throw new DataException($"{type} only supports an entity with a [Key] property");
+            }
+            IList<PropertyInfo> canUpdateProperties = TypeProvider.GetCanUpdateProperties(type);
+            if (!canUpdateProperties.Any())
+            {
+                throw new DataException($"{type} no columns to update");
+            }
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
-            string name = TypeProvider.GetTableName(type);
             StringBuilder sb = new StringBuilder();
-            sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
-            IList<PropertyInfo> nonIdProps = TypeProvider.GetCanUpdateProperties(type);
-            IList<PropertyInfo> keyProperties = TypeProvider.GetUpdateKeyProperties(type);
+            sb.AppendFormat("update {0} set ", adapter.GetTableName(type));
 
             parameters = new DynamicParameters();
-            for (int i = 0; i < nonIdProps.Count; i++)
+            for (int i = 0; i < canUpdateProperties.Count; i++)
             {
-                MemberInfo property = nonIdProps[i];
+                MemberInfo property = canUpdateProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 parameters.Add("@" + columnName, property.GetValue(entity));
-                if (i < nonIdProps.Count - 1)
+                if (i < canUpdateProperties.Count - 1)
                     sb.Append(", ");
             }
             sb.Append(" where ");
@@ -277,8 +282,8 @@ namespace Dapper.Extensions.Expression
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
 
-            string name = TypeProvider.GetTableName(typeof(T));
-            sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
+            string tableName = adapter.GetTableName(typeof(T));
+            sb.AppendFormat("update {0} set ", tableName);
             UpdateExpressionVisitor.Visit(content, adapter, sb, parameters);
 
             sb.AppendFormat(" where ");
@@ -318,8 +323,8 @@ namespace Dapper.Extensions.Expression
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
 
-            string name = TypeProvider.GetTableName(typeof(T));
-            sb.AppendFormat("update {0} set ", adapter.GetQuoteName(name));
+            string tableName = adapter.GetTableName(typeof(T));
+            sb.AppendFormat("update {0} set ", tableName);
             UpdateExpressionVisitor.Visit(content, adapter, sb, parameters);
 
             sb.Append(" where ");
@@ -355,11 +360,15 @@ namespace Dapper.Extensions.Expression
             {
                 type = eleType;
             }
-            IList<PropertyInfo> keyProperties = TypeProvider.GetUpdateKeyProperties(type);
+            IList<PropertyInfo> keyProperties = TypeProvider.GetKeyProperties(type);
+            if (!keyProperties.Any())
+            {
+                throw new DataException($"{type} only supports an entity with a [Key] property");
+            }
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
-            string name = adapter.GetQuoteName(TypeProvider.GetTableName(type));
+            string tableName = adapter.GetTableName(type);
             StringBuilder sb = new StringBuilder();
-            sb.AppendFormat("delete from {0} where ", name);
+            sb.AppendFormat("delete from {0} where ", tableName);
             parameters = new DynamicParameters();
             for (int i = 0; i < keyProperties.Count; i++)
             {
@@ -395,9 +404,8 @@ namespace Dapper.Extensions.Expression
         private static string BuildDeleteAllSql<T>(IDbConnection connection, NamingPolicy namingPolicy)
         {
             Type type = typeof(T);
-            string name = TypeProvider.GetTableName(type);
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
-            string statement = $"delete from {adapter.GetQuoteName(name)}";
+            string statement = $"delete from {adapter.GetTableName(type)}";
             return statement;
         }
 
@@ -430,8 +438,7 @@ namespace Dapper.Extensions.Expression
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
-            string name = TypeProvider.GetTableName(typeof(T));
-            sb.AppendFormat("delete from {0} where ", adapter.GetQuoteName(name));
+            sb.AppendFormat("delete from {0} where ", adapter.GetTableName(typeof(T)));
             WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
             return sb.ToString();
         }
@@ -469,9 +476,9 @@ namespace Dapper.Extensions.Expression
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection, namingPolicy);
-                PropertyInfo key = TypeProvider.GetSingleKey<T>(nameof(Get));
-                string tableName = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
-                string keyName = sqlAdapter.GetQuoteName(key.Name);
+                //PropertyInfo key = TypeProvider.GetSingleKey<T>(nameof(Get));
+                //string tableName = sqlAdapter.GetTableName(type);
+                //string keyName = sqlAdapter.GetQuoteName(key.Name);
                 IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
                 StringBuilder sqlBuilder = new StringBuilder();
                 sqlBuilder.Append("SELECT ");
@@ -488,6 +495,7 @@ namespace Dapper.Extensions.Expression
                         sqlBuilder.Append(",");
                     }
                 }
+                string tableName = sqlAdapter.GetTableName(type);
                 sqlBuilder.AppendFormat(" FROM {0} WHERE ", tableName);
 
 
@@ -495,9 +503,9 @@ namespace Dapper.Extensions.Expression
                 //StringBuilder sb = new StringBuilder();
                 //string name = TypeProvider.GetTableName(typeof(T));
                 //sb.AppendFormat("delete from {0} where ", adapter.GetQuoteName(name));
-                WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters, false);
                 //return sb.ToString();
 
+                WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters, false);
                 sql = sqlBuilder.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
@@ -554,7 +562,7 @@ namespace Dapper.Extensions.Expression
                     sqlBuilder.Append(",");
                 }
             }
-            string tableName = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
+            string tableName = sqlAdapter.GetTableName(type);
             sqlBuilder.AppendFormat(" FROM {0}", tableName);
             sql = sqlBuilder.ToString();
             GetQueries[cacheType.TypeHandle] = sql;
@@ -592,7 +600,7 @@ namespace Dapper.Extensions.Expression
                 return sql;
             }
             ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection, namingPolicy);
-            string name = sqlAdapter.GetQuoteName(TypeProvider.GetTableName(type));
+            string name = sqlAdapter.GetTableName(type);
             sql = $"select count(*) from {name}";
             CountQueries[type.TypeHandle] = sql;
             return sql;
@@ -669,9 +677,8 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static string GetTableName<T>(this IDbConnection connection, NamingPolicy namingPolicy = NamingPolicy.None)
         {
-            string name = TypeProvider.GetTableName(typeof(T));
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
-            return adapter.GetQuoteName(name);
+            return adapter.GetTableName(typeof(T));
         }
 
         /// <summary>
