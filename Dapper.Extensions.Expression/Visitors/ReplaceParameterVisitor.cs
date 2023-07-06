@@ -10,6 +10,7 @@ namespace Dapper.Extensions.Expression.Visitors
     /// 参数替换
     /// 将第一个参数替换成t1,第二个参数替换成t2...
     /// </summary>
+    [Obsolete("unnecessary", true)]
     internal class ReplaceParameterVisitor : ExpressionVisitor
     {
         private readonly ReadOnlyCollection<ParameterExpression> _parameters;

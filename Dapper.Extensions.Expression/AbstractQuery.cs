@@ -115,7 +115,7 @@ namespace Dapper.Extensions.Expression
         protected void SetOn(JoinType joinType, LambdaExpression on, int index)
         {
             _joinTypes[index] = joinType;
-            _onExpressions[index] = ReplaceParameterVisitor.Replace(on, on.Parameters);
+            _onExpressions[index] = on;// ReplaceParameterVisitor.Replace(on, on.Parameters);
         }
 
         /// <summary>
@@ -133,7 +133,8 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(ex), ex.Parameters), _adapter, _whereBuilder, Parameters, true);
+            //WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ex, ex.Parameters), _adapter, _whereBuilder, Parameters, true);
+            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
         }
 
         /// <summary>
@@ -160,11 +161,11 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            LambdaExpression ex = ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(where), where.Parameters);
-            ParameterExpression p = ex.Parameters.Last();
-            string tableName = TypeProvider.GetTableName(p.Type);
-            _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", _adapter.GetQuoteName(tableName), _adapter.GetQuoteName(p.Name));
-            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
+            //LambdaExpression ex = ReplaceParameterVisitor.Replace(where, where.Parameters);
+            ParameterExpression p = where.Parameters.Last();
+            string tableName = _adapter.GetTableName(p.Type);
+            _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", tableName, _adapter.GetQuoteName(p.Name));
+            WhereExpressionVisitor.Visit(where, _adapter, _whereBuilder, Parameters, true);
             _whereBuilder.Append(") ");
         }
 
@@ -178,8 +179,8 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            LambdaExpression ex = ReplaceParameterVisitor.Replace(selector, selector.Parameters);
-            SelectExpressionVisitor.Visit(ex, _adapter, _whereBuilder, true);
+            //LambdaExpression ex = ReplaceParameterVisitor.Replace(selector, selector.Parameters);
+            SelectExpressionVisitor.Visit(selector, _adapter, _whereBuilder, true);
             _whereBuilder.Append(" BETWEEN ");
             WhereExpressionVisitor.AddParameter(_whereBuilder, Parameters, left);
             _whereBuilder.Append(" AND ");
@@ -214,9 +215,10 @@ namespace Dapper.Extensions.Expression
             }
             if (_orderBuilder.Length > 0)
             {
-                _orderBuilder.Append(",");
+                _orderBuilder.Append(',');
             }
-            OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, "ASC", _orderBuilder, true);
+            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, "ASC", _orderBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, "ASC", _orderBuilder, true);
         }
 
         protected void OrderByDescending(LambdaExpression keySelector)
@@ -227,9 +229,10 @@ namespace Dapper.Extensions.Expression
             }
             if (_orderBuilder.Length > 0)
             {
-                _orderBuilder.Append(",");
+                _orderBuilder.Append(',');
             }
-            OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, "DESC", _orderBuilder, true);
+            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, "DESC", _orderBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, "DESC", _orderBuilder, true);
         }
 
         protected void GroupBy(LambdaExpression keySelector)
@@ -240,9 +243,10 @@ namespace Dapper.Extensions.Expression
             }
             if (_groupBuilder.Length > 0)
             {
-                _groupBuilder.Append(",");
+                _groupBuilder.Append(',');
             }
-            OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _groupBuilder, true);
+            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _groupBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, null, _groupBuilder, true);
         }
 
         protected void Having(LambdaExpression keySelector)
@@ -251,7 +255,8 @@ namespace Dapper.Extensions.Expression
             {
                 _having = new StringBuilder();
             }
-            WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ExpressionResolver.Visit(keySelector), keySelector.Parameters), _adapter, _having, Parameters, true);
+            //WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, _having, Parameters, true);
+            WhereExpressionVisitor.Visit(keySelector, _adapter, _having, Parameters, true);
         }
 
         protected TResult Max<TResult>(LambdaExpression keySelector)
@@ -279,8 +284,9 @@ namespace Dapper.Extensions.Expression
                 _aggregateBuilder.Clear();
             }
             _aggregateBuilder.Append("MAX(");
-            OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
-            _aggregateBuilder.Append(")");
+            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, null, _aggregateBuilder, true);
+            _aggregateBuilder.Append(')');
         }
 
         protected TResult Min<TResult>(LambdaExpression keySelector)
@@ -308,8 +314,9 @@ namespace Dapper.Extensions.Expression
                 _aggregateBuilder.Clear();
             }
             _aggregateBuilder.Append("MIN(");
-            OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
-            _aggregateBuilder.Append(")");
+            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, null, _aggregateBuilder, true);
+            _aggregateBuilder.Append(')');
         }
 
         protected TResult Sum<TResult>(LambdaExpression keySelector)
@@ -341,8 +348,9 @@ namespace Dapper.Extensions.Expression
                 _aggregateBuilder.Clear();
             }
             _aggregateBuilder.Append("SUM(");
-            OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
-            _aggregateBuilder.Append(")");
+            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, null, _aggregateBuilder, true);
+            _aggregateBuilder.Append(')');
         }
 
         private bool IsFromKeySelector(LambdaExpression lambda, out ParameterExpression p)
@@ -353,27 +361,28 @@ namespace Dapper.Extensions.Expression
                 p = DefaultSelector.Parameters[0];
                 return true;
             }
-            if (!(lambda.Body is ParameterExpression bodyParameter))
+            if (lambda.Body is ParameterExpression bodyParameter)
             {
-                return false;
+                p = System.Linq.Expressions.Expression.Parameter(bodyParameter.Type, "t" + (lambda.Parameters.IndexOf(bodyParameter) + 1));
+                return true;
             }
-            foreach (LambdaExpression onExpression in _onExpressions)
-            {
-                foreach (ParameterExpression parameter in lambda.Parameters)
-                {
-                    int index = lambda.Parameters.IndexOf(parameter);
-                    if (index > lambda.Parameters.Count - 1)
-                    {
-                        continue;
-                    }
-                    if (parameter.Name != bodyParameter.Name)
-                    {
-                        continue;
-                    }
-                    p = onExpression.Parameters[index];
-                    return true;
-                }
-            }
+            //foreach (LambdaExpression onExpression in _onExpressions)
+            //{
+            //    foreach (ParameterExpression parameter in lambda.Parameters)
+            //    {
+            //        int index = lambda.Parameters.IndexOf(parameter);
+            //        if (index > lambda.Parameters.Count - 1)
+            //        {
+            //            continue;
+            //        }
+            //        if (parameter.Name != bodyParameter.Name)
+            //        {
+            //            continue;
+            //        }
+            //        p = System.Linq.Expressions.Expression.Parameter(parameter.Type, "t" + (index + 1));//  onExpression.Parameters[index];
+            //        return true;
+            //    }
+            //}
             return false;
         }
 
@@ -389,7 +398,8 @@ namespace Dapper.Extensions.Expression
             }
             else
             {
-                SelectExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(selector, selector.Parameters), _adapter, _selectBuilder, true);
+                //SelectExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(selector, selector.Parameters), _adapter, _selectBuilder, true);
+                SelectExpressionVisitor.Visit(selector, _adapter, _selectBuilder, true);
             }
         }
 
@@ -398,7 +408,7 @@ namespace Dapper.Extensions.Expression
             IList<PropertyInfo> validPropertyInfos = TypeProvider.GetCanQueryProperties(p.Type);
             foreach (var property in validPropertyInfos)
             {
-                _selectBuilder.Append(_adapter.GetQuoteName(p.Name)).Append(".");
+                _selectBuilder.Append(_adapter.GetQuoteName(p.Name)).Append('.');
                 bool isAlias = _adapter.AppendColumnName(_selectBuilder, property);
                 if (isAlias)
                 {
@@ -407,7 +417,7 @@ namespace Dapper.Extensions.Expression
                 }
                 if (validPropertyInfos.IndexOf(property) < validPropertyInfos.Count - 1)
                 {
-                    _selectBuilder.Append(",");
+                    _selectBuilder.Append(',');
                 }
             }
         }
@@ -455,13 +465,14 @@ namespace Dapper.Extensions.Expression
             foreach (ParameterExpression e in lambda.Parameters)
             {
                 int index = lambda.Parameters.IndexOf(e);
+                ParameterExpression newParam = System.Linq.Expressions.Expression.Parameter(e.Type, "t" + (index + 1));
                 if (index == 0)
                 {
-                    AddTable(sqlBuilder, e);
+                    AddTable(sqlBuilder, newParam);
                     continue;
                 }
                 sqlBuilder.AppendFormat(" {0} ", SqlProvider.JoinTypeSqlCause[_joinTypes[index - 1]]);
-                AddTable(sqlBuilder, e);
+                AddTable(sqlBuilder, newParam);
                 sqlBuilder.Append(" ON ");
                 OnExpressionVisitor.Visit(_onExpressions[index - 1], _adapter, sqlBuilder);
             }
@@ -469,8 +480,8 @@ namespace Dapper.Extensions.Expression
 
         private void AddTable(StringBuilder sqlBuilder, ParameterExpression parameter)
         {
-            _adapter.AppendQuoteName(sqlBuilder, TypeProvider.GetTableName(parameter.Type));
-            sqlBuilder.Append(" AS ").Append(_adapter.GetQuoteName(parameter.Name));
+            string tableName = _adapter.GetTableName(parameter.Type);
+            sqlBuilder.Append(tableName).Append(" AS ").Append(_adapter.GetQuoteName(parameter.Name));
         }
 
         public virtual string GetCountCommandText()

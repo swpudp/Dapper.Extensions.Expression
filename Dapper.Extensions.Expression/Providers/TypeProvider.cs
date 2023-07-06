@@ -12,8 +12,8 @@ namespace Dapper.Extensions.Expression.Providers
 {
     internal static class TypeProvider
     {
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> KeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        //private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> AutoIncrementProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
@@ -78,18 +78,6 @@ namespace Dapper.Extensions.Expression.Providers
             return notMappedPropertyInfos;
         }
 
-        internal static string GetTableName(Type type)
-        {
-            if (TypeTableName.TryGetValue(type.TypeHandle, out string name))
-            {
-                return name;
-            }
-            TableAttribute tableAttr = type.GetCustomAttribute<TableAttribute>(false);
-            name = tableAttr != null ? tableAttr.Name : type.Name;
-            TypeTableName[type.TypeHandle] = name;
-            return name;
-        }
-
         private static IList<PropertyInfo> GetAllProperties(Type type)
         {
             if (TypeProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pis))
@@ -101,24 +89,15 @@ namespace Dapper.Extensions.Expression.Providers
             return properties;
         }
 
-        private static IList<PropertyInfo> GetKeyProperties(Type type)
+        private static IList<PropertyInfo> GetAutoIncrementProperties(Type type)
         {
-            if (KeyProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
+            if (AutoIncrementProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
                 return pi;
             }
             IList<PropertyInfo> allProperties = GetAllProperties(type);
-            IList<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
-
-            if (keyProperties.Count == 0)
-            {
-                PropertyInfo idProp = allProperties.FirstOrDefault(p => string.Equals(p.Name, "id", StringComparison.CurrentCultureIgnoreCase));
-                if (idProp != null && !idProp.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute))
-                {
-                    keyProperties.Add(idProp);
-                }
-            }
-            KeyProperties[type.TypeHandle] = keyProperties;
+            IList<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => (a is KeyAttribute keyAttribute) && keyAttribute.IsAutoIncrement)).ToList();
+            AutoIncrementProperties[type.TypeHandle] = keyProperties;
             return keyProperties;
         }
 
@@ -134,7 +113,7 @@ namespace Dapper.Extensions.Expression.Providers
                 return propertyInfos;
             }
             IList<PropertyInfo> allProperties = GetAllProperties(type);
-            IEnumerable<PropertyInfo> keyProperties = GetKeyProperties(type);
+            IEnumerable<PropertyInfo> keyProperties = GetAutoIncrementProperties(type);
             IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
             IList<PropertyInfo> canWriteProperties = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
@@ -153,7 +132,7 @@ namespace Dapper.Extensions.Expression.Providers
             {
                 return properties;
             }
-            IList<PropertyInfo> keyProperties = GetUpdateKeyProperties(type);
+            IList<PropertyInfo> keyProperties = GetKeyProperties(type);
             IList<PropertyInfo> allProperties = GetAllProperties(type);
             IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
@@ -162,25 +141,13 @@ namespace Dapper.Extensions.Expression.Providers
             return nonIdProps;
         }
 
-        internal static IList<PropertyInfo> GetUpdateKeyProperties(Type type)
-        {
-            List<PropertyInfo> keyProperties = GetKeyProperties(type).ToList();
-            IList<PropertyInfo> explicitKeyProperties = GetExplicitKeyProperties(type);
-            if (keyProperties.Count == 0 && explicitKeyProperties.Count == 0)
-            {
-                throw new ArgumentException("Entity must have at least one [Key] or [ExplicitKey] property");
-            }
-            keyProperties.AddRange(explicitKeyProperties);
-            return keyProperties;
-        }
-
-        private static IList<PropertyInfo> GetExplicitKeyProperties(Type type)
+        internal static IList<PropertyInfo> GetKeyProperties(Type type)
         {
             if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
             {
                 return pi;
             }
-            List<PropertyInfo> explicitKeyProperties = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is ExplicitKeyAttribute)).ToList();
+            List<PropertyInfo> explicitKeyProperties = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
             ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
             return explicitKeyProperties;
         }
@@ -248,19 +215,19 @@ namespace Dapper.Extensions.Expression.Providers
             return methodInfo.IsStatic && declaringType == typeof(Enumerable);
         }
 
-        internal static PropertyInfo GetSingleKey<T>(string method)
-        {
-            var type = typeof(T);
-            var keys = GetKeyProperties(type);
-            var explicitKeys = GetExplicitKeyProperties(type);
-            var keyCount = keys.Count + explicitKeys.Count;
-            if (keyCount > 1)
-                throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property. [Key] Count: {keys.Count}, [ExplicitKey] Count: {explicitKeys.Count}");
-            if (keyCount == 0)
-                throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
+        //internal static PropertyInfo GetSingleKey<T>(string method)
+        //{
+        //    var type = typeof(T);
+        //    var keys = GetAutoIncrementProperties(type);
+        //    var explicitKeys = GetExplicitKeyProperties(type);
+        //    var keyCount = keys.Count + explicitKeys.Count;
+        //    if (keyCount > 1)
+        //        throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property. [Key] Count: {keys.Count}, [ExplicitKey] Count: {explicitKeys.Count}");
+        //    if (keyCount == 0)
+        //        throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
 
-            return keys.Count > 0 ? keys[0] : explicitKeys[0];
-        }
+        //    return keys.Count > 0 ? keys[0] : explicitKeys[0];
+        //}
 
         internal static readonly IList<Type> AllowTypes = new List<Type>
         {

@@ -24,22 +24,6 @@ namespace Dapper.Extensions.Expression
     }
 
     /// <summary>
-    /// Specifies that this field is a primary key in the database
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class KeyAttribute : Attribute
-    {
-    }
-
-    /// <summary>
-    /// Specifies that this field is an explicitly set primary key in the database
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property)]
-    public class ExplicitKeyAttribute : Attribute
-    {
-    }
-
-    /// <summary>
     /// 自动计算字段，不可写入和更新，可查询
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]
@@ -61,15 +45,27 @@ namespace Dapper.Extensions.Expression
     [AttributeUsage(AttributeTargets.Property)]
     public class ColumnAttribute : Attribute
     {
-        public ColumnAttribute(string columnName)
+        public ColumnAttribute(string name)
         {
-            ColumnName = columnName;
+            Name = name;
         }
 
         /// <summary>
         /// 列名
         /// </summary>
-        public string ColumnName { get; }
+        public string Name { get; }
+    }
+
+    /// <summary>
+    /// 主键称指定
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class KeyAttribute : Attribute
+    {
+        /// <summary>
+        /// 自增
+        /// </summary>
+        public bool IsAutoIncrement { get; set; }
     }
 
     public enum JoinType

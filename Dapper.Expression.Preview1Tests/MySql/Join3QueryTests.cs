@@ -1,4 +1,5 @@
-﻿using Dapper.Extensions.Expression.Queries;
+﻿using Dapper.Extensions.Expression;
+using Dapper.Extensions.Expression.Queries;
 using Dapper.Extensions.Expression.Queries.JoinQueries;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -10,13 +11,13 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 
-namespace Dapper.Extensions.Expression.UnitTests
+namespace Dapper.Extensions.Expression.UnitTests.MySql
 {
     /// <summary>
     /// 三表联合查询
     /// </summary>
     [TestClass]
-    public class Join3QueryTests : BaseTest
+    public class Join3QueryTests : MysqlBaseTest
     {
         /// <summary>
         /// 查询测试

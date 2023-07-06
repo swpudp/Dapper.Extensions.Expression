@@ -1,4 +1,5 @@
-﻿using System.Linq.Expressions;
+﻿using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 
@@ -10,6 +11,13 @@ namespace Dapper.Extensions.Expression.Adapters
     /// </summary>
     internal interface ISqlAdapter
     {
+        /// <summary>
+        /// 获取表名
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        string GetTableName(Type type);
+
         /// <summary>
         /// Adds the name of a column.
         /// </summary>
@@ -72,10 +80,5 @@ namespace Dapper.Extensions.Expression.Adapters
         /// 求字符串长度函数
         /// </summary>
         bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter);
-
-        /// <summary>
-        /// 命名策略
-        /// </summary>
-        NamingPolicy NamingPolicy { get; }
     }
 }

@@ -3,20 +3,32 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace Dapper.Extensions.Expression.UnitTests
+namespace Dapper.Extensions.Expression.UnitTests.MySql
 {
     [TestClass]
-    public class UpdateTests : BaseTest
+    public class NamingPolicyTests : MysqlBaseTest
     {
         /// <summary>
-        /// 获取表名测试
+        /// 获取SnakeCase表名测试
         /// </summary>
         [TestMethod]
-        public void GetTableNameTest()
+        public void GetSnakeCaseTableNameTest()
         {
             using IDbConnection connection = CreateConnection();
-            string tableName = connection.GetTableName<Order>();
-            Assert.AreEqual("`order`", tableName);
+            string tableName = connection.GetTableName<NamingPolicySnakeCase>(NamingPolicy.SnakeCase);
+            Assert.AreEqual("`naming_policy_snake_case`", tableName);
+        }
+
+        /// <summary>
+        /// SnakeCase写入测试
+        /// </summary>
+        [TestMethod]
+        public async Task SnakeCaseInsertTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            int count = await connection.InsertBulkAsync<NamingPolicySnakeCase>(data, null, NamingPolicy.SnakeCase);
+            Assert.AreEqual(100, count);
         }
 
         /// <summary>
@@ -26,12 +38,8 @@ namespace Dapper.Extensions.Expression.UnitTests
         public void UpdateTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order order = connection.Get<Order>("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            Assert.IsNotNull(order);
-            order.UpdateTime = DateTime.Now;
-            order.Amount = Convert.ToDecimal(new Random().NextDouble() * 100);
-            int updated = connection.Update(order);
-            Assert.IsTrue(updated > 0);
+            NamingPolicySnakeCase snakeCase = connection.Get<NamingPolicySnakeCase>(f => f.Id == new Guid("000c70b3-fccc-4838-a524-9b7edc4f9c9a"), null, NamingPolicy.SnakeCase);
+            Assert.IsNotNull(snakeCase);
         }
 
         /// <summary>
@@ -41,7 +49,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         public async Task UpdateAsyncTest()
         {
             using IDbConnection connection = CreateConnection();
-            Order order = connection.Get<Order>("06d809ff-85d1-44df-92c7-7b069433e7dd");
+            Order order = connection.Get<Order>(f => f.Id == new Guid("06d809ff-85d1-44df-92c7-7b069433e7dd"));
             Assert.IsNotNull(order);
             order.UpdateTime = DateTime.Now;
             order.Amount = Convert.ToDecimal(new Random().NextDouble() * 90);
@@ -147,7 +155,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            Order order = connection.Get<Order>(id);
+            Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
@@ -168,7 +176,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            Order order = connection.Get<Order>(id);
+            Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version + 1, f => new Order
             {
@@ -188,7 +196,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            Order order = connection.Get<Order>(id);
+            Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsDelete && !f.IsDelete && !f.IsActive.Value, f => new Order
             {
@@ -209,7 +217,7 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            Order order = connection.Get<Order>(id);
+            Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
             Guid docId = Guid.NewGuid();
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order
@@ -228,9 +236,9 @@ namespace Dapper.Extensions.Expression.UnitTests
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            Order order = connection.Get<Order>(id);
-            order.DocId = null;
+            Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
+            order.DocId = null;
             Guid docId = Guid.NewGuid();
             int updated = await connection.UpdateAsync<Order>(f => f.DocId == order.DocId, f => new Order
             {

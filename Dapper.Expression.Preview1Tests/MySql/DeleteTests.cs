@@ -1,13 +1,14 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Dapper.Extensions.Expression;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
 
-namespace Dapper.Extensions.Expression.UnitTests
+namespace Dapper.Extensions.Expression.UnitTests.MySql
 {
     [TestClass]
-    public class DeleteTests : BaseTest
+    public class DeleteTests : MysqlBaseTest
     {
         /// <summary>
         /// 删除测试

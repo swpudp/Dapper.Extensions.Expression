@@ -39,12 +39,12 @@ namespace Dapper.Extensions.Expression.MethodCalls
                 {
                     if (idx > 0)
                     {
-                        builder.Append(",");
+                        builder.Append(',');
                     }
                     idx++;
                     WhereExpressionVisitor.AddParameter(builder, parameters, v);
                 }
-                builder.Append(")");
+                builder.Append(')');
             }
             else
             {

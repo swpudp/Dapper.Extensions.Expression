@@ -13,8 +13,25 @@ using System.Text;
 
 namespace Dapper.Extensions.Expression.Visitors
 {
-    internal static class WhereExpressionVisitor
+    internal class WhereBuilderVisitor : ExpressionVisitor
     {
+
+
+
+
+        protected override System.Linq.Expressions.Expression VisitBinary(BinaryExpression node)
+        {
+            return base.VisitBinary(node);
+        }
+
+
+
+
+
+
+
+
+
         /// <summary>
         /// 表达式访问方法
         /// </summary>
@@ -67,17 +84,15 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 return;
             }
-            InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
-
-            //if (lambda.Body.NodeType != ExpressionType.MemberAccess)
-            //{
-            //    InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
-            //}
-            //else
-            //{
-            //    lambda = System.Linq.Expressions.Expression.Lambda(System.Linq.Expressions.Expression.Equal(lambda.Body, ConstantDefined.BooleanTrue), lambda.Parameters.ToArray());
-            //    InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
-            //}
+            if (lambda.Body.NodeType != ExpressionType.MemberAccess)
+            {
+                InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
+            }
+            else
+            {
+                lambda = System.Linq.Expressions.Expression.Lambda(System.Linq.Expressions.Expression.Equal(lambda.Body, ConstantDefined.BooleanTrue), lambda.Parameters.ToArray());
+                InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
+            }
         }
 
         private static void VisitBinary(System.Linq.Expressions.Expression ex, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -88,11 +103,10 @@ namespace Dapper.Extensions.Expression.Visitors
                 return;
             }
             InternalVisit(exp.Left, adapter, sqlBuilder, parameters, appendParameter);
-            bool rightIsNull = ValueIsNull(exp.Right);
             switch (ex.NodeType)
             {
                 case ExpressionType.Equal:
-                    sqlBuilder.Append(rightIsNull ? " IS NULL " : " = ");
+                    sqlBuilder.Append(RetValueIsNull(exp.Right) ? " IS NULL " : " = ");
                     break;
                 case ExpressionType.And:
                 case ExpressionType.AndAlso:
@@ -116,7 +130,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     break;
                 case ExpressionType.Not:
                 case ExpressionType.NotEqual:
-                    sqlBuilder.Append(rightIsNull ? " IS NOT NULL " : " <> ");
+                    sqlBuilder.Append(RetValueIsNull(exp.Right) ? " IS NOT NULL " : " <> ");
                     break;
                 case ExpressionType.Add:
                     sqlBuilder.Append(" + ");
@@ -124,7 +138,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 default:
                     throw new NotSupportedException($"暂不支持{ex.NodeType}操作符");
             }
-            if (!rightIsNull)
+            if (!RetValueIsNull(exp.Right))
             {
                 InternalVisit(exp.Right, adapter, sqlBuilder, parameters, appendParameter);
             }
@@ -135,22 +149,25 @@ namespace Dapper.Extensions.Expression.Visitors
         /// </summary>
         /// <param name="exp"></param>
         /// <returns></returns>
-        private static bool ValueIsNull(System.Linq.Expressions.Expression exp)
+        private static bool RetValueIsNull(System.Linq.Expressions.Expression exp)
         {
             switch (exp.NodeType)
             {
                 case ExpressionType.Constant:
-                    ConstantExpression c = (ConstantExpression)exp;
-                    return c.Value == null || c.Value == DBNull.Value;
-
-                case ExpressionType.MemberAccess:
-                    MemberExpression m = (MemberExpression)exp;
-                    if (m.Expression?.NodeType == ExpressionType.Parameter)
                     {
-                        return false;
+                        ConstantExpression c = (ConstantExpression)exp;
+                        return c.Value == null || c.Value == DBNull.Value;
                     }
-                    object value = ExpressionEvaluator.Visit(exp);
-                    return value == null;
+                case ExpressionType.MemberAccess:
+                    {
+                        MemberExpression m = (MemberExpression)exp;
+                        if (m.Expression?.NodeType == ExpressionType.Parameter)
+                        {
+                            return false;
+                        }
+                        object value = ExpressionEvaluator.Visit(exp);
+                        return value == null;
+                    }
                 default:
                     return false;
             }
@@ -182,7 +199,7 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 //访问参数，无法从父类获取子类特性
                 InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
-                MemberInfo columnProperty = TypeProvider.GetColumnProperty(member.DeclaringType, member);
+                MemberInfo columnProperty = TypeProvider.GetColumnProperty(memberExpression.Expression.Type, member);
                 adapter.AppendColumnName(sqlBuilder, columnProperty);
                 return;
             }
@@ -428,7 +445,7 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 throw new NotSupportedException();
             }
-            var ex = new ReplaceExpressionVisitor(lambda.Parameters, false).Visit(exp);
+            System.Linq.Expressions.Expression ex = new ReplaceExpressionVisitor(lambda.Parameters, false).Visit(exp);
             IList<System.Linq.Expressions.Expression> nodeExpressions = new List<System.Linq.Expressions.Expression>();
             bool needSegregate = lambda.Body.NodeType == ExpressionType.AndAlso || lambda.Body.NodeType == ExpressionType.OrElse;
             if (needSegregate)
@@ -470,6 +487,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             nodeExpressions.Clear();
         }
+
 
         private static void Visit(System.Linq.Expressions.Expression e, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
         {

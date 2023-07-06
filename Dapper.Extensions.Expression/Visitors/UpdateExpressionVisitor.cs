@@ -118,7 +118,8 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters)
         {
-            Visit(lambda.Body, adapter, builder, parameters);
+            var newExp = new ReplaceExpressionVisitor(lambda.Parameters, false).Visit(lambda) as LambdaExpression;
+            Visit(newExp.Body, adapter, builder, parameters);
         }
 
         private static void VisitNew(NewExpression e, ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters)
@@ -134,10 +135,10 @@ namespace Dapper.Extensions.Expression.Visitors
                 int index = e.Members.IndexOf(memberInfo);
                 if (index > 0)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                 }
                 string columnName = adapter.GetQuoteName(memberInfo, out _);
-                builder.Append(columnName).Append("=");
+                builder.Append(columnName).Append('=');
 
                 System.Linq.Expressions.Expression argExpression = e.Arguments[index];
                 if (!CanEvaluate(argExpression, adapter, builder, parameters))
@@ -159,15 +160,15 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 if (memberBinding.Member.IsNotMapped())
                 {
-                    throw new NotSupportedException($"NotMappedAttribute marked on property:{ memberBinding.Member.Name} of type:{memberBinding.Member.DeclaringType?.FullName}");
+                    throw new NotSupportedException($"NotMappedAttribute marked on property:{memberBinding.Member.Name} of type:{memberBinding.Member.DeclaringType?.FullName}");
                 }
                 int index = e.Bindings.IndexOf(memberBinding);
                 if (index > 0 && index < e.Bindings.Count)
                 {
-                    builder.Append(",");
+                    builder.Append(',');
                 }
                 string columnName = adapter.GetQuoteName(memberBinding.Member, out _);
-                builder.Append(columnName).Append("=");
+                builder.Append(columnName).Append('=');
                 MemberAssignment memberAssignment = (MemberAssignment)memberBinding;
                 if (!CanEvaluate(memberAssignment.Expression, adapter, builder, parameters))
                 {
