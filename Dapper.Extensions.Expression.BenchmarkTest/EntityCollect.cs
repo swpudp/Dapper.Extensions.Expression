@@ -16,7 +16,7 @@ namespace Dapper.Extensions.Expression.BenchmarkTest
     [Table("buyer")]
     public class Buyer : IEntity
     {
-        [ExplicitKey] public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         public string Name { get; set; }
 
@@ -47,7 +47,7 @@ namespace Dapper.Extensions.Expression.BenchmarkTest
     [Table("items")]
     public class Item : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public Guid OrderId { get; set; }
@@ -77,7 +77,7 @@ namespace Dapper.Extensions.Expression.BenchmarkTest
     [Table("attachment")]
     public class Attachment : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public Guid OrderId { get; set; }
@@ -92,7 +92,7 @@ namespace Dapper.Extensions.Expression.BenchmarkTest
     [Table("order")]
     public class Order : IEntity
     {
-        [ExplicitKey] public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         public Guid BuyerId { get; set; }
 
@@ -225,7 +225,7 @@ namespace Dapper.Extensions.Expression.BenchmarkTest
     [Table("log")]
     public class Log : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public DateTime Logged { get; set; }

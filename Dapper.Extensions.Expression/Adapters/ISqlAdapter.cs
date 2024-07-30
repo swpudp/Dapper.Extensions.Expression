@@ -23,7 +23,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo);
+        bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo, Type type = null);
 
         /// <summary>
         /// Adds the name of a column.
@@ -51,7 +51,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="memberInfo">The column name.</param>
         /// <param name="isAlias">别名</param>
-        string GetQuoteName(MemberInfo memberInfo, out bool isAlias);
+        string GetQuoteName(MemberInfo memberInfo, out bool isAlias, Type type = null);
 
         /// <summary>
         /// Adds a column equality to a parameter.
@@ -80,5 +80,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// 求字符串长度函数
         /// </summary>
         bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter);
+
+        string ParseBool(bool v);
     }
 }

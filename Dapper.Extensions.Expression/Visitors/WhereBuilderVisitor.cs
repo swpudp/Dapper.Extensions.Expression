@@ -199,8 +199,8 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 //访问参数，无法从父类获取子类特性
                 InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
-                MemberInfo columnProperty = TypeProvider.GetColumnProperty(memberExpression.Expression.Type, member);
-                adapter.AppendColumnName(sqlBuilder, columnProperty);
+                //MemberInfo columnProperty = TypeProvider.GetColumnProperty(memberExpression.Expression.Type, member);
+                adapter.AppendColumnName(sqlBuilder, member, memberExpression.Expression.Type);
                 return;
             }
             if (member.DeclaringType == ConstantDefined.TypeOfString)
@@ -213,15 +213,6 @@ namespace Dapper.Extensions.Expression.Visitors
             if (memberExpression.Expression.Type.IsNullable())
             {
                 throw new NotImplementedException("VisitMember:memberExpression.Expression.Type.IsNullable()");
-                //switch (member.Name)
-                //{
-                //    case ConstantDefined.MemberNameValue:
-                //        InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
-                //        return;
-                //    case ConstantDefined.MemberNameHasValue:
-                //        adapter.AppendColumnName(sqlBuilder, memberExpression.Member);
-                //        return;
-                //}
             }
             System.Linq.Expressions.Expression memberNewExpression = ExpressionEvaluator.MakeExpression(memberExpression);
             InternalVisit(memberNewExpression, adapter, sqlBuilder, parameters, appendParameter);
@@ -445,7 +436,6 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 throw new NotSupportedException();
             }
-            System.Linq.Expressions.Expression ex = new ReplaceExpressionVisitor(lambda.Parameters, false).Visit(exp);
             IList<System.Linq.Expressions.Expression> nodeExpressions = new List<System.Linq.Expressions.Expression>();
             bool needSegregate = lambda.Body.NodeType == ExpressionType.AndAlso || lambda.Body.NodeType == ExpressionType.OrElse;
             if (needSegregate)
@@ -456,13 +446,13 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             else
             {
-                nodeExpressions.Add(ex);
+                nodeExpressions.Add(exp);
             }
             foreach (System.Linq.Expressions.Expression e in nodeExpressions)
             {
                 if (needSegregate && nodeExpressions.IndexOf(e) > 0)
                 {
-                    sqlBuilder.AppendFormat(" {0} ", BinaryTypes[ex.NodeType]);
+                    sqlBuilder.AppendFormat(" {0} ", BinaryTypes[exp.NodeType]);
                 }
                 switch (e.NodeType)
                 {

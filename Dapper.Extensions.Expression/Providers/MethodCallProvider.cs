@@ -37,16 +37,12 @@ namespace Dapper.Extensions.Expression.Providers
                 return handler;
             }
             Initialize();
-            foreach (AbstractMethodCallHandler unAssignHandler in MethodCallHandlerInstances.Where(f => f.MethodName == exp.Method.Name))
+            handler = MethodCallHandlerInstances.Where(f => f.MethodName == exp.Method.Name).FirstOrDefault(f => f.IsMatch(exp));
+            if (handler == null)
             {
-                if (!unAssignHandler.IsMatch(exp))
-                {
-                    continue;
-                }
-                handler = unAssignHandler;
-                MethodCallHandlers.Add(exp.Method.MethodHandle, handler);
-                break;
+                throw new NotSupportedException(exp.Method.Name);
             }
+            MethodCallHandlers.Add(exp.Method.MethodHandle, handler);
             return handler;
         }
     }

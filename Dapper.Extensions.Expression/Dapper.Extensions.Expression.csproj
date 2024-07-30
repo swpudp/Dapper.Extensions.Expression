@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.0.7</Version>
+		<Version>1.0.9</Version>
 		<Description>将表达式翻译为sql语句</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Copyright>swpudp</Copyright>
@@ -12,15 +12,14 @@
 		<PackageReleaseNotes>add method 'whereif '</PackageReleaseNotes>
 		<EnableNETAnalyzers>True</EnableNETAnalyzers>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<AssemblyVersion>1.0.9</AssemblyVersion>
+		<FileVersion>1.0.9</FileVersion>
+		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+		<IncludeSymbols>True</IncludeSymbols>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Dapper" Version="2.0.78" />
-		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Dapper" Version="2.0.123" />
+		<PackageReference Include="Dapper" Version="2.1.21" />
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
 	</ItemGroup>

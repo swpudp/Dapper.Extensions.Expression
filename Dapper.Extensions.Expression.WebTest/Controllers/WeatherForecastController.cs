@@ -232,7 +232,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
     [Table("attachment")]
     public class Attachment : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         public string OrderId { get; set; }
@@ -247,7 +247,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
     [Table("testentity")]
     public class TestEntity : IEntity
     {
-        [ExplicitKey]
+        [Key]
         public Guid Id { get; set; }
 
         [Column("Name")]
@@ -278,7 +278,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
     [Table("buyer")]
     public class Buyer : IEntity
     {
-        [ExplicitKey] public Guid Id { get; set; }
+        [Key] public Guid Id { get; set; }
 
         public string Name { get; set; }
 
@@ -341,7 +341,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         /// <summary>
         /// Id
         /// </summary>
-        [ExplicitKey]
+        [Key]
         //[Chloe.Annotations.Column(IsPrimaryKey = true)]
         public long Id { get; set; }
 

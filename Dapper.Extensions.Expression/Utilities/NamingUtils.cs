@@ -8,27 +8,26 @@ namespace Dapper.Extensions.Expression.Utilities
 {
     internal static class NamingUtils
     {
-        internal static Dictionary<NamingPolicy, Func<string, string>> NamingPolicyHandlers = new Dictionary<NamingPolicy, Func<string, string>>
+        private static readonly Dictionary<NamingPolicy, Func<string, string>> NamingPolicyHandlers = new Dictionary<NamingPolicy, Func<string, string>>
         {
-            [NamingPolicy.None] = s => s,
-            [NamingPolicy.CamelCase] = NamingUtils.GetCamelCaseName,
-            [NamingPolicy.LowerCase] = NamingUtils.GetLowerCaseName,
-            [NamingPolicy.SnakeCase] = NamingUtils.GetSnakeCaseName,
-            [NamingPolicy.UpperCase] = NamingUtils.GetUpperCaseName,
-            [NamingPolicy.UpperSnakeCase] = NamingUtils.GetUpperSnakeCaseName
+            [NamingPolicy.CamelCase] = GetCamelCaseName,
+            [NamingPolicy.LowerCase] = GetLowerCaseName,
+            [NamingPolicy.SnakeCase] = GetSnakeCaseName,
+            [NamingPolicy.UpperCase] = GetUpperCaseName,
+            [NamingPolicy.UpperSnakeCase] = GetUpperSnakeCaseName
         };
 
-        internal static string GetCamelCaseName(string name)
+        private static string GetCamelCaseName(string name)
         {
             return string.IsNullOrEmpty(name) ? name : char.ToLower(name[0]) + name.Substring(1);
         }
 
-        internal static string GetLowerCaseName(string name)
+        private static string GetLowerCaseName(string name)
         {
             return name.ToLower();
         }
 
-        internal static string GetSnakeCaseName(string name)
+        private static string GetSnakeCaseName(string name)
         {
             if (string.IsNullOrEmpty(name))
             {
@@ -87,11 +86,26 @@ namespace Dapper.Extensions.Expression.Utilities
             return builder.ToString();
         }
 
-        internal static string GetUpperCaseName(string name) { return name.ToUpper(); }
+        private static string GetUpperCaseName(string name) { return name.ToUpper(); }
 
-        internal static string GetUpperSnakeCaseName(string name)
+        private static string GetUpperSnakeCaseName(string name)
         {
             return GetSnakeCaseName(name).ToUpper();
+        }
+
+        internal static string GetName(NamingPolicy namingPolicy, string name)
+        {
+            return NamingPolicyHandlers[namingPolicy](name);
+        }
+
+        internal static FieldNamingAttribute GetNamingAttribute(MemberInfo member)
+        {
+            FieldNamingAttribute namingAttribute = member.ReflectedType.GetCustomAttribute<FieldNamingAttribute>(true);
+            if (namingAttribute != null)
+            {
+                return namingAttribute;
+            }
+            return member.DeclaringType.GetCustomAttribute<FieldNamingAttribute>(true);
         }
     }
 }

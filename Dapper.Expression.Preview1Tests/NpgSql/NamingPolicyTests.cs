@@ -1,12 +1,14 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Dapper.Extensions.Expression.Queries;
+using Dapper.Extensions.Expression.UnitTests.MySql;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace Dapper.Extensions.Expression.UnitTests.MySql
+namespace Dapper.Extensions.Expression.UnitTests.NpgSql
 {
     [TestClass]
-    public class NamingPolicyTests : MysqlBaseTest
+    public class NamingPolicyTests : NpgSqlBaseTest
     {
         /// <summary>
         /// 获取SnakeCase表名测试
@@ -27,8 +29,27 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         {
             using IDbConnection connection = CreateConnection();
             System.Collections.Generic.IList<NamingPolicySnakeCase> data = CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
-            int count = await connection.InsertBulkAsync<NamingPolicySnakeCase>(data, null);
+            int count = await connection.InsertBulkAsync(data, null);
             Assert.AreEqual(100, count);
+        }
+
+        /// <summary>
+        /// SnakeCase写入测试
+        /// </summary>
+        [TestMethod]
+        public async Task SnakeCaseInsertAsyncTest()
+        {
+            IdentityUser user = new IdentityUser
+            {
+                Id = Guid.NewGuid().ToString().Substring(0, 24),
+                TenantId = Guid.NewGuid().ToString().Substring(0, 24),
+                UserName = Guid.NewGuid().ToString().Substring(0, 8),
+                //LockoutEnd = DateTime.Now,
+                Version = new Random().Next(DateTime.Now.Millisecond)
+            };
+            using IDbConnection connection = CreateConnection();
+            int count = await connection.InsertAsync(user);
+            Assert.AreEqual(1, count);
         }
 
         /// <summary>
@@ -246,6 +267,21 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
                 DocId = docId
             });
             Assert.IsTrue(updated > 0);
+        }
+
+        /// <summary>
+        /// 查询测试
+        /// </summary>
+        [TestMethod]
+        public async Task QueryWhereCountAsyncTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            Query<IdentityUser> query = connection.Query<IdentityUser>();
+            query.Where(v => v.Version > 0);
+            int data = await query.CountAsync();
+            Assert.IsTrue(data > 0);
+            IdentityUser identityUser = await query.FirstOrDefaultAsync<IdentityUser>();
+            Assert.IsNotNull(identityUser);
         }
     }
 }

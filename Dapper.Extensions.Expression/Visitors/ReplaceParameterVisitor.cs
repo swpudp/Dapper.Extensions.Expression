@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Linq.Expressions;
 
 namespace Dapper.Extensions.Expression.Visitors
@@ -10,7 +12,6 @@ namespace Dapper.Extensions.Expression.Visitors
     /// 参数替换
     /// 将第一个参数替换成t1,第二个参数替换成t2...
     /// </summary>
-    [Obsolete("unnecessary", true)]
     internal class ReplaceParameterVisitor : ExpressionVisitor
     {
         private readonly ReadOnlyCollection<ParameterExpression> _parameters;
@@ -23,6 +24,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         internal static LambdaExpression Replace(System.Linq.Expressions.Expression ex, ReadOnlyCollection<ParameterExpression> parameterExpressions)
         {
+            Debug.WriteLine($"new ReplaceParameterVisitor for ex.{ex.Type},parameterExpressions.{string.Join(",", parameterExpressions.Select(x => x.Name))}");
             return new ReplaceParameterVisitor(parameterExpressions).Visit(ex) as LambdaExpression;
         }
 

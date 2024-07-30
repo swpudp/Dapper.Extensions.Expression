@@ -1135,7 +1135,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             using IDbConnection connection = CreateConnection();
             IQuery query = connection.JoinQuery<Order, Item, Buyer>()
                 .On(JoinType.Left, (a, b) => a.Id == b.OrderId)
-                .On(JoinType.Left, (a, b, c) => a.BuyerId == c.Id)
+                .On(JoinType.Left, (c, d, e) => c.BuyerId == e.Id)
                   .WhereIf(queryParam.CreateTime.HasValue, (f, g, j) => f.CreateTime > queryParam.CreateTime)
                   .WhereIf(queryParam.IsDelete == true, (f, i, k) => f.IsDelete)
                   .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), (f, k, l) => f.Remark.Contains(queryParam.Key))

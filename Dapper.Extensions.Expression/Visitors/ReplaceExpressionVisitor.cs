@@ -15,6 +15,7 @@ using System.Text;
 
 namespace Dapper.Extensions.Expression.Visitors
 {
+    [Obsolete("unnecessary", true)]
     internal class ReplaceExpressionVisitor : ExpressionVisitor
     {
         private static readonly IDictionary<RuntimeTypeHandle, IDictionary<int, ParameterExpression>> NewExpressions = new ConcurrentDictionary<RuntimeTypeHandle, IDictionary<int, ParameterExpression>>();

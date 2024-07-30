@@ -23,7 +23,7 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
         /// </summary>
         protected override LambdaExpression DefaultSelector => FirstSelector;
 
-        internal JoinQuery(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 1, namingPolicy)
+        internal JoinQuery(IDbConnection connection) : base(connection, 1)
         {
         }
 

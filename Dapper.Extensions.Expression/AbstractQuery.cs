@@ -8,7 +8,6 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using Dapper.Extensions.Expression.Utilities;
 using Dapper.Extensions.Expression.Visitors;
 using Dapper.Extensions.Expression.Queries;
 
@@ -96,11 +95,11 @@ namespace Dapper.Extensions.Expression
         /// </summary>
         private readonly JoinType[] _joinTypes;
 
-        internal AbstractQuery(IDbConnection connection, int onLength, NamingPolicy namingPolicy)
+        internal AbstractQuery(IDbConnection connection, int onLength)
         {
             _joinTypes = new JoinType[onLength];
             _onExpressions = new LambdaExpression[onLength];
-            _adapter = SqlProvider.GetFormatter(connection, namingPolicy);
+            _adapter = SqlProvider.GetFormatter(connection);
             _selectBuilder = new StringBuilder();
             Parameters = new DynamicParameters();
             Connection = connection;
@@ -161,11 +160,11 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            //LambdaExpression ex = ReplaceParameterVisitor.Replace(where, where.Parameters);
-            ParameterExpression p = where.Parameters.Last();
+            LambdaExpression ex = ReplaceParameterVisitor.Replace(where, where.Parameters);
+            ParameterExpression p = ex.Parameters.Last();
             string tableName = _adapter.GetTableName(p.Type);
             _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", tableName, _adapter.GetQuoteName(p.Name));
-            WhereExpressionVisitor.Visit(where, _adapter, _whereBuilder, Parameters, true);
+            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
             _whereBuilder.Append(") ");
         }
 

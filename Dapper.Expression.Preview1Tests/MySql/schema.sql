@@ -1,4 +1,4 @@
-﻿CREATE DATABASE  if not exists `dapper_exp` /*!40100 DEFAULT CHARACTER SET utf8 */;
+﻿CREATE DATABASE  if not exists `dapper_exp`;
 
 use `dapper_exp`;
 
@@ -9,7 +9,7 @@ CREATE TABLE `attachment` (
   `Extend` varchar(45) NOT NULL,
   `Version` int(11) NOT NULL,
   PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `buyer` (
   `Id` char(36) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE `buyer` (
   `UpdateTime` datetime DEFAULT NULL,
   `Version` int(11) NOT NULL,
   PRIMARY KEY (`Id`,`CreateTime`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `items` (
   `Id` char(36) NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE `items` (
   `Unit` varchar(45) DEFAULT NULL,
   `Version` int(11) NOT NULL,
   PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `order` (
   `Id` char(36) NOT NULL,
@@ -53,14 +53,13 @@ CREATE TABLE `order` (
   `Freight` float(16,4) DEFAULT NULL,
   `DocId` char(36) DEFAULT NULL,
   `IsDelete` bit(1) NOT NULL,
-  `IsActive` bit(2) DEFAULT NULL,
   `IsActive` bit(2) not NULL default 0,
   `CreateTime` datetime NOT NULL,
   `UpdateTime` datetime DEFAULT NULL,
   `Index` INT(11) NOT NULL DEFAULT 0,
   `Version` int(11) NOT NULL,
   PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `naming_policy_snake_case` (
   `id` char(36) NOT NULL,
@@ -68,4 +67,4 @@ CREATE TABLE `naming_policy_snake_case` (
   `create_time` datetime NOT NULL,
   `version` int(11) NOT NULL,
   PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

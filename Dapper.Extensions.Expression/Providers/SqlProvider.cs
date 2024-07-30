@@ -9,18 +9,13 @@ namespace Dapper.Extensions.Expression.Providers
     {
         private static readonly IDictionary<string, ISqlAdapter> Adapters = new Dictionary<string, ISqlAdapter>
         {
-            ["mysqlconnection_" + NamingPolicy.None] = new MySqlAdapter(NamingPolicy.None),
-            ["mysqlconnection_" + NamingPolicy.CamelCase] = new MySqlAdapter(NamingPolicy.CamelCase),
-            ["mysqlconnection_" + NamingPolicy.LowerCase] = new MySqlAdapter(NamingPolicy.LowerCase),
-            ["mysqlconnection_" + NamingPolicy.SnakeCase] = new MySqlAdapter(NamingPolicy.SnakeCase),
-            ["mysqlconnection_" + NamingPolicy.UpperSnakeCase] = new MySqlAdapter(NamingPolicy.UpperSnakeCase),
-            ["mysqlconnection_" + NamingPolicy.UpperCase] = new MySqlAdapter(NamingPolicy.UpperCase)
+            ["mysqlconnection"] = new MySqlAdapter(),
+            ["npgsqlconnection"] = new NpgSqlAdapter()
         };
 
-        internal static ISqlAdapter GetFormatter(IDbConnection connection, NamingPolicy namingPolicy)
+        internal static ISqlAdapter GetFormatter(IDbConnection connection)
         {
-            string name = $"{connection.GetType().Name.ToLower()}_{namingPolicy}";
-            if (!Adapters.TryGetValue(name, out ISqlAdapter adapter))
+            if (!Adapters.TryGetValue(connection.GetType().Name.ToLower(), out ISqlAdapter adapter))
             {
                 throw new NotSupportedException("不支持的数据库类型");
             }

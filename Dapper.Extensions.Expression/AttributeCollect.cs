@@ -68,6 +68,39 @@ namespace Dapper.Extensions.Expression
         public bool IsAutoIncrement { get; set; }
     }
 
+    /// <summary>
+    /// 字段命名策略
+    /// </summary>
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+    public class FieldNamingAttribute : Attribute
+    {
+        public FieldNamingAttribute(NamingPolicy policy)
+        {
+            Policy = policy;
+        }
+
+        public NamingPolicy Policy { get; }
+    }
+
+    /// <summary>
+    /// 表名命名策略
+    /// </summary>
+
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+    public class TableNamingAttribute : Attribute
+    {
+        public TableNamingAttribute(NamingPolicy policy, string prefix = null)
+        {
+            Policy = policy;
+            Prefix = prefix;
+        }
+
+        public NamingPolicy Policy { get; }
+
+        public string Prefix { get; }
+    }
+
     public enum JoinType
     {
         Left,

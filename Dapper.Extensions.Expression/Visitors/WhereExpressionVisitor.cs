@@ -182,8 +182,8 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 //访问参数，无法从父类获取子类特性
                 InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
-                MemberInfo columnProperty = TypeProvider.GetColumnProperty(member.DeclaringType, member);
-                adapter.AppendColumnName(sqlBuilder, columnProperty);
+                //MemberInfo columnProperty = TypeProvider.GetColumnProperty(member.DeclaringType, member);
+                adapter.AppendColumnName(sqlBuilder, member, memberExpression.Expression.Type);
                 return;
             }
             if (member.DeclaringType == ConstantDefined.TypeOfString)
@@ -428,13 +428,13 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 throw new NotSupportedException();
             }
-            var ex = new ReplaceExpressionVisitor(lambda.Parameters, false).Visit(exp);
+            LambdaExpression ex = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
             IList<System.Linq.Expressions.Expression> nodeExpressions = new List<System.Linq.Expressions.Expression>();
-            bool needSegregate = lambda.Body.NodeType == ExpressionType.AndAlso || lambda.Body.NodeType == ExpressionType.OrElse;
+            bool needSegregate = ex.Body.NodeType == ExpressionType.AndAlso || ex.Body.NodeType == ExpressionType.OrElse;
             if (needSegregate)
             {
                 sqlBuilder.Append('(');
-                BinaryExpression b = (BinaryExpression)lambda.Body;
+                BinaryExpression b = (BinaryExpression)ex.Body;
                 Segregate(b, b.NodeType, nodeExpressions);
             }
             else
@@ -445,7 +445,7 @@ namespace Dapper.Extensions.Expression.Visitors
             {
                 if (needSegregate && nodeExpressions.IndexOf(e) > 0)
                 {
-                    sqlBuilder.AppendFormat(" {0} ", BinaryTypes[ex.NodeType]);
+                    sqlBuilder.AppendFormat(" {0} ", BinaryTypes[ex.Body.NodeType]);
                 }
                 switch (e.NodeType)
                 {

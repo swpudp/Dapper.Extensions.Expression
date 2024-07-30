@@ -18,7 +18,7 @@ namespace Dapper.Extensions.Expression.Queries
         /// </summary>
         protected override LambdaExpression DefaultSelector => FirstSelector;
 
-        internal Query(IDbConnection connection, NamingPolicy namingPolicy) : base(connection, 0, namingPolicy)
+        internal Query(IDbConnection connection) : base(connection, 0)
         {
             Expression<Func<T, T>> selector = t1 => t1;
         }

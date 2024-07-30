@@ -9,7 +9,6 @@ namespace Dapper.Extensions.Expression
     /// </summary>
     public enum NamingPolicy
     {
-        None,
         CamelCase,
         LowerCase,
         SnakeCase,

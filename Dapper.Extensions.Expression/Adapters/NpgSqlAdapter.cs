@@ -10,7 +10,7 @@ namespace Dapper.Extensions.Expression.Adapters
     /// <summary>
     /// The MySQL database adapter.
     /// </summary>
-    internal class MySqlAdapter : ISqlAdapter
+    internal class NpgSqlAdapter : ISqlAdapter
     {
         /// <summary>
         /// Adds the name of a column.
@@ -33,12 +33,12 @@ namespace Dapper.Extensions.Expression.Adapters
         public void AppendAliasColumnName(StringBuilder sb, MemberInfo memberInfo, MemberInfo aliasMemberInfo)
         {
             string columnName = GetQuoteName(memberInfo, out _);
-            sb.AppendFormat("{0} AS `{1}`", columnName, aliasMemberInfo.Name);
+            sb.AppendFormat("{0} AS \"{1}\"", columnName, aliasMemberInfo.Name);
         }
 
         public void AppendQuoteName(StringBuilder sb, string name)
         {
-            sb.AppendFormat("`{0}`", name);
+            sb.AppendFormat("\"{0}\"", name);
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="tableName">The table name.</param>
         public string GetQuoteName(string tableName)
         {
-            return $"`{tableName}`";
+            return $"\"{tableName}\"";
         }
 
         public string GetTableName(Type type)
@@ -75,19 +75,23 @@ namespace Dapper.Extensions.Expression.Adapters
         {
             //todo 疑问，是否能获取到真实类型
             FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
+            if (namingAttribute == null && type != null)
+            {
+                namingAttribute = type.GetCustomAttribute<FieldNamingAttribute>(true);
+            }
             if (namingAttribute != null)
             {
                 isAlias = true;
-                return $"`{NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name)}`";
+                return $"\"{NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name)}\"";
             }
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
             if (columnAttribute == null)
             {
                 isAlias = false;
-                return $"`{memberInfo.Name}`";
+                return $"\"{memberInfo.Name}\"";
             }
             isAlias = true;
-            return $"`{columnAttribute.Name}`";
+            return $"\"{columnAttribute.Name}\"";
         }
 
         /// <summary>
@@ -103,18 +107,18 @@ namespace Dapper.Extensions.Expression.Adapters
             if (namingAttribute != null)
             {
                 name = NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name);
-                sb.AppendFormat("`{0}` = @{1}", name, memberInfo.Name);
+                sb.AppendFormat("\"{0}\" = @{1}", name, memberInfo.Name);
                 return;
             }
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
             if (columnAttribute == null)
             {
-                sb.AppendFormat("`{0}` = @{1}", memberInfo.Name, memberInfo.Name);
+                sb.AppendFormat("\"{0}\" = @{1}", memberInfo.Name, memberInfo.Name);
                 name = memberInfo.Name;
             }
             else
             {
-                sb.AppendFormat("`{0}` = @{1}", columnAttribute.Name, columnAttribute.Name);
+                sb.AppendFormat("\"{0}\" = @{1}", columnAttribute.Name, columnAttribute.Name);
                 name = columnAttribute.Name;
             }
         }
@@ -129,7 +133,7 @@ namespace Dapper.Extensions.Expression.Adapters
                 return;
             }
             int currentPage = page > 1 ? page - 1 : 0;
-            sb.AppendFormat(" LIMIT {0},{1}", currentPage * pageSize, pageSize);
+            sb.AppendFormat(" LIMIT {0} OFFSET {1}", currentPage * pageSize, pageSize);
         }
 
         public void HandleDateTime(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -229,9 +233,10 @@ namespace Dapper.Extensions.Expression.Adapters
             return true;
         }
 
+
         public string ParseBool(bool v)
         {
-            return v ? "1" : "0";
+            return v ? "true" : "false";
         }
     }
 }

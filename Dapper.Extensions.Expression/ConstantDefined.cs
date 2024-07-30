@@ -35,7 +35,7 @@ namespace Dapper.Extensions.Expression
         internal static readonly ExpressionType[] AndAlsoNodeTypes = { ExpressionType.And, ExpressionType.AndAlso };
 
         /// <summary>
-        /// and类型节点
+        /// or类型节点
         /// </summary>
         internal static readonly ExpressionType[] OrAlsoNodeTypes = { ExpressionType.Or, ExpressionType.OrElse };
 
@@ -43,19 +43,19 @@ namespace Dapper.Extensions.Expression
         /// 当前时间方法定义
         /// </summary>
         internal static readonly PropertyInfo PropertyDateTimeNow = typeof(DateTime).GetProperty("Now");
-        public static readonly PropertyInfo PropertyDateTimeUtcNow = typeof(DateTime).GetProperty("UtcNow");
-        public static readonly PropertyInfo PropertyDateTimeToday = typeof(DateTime).GetProperty("Today");
+        internal static readonly PropertyInfo PropertyDateTimeUtcNow = typeof(DateTime).GetProperty("UtcNow");
+        internal static readonly PropertyInfo PropertyDateTimeToday = typeof(DateTime).GetProperty("Today");
         internal static readonly PropertyInfo PropertyDateTimeDate = typeof(DateTime).GetProperty("Date");
 
 
-        public static readonly PropertyInfo PropertyDateTimeYear = typeof(DateTime).GetProperty("Year");
-        public static readonly PropertyInfo PropertyDateTimeMonth = typeof(DateTime).GetProperty("Month");
-        public static readonly PropertyInfo PropertyDateTimeDay = typeof(DateTime).GetProperty("Day");
-        public static readonly PropertyInfo PropertyDateTimeHour = typeof(DateTime).GetProperty("Hour");
-        public static readonly PropertyInfo PropertyDateTimeMinute = typeof(DateTime).GetProperty("Minute");
-        public static readonly PropertyInfo PropertyDateTimeSecond = typeof(DateTime).GetProperty("Second");
-        public static readonly PropertyInfo PropertyDateTimeMillisecond = typeof(DateTime).GetProperty("Millisecond");
-        public static readonly PropertyInfo PropertyDateTimeDayOfWeek = typeof(DateTime).GetProperty("DayOfWeek");
+        internal static readonly PropertyInfo PropertyDateTimeYear = typeof(DateTime).GetProperty("Year");
+        internal static readonly PropertyInfo PropertyDateTimeMonth = typeof(DateTime).GetProperty("Month");
+        internal static readonly PropertyInfo PropertyDateTimeDay = typeof(DateTime).GetProperty("Day");
+        internal static readonly PropertyInfo PropertyDateTimeHour = typeof(DateTime).GetProperty("Hour");
+        internal static readonly PropertyInfo PropertyDateTimeMinute = typeof(DateTime).GetProperty("Minute");
+        internal static readonly PropertyInfo PropertyDateTimeSecond = typeof(DateTime).GetProperty("Second");
+        internal static readonly PropertyInfo PropertyDateTimeMillisecond = typeof(DateTime).GetProperty("Millisecond");
+        internal static readonly PropertyInfo PropertyDateTimeDayOfWeek = typeof(DateTime).GetProperty("DayOfWeek");
 
         internal static readonly Type TypeOfDateTime = typeof(DateTime);
         internal static readonly Type TypeOfString = typeof(string);

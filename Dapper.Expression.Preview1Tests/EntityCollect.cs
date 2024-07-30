@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using System;
 
 namespace Dapper.Extensions.Expression.UnitTests
 {
@@ -256,6 +257,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     /// <summary>
     /// 测试命名策略
     /// </summary>
+    [Naming(NamingPolicy.SnakeCase)]
     public class NamingPolicySnakeCase : IEntity
     {
         [Key]
@@ -266,6 +268,15 @@ namespace Dapper.Extensions.Expression.UnitTests
         public NamingPolicy NamingType { get; set; }
 
         public DateTime CreateTime { get; set; }
+    }
+
+    [Table("identity_user")]
+    [Naming(NamingPolicy.SnakeCase)]
+    public class IdentityUser : IdentityUser<string>
+    {
+        public string TenantId { get; set; }
+
+        public int Version { get; set; }
     }
 
     public interface IEntity
