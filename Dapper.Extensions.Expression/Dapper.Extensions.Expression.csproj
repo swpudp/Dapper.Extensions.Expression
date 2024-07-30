@@ -3,23 +3,36 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.0.9</Version>
+		<Version>1.0.10</Version>
 		<Description>将表达式翻译为sql语句</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Copyright>swpudp</Copyright>
 		<Company>swpudp</Company>
 		<Authors>swpudp@163.com</Authors>
-		<PackageReleaseNotes>add method 'whereif '</PackageReleaseNotes>
+		<PackageReleaseNotes>add naming policy</PackageReleaseNotes>
 		<EnableNETAnalyzers>True</EnableNETAnalyzers>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-		<AssemblyVersion>1.0.9</AssemblyVersion>
-		<FileVersion>1.0.9</FileVersion>
+		<AssemblyVersion>1.0.10</AssemblyVersion>
+		<FileVersion>1.0.10</FileVersion>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>True</IncludeSymbols>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RepositoryUrl>https://github.com/swpudp/Dapper.Extensions.Expression.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>Dapper;Dapper.Extension;Linq;Expression</PackageTags>
+		<PackAsTool>False</PackAsTool>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Dapper" Version="2.1.21" />
+	  <None Include="..\README.md">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Dapper" Version="2.1.35" />
 		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
 		<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />
 	</ItemGroup>

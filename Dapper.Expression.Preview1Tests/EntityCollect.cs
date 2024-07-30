@@ -257,7 +257,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     /// <summary>
     /// 测试命名策略
     /// </summary>
-    [Naming(NamingPolicy.SnakeCase)]
+    [TableNaming(NamingPolicy.SnakeCase)]
     public class NamingPolicySnakeCase : IEntity
     {
         [Key]
@@ -271,7 +271,7 @@ namespace Dapper.Extensions.Expression.UnitTests
     }
 
     [Table("identity_user")]
-    [Naming(NamingPolicy.SnakeCase)]
+    [TableNaming(NamingPolicy.SnakeCase)]
     public class IdentityUser : IdentityUser<string>
     {
         public string TenantId { get; set; }
