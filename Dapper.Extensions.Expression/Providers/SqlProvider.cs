@@ -7,15 +7,16 @@ namespace Dapper.Extensions.Expression.Providers
 {
     internal static class SqlProvider
     {
-        private static readonly IDictionary<string, ISqlAdapter> Adapters = new Dictionary<string, ISqlAdapter>
+        private static readonly Dictionary<string, ISqlAdapter> Adapters = new Dictionary<string, ISqlAdapter>
         {
-            ["mysqlconnection"] = new MySqlAdapter(),
-            ["npgsqlconnection"] = new NpgSqlAdapter()
+            ["MySqlConnection"] = new MySqlAdapter(),
+            ["NpgsqlConnection"] = new NpgSqlAdapter(),
+            ["SqlConnection"] = new MsSqlAdapter(),
         };
 
         internal static ISqlAdapter GetFormatter(IDbConnection connection)
         {
-            if (!Adapters.TryGetValue(connection.GetType().Name.ToLower(), out ISqlAdapter adapter))
+            if (!Adapters.TryGetValue(connection.GetType().Name, out ISqlAdapter adapter))
             {
                 throw new NotSupportedException("不支持的数据库类型");
             }

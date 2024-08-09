@@ -95,7 +95,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static int InsertBulk<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
+            string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos, out int maxParameterCount);
             StringBuilder parameterList = new StringBuilder();
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             var parameters = new Dictionary<string, object>();
@@ -148,7 +148,7 @@ namespace Dapper.Extensions.Expression
                     parameterList.Append(parameterName);
                 }
                 parameterList.Append(')');
-                if (parameters.Count() > MaxParameterCount || index + 1 == entities.Count)
+                if (parameters.Count() > maxParameterCount || index + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += connection.Execute(cmd, parameters, transaction, commandTimeout);
@@ -168,7 +168,7 @@ namespace Dapper.Extensions.Expression
         /// <param name="columnList"></param>
         /// <param name="canWriteProperties"></param>
         /// <returns></returns>
-        private static string GetEntityPropertyInfos<T>(IDbConnection connection, out StringBuilder columnList, out IList<PropertyInfo> canWriteProperties)
+        private static string GetEntityPropertyInfos<T>(IDbConnection connection, out StringBuilder columnList, out IList<PropertyInfo> canWriteProperties, out int maxParameterCount)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
@@ -187,6 +187,7 @@ namespace Dapper.Extensions.Expression
                     columnList.Append(", ");
                 }
             }
+            maxParameterCount = adapter.MaxParameterCount;
             return adapter.GetTableName(type);
         }
 

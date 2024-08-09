@@ -64,6 +64,7 @@ namespace Dapper.Extensions.Expression
 
         internal const string MemberNameValue = "Value";
         internal const string MemberNameHasValue = "HasValue";
+        internal const string GuidEmpty = "Empty";
 
     }
 }

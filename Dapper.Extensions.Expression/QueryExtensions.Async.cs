@@ -14,11 +14,6 @@ namespace Dapper.Extensions.Expression
     public static partial class QueryExtensions
     {
         /// <summary>
-        /// 最大参数个数
-        /// </summary>
-        private const int MaxParameterCount = 4000;
-
-        /// <summary>
         /// 当写入多条数据时，实质是循环写入
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -61,7 +56,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static async Task<int> InsertBulkAsync<T>(this IDbConnection connection, IList<T> entities, IDbTransaction transaction = null, int? commandTimeout = null)
         {
-            string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos);
+            string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos, out int maxParameterCount);
             StringBuilder parameterList = new StringBuilder();
             var parameters = new Dictionary<string, object>();
             int index = 0;
@@ -113,7 +108,7 @@ namespace Dapper.Extensions.Expression
                     parameterList.Append(parameterName);
                 }
                 parameterList.Append(')');
-                if (parameters.Count() > MaxParameterCount || index + 1 == entities.Count)
+                if (parameters.Count() > maxParameterCount || index + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += await connection.ExecuteAsync(cmd, parameters, transaction, commandTimeout);

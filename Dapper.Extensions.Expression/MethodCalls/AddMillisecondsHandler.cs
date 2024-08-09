@@ -1,22 +1,22 @@
 ﻿using Dapper.Extensions.Expression.Adapters;
-using Dapper.Extensions.Expression.Visitors;
 using System;
 using System.Linq.Expressions;
 using System.Text;
 
 namespace Dapper.Extensions.Expression.MethodCalls
 {
-    internal class NewGuidHandler : AbstractMethodCallHandler
+    internal class AddMillisecondsHandler : AbstractMethodCallHandler
     {
-        public override string MethodName => "NewGuid";
+        public override string MethodName => "AddMilliseconds";
+
         public override bool IsMatch(MethodCallExpression exp)
         {
-            return exp.Method.DeclaringType == typeof(Guid);
+            return exp.Method.DeclaringType == typeof(DateTime);
         }
 
         public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
-            WhereExpressionVisitor.AddParameter(builder, parameters, Guid.NewGuid());
+            sqlAdapter.DateTimeAddMethod(e, "Millisecond", builder, parameters, appendParameter);
         }
     }
 }

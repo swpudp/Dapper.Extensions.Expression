@@ -1,5 +1,6 @@
 ﻿using Dapper.Extensions.Expression.MethodCalls;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -9,16 +10,16 @@ namespace Dapper.Extensions.Expression.Providers
 {
     internal static class MethodCallProvider
     {
-        private static readonly IDictionary<RuntimeMethodHandle, AbstractMethodCallHandler> MethodCallHandlers = new Dictionary<RuntimeMethodHandle, AbstractMethodCallHandler>();
+        private static readonly IDictionary<RuntimeMethodHandle, AbstractMethodCallHandler> MethodCallHandlers = new ConcurrentDictionary<RuntimeMethodHandle, AbstractMethodCallHandler>();
 
-        private static readonly IList<AbstractMethodCallHandler> MethodCallHandlerInstances = new List<AbstractMethodCallHandler>();
+        private static readonly List<AbstractMethodCallHandler> MethodCallHandlerInstances = new List<AbstractMethodCallHandler>();
 
         /// <summary>
         /// 初始化实例
         /// </summary>
         private static void Initialize()
         {
-            if (MethodCallHandlerInstances.Any())
+            if (MethodCallHandlerInstances.Count != 0)
             {
                 return;
             }

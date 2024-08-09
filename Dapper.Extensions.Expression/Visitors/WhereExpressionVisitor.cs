@@ -173,11 +173,15 @@ namespace Dapper.Extensions.Expression.Visitors
                 adapter.HandleDateTime(memberExpression, sqlBuilder, parameters, appendParameter);
                 return;
             }
+            if (member.DeclaringType == typeof(Guid) && member.Name == ConstantDefined.GuidEmpty)
+            {
+                AddParameter(sqlBuilder, parameters, Guid.Empty);
+                return;
+            }
             if (memberExpression.Expression == null)
             {
                 throw new NotSupportedException();
             }
-
             if (memberExpression.Expression.NodeType == ExpressionType.Parameter)
             {
                 //访问参数，无法从父类获取子类特性
@@ -193,19 +197,11 @@ namespace Dapper.Extensions.Expression.Visitors
                     return;
                 }
             }
-            if (memberExpression.Expression.Type.IsNullable())
-            {
-                throw new NotImplementedException("VisitMember:memberExpression.Expression.Type.IsNullable()");
-                //switch (member.Name)
-                //{
-                //    case ConstantDefined.MemberNameValue:
-                //        InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
-                //        return;
-                //    case ConstantDefined.MemberNameHasValue:
-                //        adapter.AppendColumnName(sqlBuilder, memberExpression.Member);
-                //        return;
-                //}
-            }
+            //if (memberExpression.Expression.Type.IsNullable())
+            //{
+            //    ProcessUnaryMemberAccess(memberExpression, sqlBuilder, adapter, parameters, appendParameter);
+            //    return;
+            //}
             System.Linq.Expressions.Expression memberNewExpression = ExpressionEvaluator.MakeExpression(memberExpression);
             InternalVisit(memberNewExpression, adapter, sqlBuilder, parameters, appendParameter);
         }
@@ -233,18 +229,12 @@ namespace Dapper.Extensions.Expression.Visitors
         /// </summary>
         private static void VisitUnaryNot(System.Linq.Expressions.Expression e, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
-            throw new NotImplementedException("VisitUnaryNot");
-            //Debug.WriteLine(nameof(VisitUnaryNot) + sqlBuilder);
-            //if (!(e is UnaryExpression unaryExpression))
-            //{
-            //    return;
-            //}
-
-            //ConstantExpression right = um.Member.Name == ConstantDefined.MemberNameHasValue ? TypeProvider.GetNullExpression(um.Expression.Type) : TypeProvider.GetFalseExpression(um.Expression.Type);
-            //BinaryExpression binaryExpression = System.Linq.Expressions.Expression.Equal(um, ConstantDefined.BooleanFalse);
-
-            //BinaryExpression binaryExpression = PreProcessUnaryNot(unaryExpression);
-            //InternalVisit(binaryExpression, adapter, sqlBuilder, parameters, appendParameter);
+            Debug.WriteLine(nameof(VisitUnaryNot) + sqlBuilder);
+            if (!(e is UnaryExpression une))
+            {
+                return;
+            }
+            ProcessUnaryNot(une, sqlBuilder, adapter, parameters, appendParameter);
         }
 
         /// <summary>
@@ -429,6 +419,16 @@ namespace Dapper.Extensions.Expression.Visitors
                 throw new NotSupportedException();
             }
             LambdaExpression ex = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
+            if (ex.Body.NodeType == ExpressionType.Not)
+            {
+                ProcessUnaryNot((UnaryExpression)ex.Body, sqlBuilder, adapter, parameters, appendParameter);
+                return;
+            }
+            if (ex.Body.NodeType == ExpressionType.MemberAccess)
+            {
+                ProcessUnaryMemberAccess((MemberExpression)ex.Body, sqlBuilder, adapter, parameters, appendParameter);
+                return;
+            }
             IList<System.Linq.Expressions.Expression> nodeExpressions = new List<System.Linq.Expressions.Expression>();
             bool needSegregate = ex.Body.NodeType == ExpressionType.AndAlso || ex.Body.NodeType == ExpressionType.OrElse;
             if (needSegregate)
@@ -454,10 +454,10 @@ namespace Dapper.Extensions.Expression.Visitors
                         PreProcessBinary((BinaryExpression)e, sqlBuilder, adapter, parameters, appendParameter);
                         break;
                     case ExpressionType.Not:
-                        PreProcessUnaryNot((UnaryExpression)e, sqlBuilder, adapter, parameters, appendParameter);
+                        ProcessUnaryNot((UnaryExpression)e, sqlBuilder, adapter, parameters, appendParameter);
                         break;
                     case ExpressionType.MemberAccess:
-                        PreProcessMemberAccess((MemberExpression)e, sqlBuilder, adapter, parameters, appendParameter);
+                        ProcessUnaryMemberAccess((MemberExpression)e, sqlBuilder, adapter, parameters, appendParameter);
                         break;
                     default:
                         Visit(e, sqlBuilder, adapter, parameters, appendParameter);
@@ -512,7 +512,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
         }
 
-        private static void PreProcessUnaryNot(System.Linq.Expressions.UnaryExpression u, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
+        private static void ProcessUnaryNot(System.Linq.Expressions.UnaryExpression u, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
         {
             if (!(u.Operand is MemberExpression um))
             {
@@ -534,7 +534,7 @@ namespace Dapper.Extensions.Expression.Visitors
             Visit(ub, sqlBuilder, adapter, parameters, appendParameter);
         }
 
-        private static void PreProcessMemberAccess(System.Linq.Expressions.MemberExpression m, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
+        private static void ProcessUnaryMemberAccess(System.Linq.Expressions.MemberExpression m, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
         {
             if (m.Type != ConstantDefined.TypeOfBoolean)
             {

@@ -454,6 +454,10 @@ namespace Dapper.Extensions.Expression
 
         private void ParseTable(StringBuilder sqlBuilder)
         {
+            if (_onExpressions.Any(x => x == null))
+            {
+                throw new InvalidOperationException("没有on语句");
+            }
             sqlBuilder.Append(" FROM ");
             if (!_onExpressions.Any())
             {

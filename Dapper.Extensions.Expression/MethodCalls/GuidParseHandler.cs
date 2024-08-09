@@ -6,9 +6,9 @@ using System.Text;
 
 namespace Dapper.Extensions.Expression.MethodCalls
 {
-    internal class NewGuidHandler : AbstractMethodCallHandler
+    internal class GuidParseHandler : AbstractMethodCallHandler
     {
-        public override string MethodName => "NewGuid";
+        public override string MethodName => "Parse";
         public override bool IsMatch(MethodCallExpression exp)
         {
             return exp.Method.DeclaringType == typeof(Guid);
@@ -16,7 +16,8 @@ namespace Dapper.Extensions.Expression.MethodCalls
 
         public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
-            WhereExpressionVisitor.AddParameter(builder, parameters, Guid.NewGuid());
+            object value = Utilities.ExpressionEvaluator.Visit(e.Arguments[0]);
+            WhereExpressionVisitor.AddParameter(builder, parameters, value);
         }
     }
 }

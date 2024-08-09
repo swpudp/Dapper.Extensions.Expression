@@ -147,11 +147,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitCoalesce(BinaryExpression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
         {
-            builder.Append("CAST(IFNULL(");
-            Visit(e.Left, adapter, builder, appendParameter);
-            builder.Append(',');
-            Visit(e.Right, adapter, builder, appendParameter);
-            builder.Append(") AS CHAR) AS ");
+            adapter.VisitCoalesce(e, builder, appendParameter, Visit);
         }
 
         private static void VisitCall(MethodCallExpression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)

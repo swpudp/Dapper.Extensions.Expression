@@ -12,6 +12,8 @@ namespace Dapper.Extensions.Expression.Adapters
     /// </summary>
     internal class MySqlAdapter : ISqlAdapter
     {
+        public int MaxParameterCount => 4000;
+
         /// <summary>
         /// Adds the name of a column.
         /// </summary>
@@ -232,6 +234,15 @@ namespace Dapper.Extensions.Expression.Adapters
         public string ParseBool(bool v)
         {
             return v ? "1" : "0";
+        }
+
+        public void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action)
+        {
+            builder.Append("CAST(IFNULL(");
+            action(e.Left, this, builder, appendParameter);
+            builder.Append(',');
+            action(e.Right, this, builder, appendParameter);
+            builder.Append(") AS CHAR) AS ");
         }
     }
 }

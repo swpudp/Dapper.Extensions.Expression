@@ -4,14 +4,14 @@
 		<TargetFramework>net5.0</TargetFramework>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="AutoFixture" Version="4.17.0" />
-		<PackageReference Include="Chloe.MySql" Version="5.1.1" />
+		<PackageReference Include="AutoFixture" Version="4.18.1" />
+		<PackageReference Include="Chloe.MySql" Version="5.25.0" />
 		<PackageReference Include="Snowflake.Core" Version="2.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="6.0.7" />
-		<PackageReference Include="MySql.Data" Version="8.0.30" />
-		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.4.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.4.0" />
-		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.4.0" />
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.7" />
+		<PackageReference Include="MySql.Data" Version="9.0.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="6.7.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="6.7.0" />
+		<PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="6.7.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Dapper.Extensions.Expression\Dapper.Extensions.Expression.csproj" />
