@@ -14,7 +14,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
     {
         protected override IDbConnection CreateConnection()
         {
-            IDbConnection connection = new SqlConnection("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=Dapper_Exp;Integrated Security=True;Connect Timeout=30");
+            IDbConnection connection = new SqlConnection("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=E:\\projects\\Dapper.Extensions.Expression\\database\\Dapper_Exp.mdf;Integrated Security=True;Connect Timeout=30");
             return connection;
         }
     }

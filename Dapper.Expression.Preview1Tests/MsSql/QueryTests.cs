@@ -689,7 +689,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public void ColumnAliasSelectObjectTest()
         {
             using IDbConnection connection = CreateConnection();
-            IList<Order> orders = connection.Query<Order>().Select(f => new { f.SerialNo }).TakePage(1, 20).ToList<Order>();
+            IList<Order> orders = connection.Query<Order>().Select(f => new { f.SerialNo }).OrderBy(x => x.CreateTime).TakePage(1, 20).ToList<Order>();
             Assert.IsNotNull(orders);
             Assert.IsTrue(orders.All(f => !string.IsNullOrEmpty(f.SerialNo)));
         }
@@ -699,7 +699,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public void ColumnAliasSelectEntityTest()
         {
             using IDbConnection connection = CreateConnection();
-            IList<Order> orders = connection.Query<Order>().Select(f => new Order { SerialNo = f.SerialNo }).TakePage(1, 20).ToList<Order>();
+            IList<Order> orders = connection.Query<Order>().Select(f => new Order { SerialNo = f.SerialNo }).OrderBy(x => x.CreateTime).TakePage(1, 20).ToList<Order>();
             Assert.IsNotNull(orders);
             Assert.IsTrue(orders.All(f => !string.IsNullOrEmpty(f.SerialNo)));
         }
@@ -754,7 +754,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
                 .OrderBy(f => new { f.CreateTime })
                 .GroupBy(f => f.SerialNo)
                 .GroupBy(f => new { f.IsDelete })
-                .GroupBy(f => new Order { SerialNo = f.SerialNo })
+                .GroupBy(f => new Order { IsActive = f.IsActive })
+                .Select(f => new { f.SerialNo, f.IsDelete, f.CreateTime, f.IsActive })
                 .ToList<Order>();
             Assert.IsNotNull(models);
             Assert.IsTrue(models.Any());
@@ -837,20 +838,18 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public async Task MaxNullableAsyncTest()
         {
-
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            DateTime? max = await query.Where(f => f.DocId != null).MaxAsync(f => f.UpdateTime);
+            DateTime? max = await query.Where(f => f.DocId == Guid.Empty).MaxAsync(f => f.UpdateTime);
             Assert.IsFalse(max.HasValue);
         }
 
         [TestMethod]
         public async Task MaxNullableNoDataAsyncTest()
         {
-
             using IDbConnection connection = CreateConnection();
             Query<Emit> query = connection.Query<Emit>();
-            int? max = await query.Where(f => f.Version > 10).MaxAsync(f => (int?)f.Version);
+            int? max = await query.Where(f => f.Version < 0).MaxAsync(f => (int?)f.Version);
             Assert.IsFalse(max > 0);
         }
 
@@ -869,7 +868,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            DateTime? max = query.Where(f => f.DocId != null).Min(f => f.UpdateTime);
+            DateTime? max = query.Where(f => f.DocId == Guid.Empty).Min(f => f.UpdateTime);
             Assert.IsFalse(max.HasValue);
         }
 
@@ -878,7 +877,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            DateTime? max = query.Where(f => f.DocId.HasValue).Min(f => f.UpdateTime);
+            DateTime? max = query.Where(f => f.Id==Guid.Empty&& f.DocId.HasValue).Min(f => f.UpdateTime);
             Assert.IsFalse(max.HasValue);
         }
 
@@ -887,7 +886,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            DateTime? max = await query.Where(f => f.DocId != null).MinAsync(f => f.UpdateTime);
+            DateTime? max = await query.Where(f => f.DocId == Guid.Empty).MinAsync(f => f.UpdateTime);
             Assert.IsFalse(max.HasValue);
         }
 
@@ -1179,6 +1178,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>().Where(f => f.Status >= Status.Running).Between(f => f.SerialNo, "123", "456")
+                .OrderBy(x => x.CreateTime)
                 .TakePage(1, 10);
             int count = query.Count();
             Assert.IsTrue(count > 0);

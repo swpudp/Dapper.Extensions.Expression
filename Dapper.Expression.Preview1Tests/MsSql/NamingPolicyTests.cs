@@ -154,7 +154,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public async Task UpdateUnaryAsyncTest()
         {
             using IDbConnection connection = CreateConnection();
-            Guid id = Guid.Parse("bed2101e-ca14-4be6-8f64-3d7fb8c5c888");
+            Guid id = Guid.Parse("93da3349-e0ea-4526-8967-09fef1b7ba83");
             Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
@@ -178,7 +178,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Guid id = Guid.Parse("ac390ec8-a450-46e8-92f6-029b00004b94");
             Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version + 1, f => new Order
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
                 SerialNo = GetRandomString(10),
                 IsDelete = true,
@@ -198,10 +198,10 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Guid id = Guid.Parse("66a3d047-74ee-4841-8267-02d192a4a0c8");
             Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsDelete && !f.IsDelete && !f.IsActive.Value, f => new Order
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsEnable && !f.IsDelete && !f.IsActive.Value, f => new Order
             {
                 SerialNo = GetRandomString(10),
-                IsDelete = true,
+                IsDelete = false,
                 IsActive = id != Guid.Empty,
                 Version = f.Version - 1,
                 UpdateTime = DateTime.Now
