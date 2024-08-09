@@ -17,7 +17,11 @@
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
-		<PackageProjectUrl>https://github.com/swpudp/Dapper.Extensions.Expression</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/swpudp/Dapper.Extensions.Expression.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageTags>Dapper;Dapper.Extension;Linq;Expression</PackageTags>
+		<PackAsTool>False</PackAsTool>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	</PropertyGroup>
 
 	<ItemGroup>
