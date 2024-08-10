@@ -1,57 +1,30 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoFixture;
+using Dapper.Extensions.Expression.Queries;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
+using Snowflake.Core;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Transactions;
 using System.Collections.Immutable;
 using System.ComponentModel;
-using System.Text.RegularExpressions;
-using AutoFixture;
+using System.Data;
 using System.Globalization;
-using Chloe.Infrastructure;
-using Snowflake.Core;
-using Dapper.Extensions.Expression.Extensions;
-using Microsoft.Extensions.Caching.Distributed;
+using System.Linq;
 using System.Text;
-using Dapper.Extensions.Expression.Queries;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Transactions;
 
 namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class WeatherForecastController : ControllerBase
+    public class TestController(ILogger<TestController> logger, IDistributedCache cache) : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
-        private readonly ILogger<WeatherForecastController> _logger;
-        private readonly IDistributedCache _cache;
-
-
-        public WeatherForecastController(ILogger<WeatherForecastController> logger, IDistributedCache cache)
-        {
-            _logger = logger;
-            _cache = cache;
-        }
-
-        [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            var rng = new Random();
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = rng.Next(-20, 55),
-                Summary = Summaries[rng.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
+        private readonly ILogger<TestController> _logger = logger;
+        private readonly IDistributedCache _cache = cache;
 
         [HttpGet("QueryTest")]
         public IEnumerable<TestEntity> QueryTest()
@@ -75,7 +48,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
                 Items = new List<Item> { new Item { Id = Guid.NewGuid() } },
                 Logged = DateTime.Now,
                 Message = "test",
-                TestName = nameof(WeatherForecastController),
+                TestName = nameof(TestController),
                 Number = "test",
                 Type = TestType.Log
             };
@@ -131,21 +104,6 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             //    await ctx.InsertAsync(item);
             //}
             //await ctx.InsertRangeAsync(data);
-        }
-
-        public class MySqlConnectionFactory : IDbConnectionFactory
-        {
-            string _connString = null;
-            public MySqlConnectionFactory(string connString)
-            {
-                this._connString = connString;
-            }
-            public IDbConnection CreateConnection()
-            {
-                IDbConnection conn = new MySqlConnection(this._connString);
-                return conn;
-
-            }
         }
 
         private static Buyer CreateBuyer()

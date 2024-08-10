@@ -1,23 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30717.126
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35122.118
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expression", "Dapper.Extensions.Expression\Dapper.Extensions.Expression.csproj", "{F1C5380A-F8CB-42FF-A813-8CFECF4EF9CE}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Expressions.Mysql", "Dapper.Expressions.Mysql\Dapper.Expressions.Mysql.csproj", "{2BD95B87-FF62-4903-821D-3961707496D6}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Expression.UnitTests", "Dapper.Expression.UnitTests\Dapper.Expression.UnitTests.csproj", "{F94BEA05-BC98-465C-98B7-F9B80684810B}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expression.UnitTests", "Dapper.Expression.Preview1Tests\Dapper.Extensions.Expression.UnitTests.csproj", "{87111E5B-60B1-4D2E-903D-EFA28E2E83DE}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChloeMapper", "ChloeMapper\ChloeMapper.csproj", "{BF2F8AD2-0E32-4148-A73F-D4485639FB06}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expression.UnitTests", "Dapper.Expression.UnitTests\Dapper.Extensions.Expression.UnitTests.csproj", "{87111E5B-60B1-4D2E-903D-EFA28E2E83DE}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expression.WebTest", "Dapper.Extensions.Expression.WebTest\Dapper.Extensions.Expression.WebTest.csproj", "{040425FE-A3D0-435B-A8C8-B12D10038EAD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EfTest", "EfTest\EfTest.csproj", "{9760FBC4-10C6-43AC-8364-E61C93DDF396}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dapper.Extensions.Expression.BenchmarkTest", "Dapper.Extensions.Expression.BenchmarkTest\Dapper.Extensions.Expression.BenchmarkTest.csproj", "{D89D3D19-BC25-422A-B44A-2D77B914A532}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Dapper.Extensions.Expression.BenchmarkTest", "Dapper.Extensions.Expression.BenchmarkTest\Dapper.Extensions.Expression.BenchmarkTest.csproj", "{D89D3D19-BC25-422A-B44A-2D77B914A532}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,30 +21,14 @@ Global
 		{F1C5380A-F8CB-42FF-A813-8CFECF4EF9CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1C5380A-F8CB-42FF-A813-8CFECF4EF9CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1C5380A-F8CB-42FF-A813-8CFECF4EF9CE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2BD95B87-FF62-4903-821D-3961707496D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2BD95B87-FF62-4903-821D-3961707496D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2BD95B87-FF62-4903-821D-3961707496D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2BD95B87-FF62-4903-821D-3961707496D6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F94BEA05-BC98-465C-98B7-F9B80684810B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F94BEA05-BC98-465C-98B7-F9B80684810B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F94BEA05-BC98-465C-98B7-F9B80684810B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F94BEA05-BC98-465C-98B7-F9B80684810B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{87111E5B-60B1-4D2E-903D-EFA28E2E83DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{87111E5B-60B1-4D2E-903D-EFA28E2E83DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{87111E5B-60B1-4D2E-903D-EFA28E2E83DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{87111E5B-60B1-4D2E-903D-EFA28E2E83DE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BF2F8AD2-0E32-4148-A73F-D4485639FB06}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BF2F8AD2-0E32-4148-A73F-D4485639FB06}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BF2F8AD2-0E32-4148-A73F-D4485639FB06}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BF2F8AD2-0E32-4148-A73F-D4485639FB06}.Release|Any CPU.Build.0 = Release|Any CPU
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{040425FE-A3D0-435B-A8C8-B12D10038EAD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9760FBC4-10C6-43AC-8364-E61C93DDF396}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D89D3D19-BC25-422A-B44A-2D77B914A532}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D89D3D19-BC25-422A-B44A-2D77B914A532}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D89D3D19-BC25-422A-B44A-2D77B914A532}.Release|Any CPU.ActiveCfg = Release|Any CPU

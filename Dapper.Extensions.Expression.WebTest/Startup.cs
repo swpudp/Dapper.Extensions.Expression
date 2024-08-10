@@ -25,7 +25,6 @@ namespace Dapper.Extensions.Expression.WebTest
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dapper.Extensions.Expression.WebTest", Version = "v1" });
             });
-            services.AddStackExchangeRedisCache(o => o.Configuration = "127.0.0.1:6379");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
