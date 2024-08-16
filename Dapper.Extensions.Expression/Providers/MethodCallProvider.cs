@@ -10,25 +10,19 @@ namespace Dapper.Extensions.Expression.Providers
 {
     internal static class MethodCallProvider
     {
-        private static readonly IDictionary<RuntimeMethodHandle, AbstractMethodCallHandler> MethodCallHandlers = new ConcurrentDictionary<RuntimeMethodHandle, AbstractMethodCallHandler>();
+        private static readonly ConcurrentDictionary<RuntimeMethodHandle, AbstractMethodCallHandler> MethodCallHandlers = new ConcurrentDictionary<RuntimeMethodHandle, AbstractMethodCallHandler>();
 
-        private static readonly List<AbstractMethodCallHandler> MethodCallHandlerInstances = new List<AbstractMethodCallHandler>();
+        private static readonly IReadOnlyCollection<AbstractMethodCallHandler> MethodCallHandlerInstances;
 
         /// <summary>
         /// 初始化实例
         /// </summary>
-        private static void Initialize()
+        static MethodCallProvider()
         {
-            if (MethodCallHandlerInstances.Count != 0)
-            {
-                return;
-            }
-            var methodHandlerTypes = Assembly.GetExecutingAssembly().GetTypes().Where(a => a.IsClass && !a.IsAbstract && typeof(AbstractMethodCallHandler).IsAssignableFrom(a));
-            foreach (Type methodHandlerType in methodHandlerTypes)
-            {
-                AbstractMethodCallHandler instance = (AbstractMethodCallHandler)Activator.CreateInstance(methodHandlerType);
-                MethodCallHandlerInstances.Add(instance);
-            }
+            MethodCallHandlerInstances = Assembly.GetExecutingAssembly().GetTypes()
+                .Where(a => a.IsClass && !a.IsAbstract && typeof(AbstractMethodCallHandler).IsAssignableFrom(a))
+                .Select(x => (AbstractMethodCallHandler)Activator.CreateInstance(x))
+                .ToList();
         }
 
         public static AbstractMethodCallHandler GetCallHandler(MethodCallExpression exp)
@@ -37,13 +31,8 @@ namespace Dapper.Extensions.Expression.Providers
             {
                 return handler;
             }
-            Initialize();
             handler = MethodCallHandlerInstances.Where(f => f.MethodName == exp.Method.Name).FirstOrDefault(f => f.IsMatch(exp));
-            if (handler == null)
-            {
-                throw new NotSupportedException(exp.Method.Name);
-            }
-            MethodCallHandlers.Add(exp.Method.MethodHandle, handler);
+            MethodCallHandlers[exp.Method.MethodHandle] = handler ?? throw new NotSupportedException(exp.Method.Name);
             return handler;
         }
     }
