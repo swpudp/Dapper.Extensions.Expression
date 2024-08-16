@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 
@@ -1377,6 +1378,48 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2", commandText, true);
         }
 
+        /// <summary>
+        /// 并发查询测试
+        /// </summary>
+        [TestMethod]
+        public async Task ConcurrentQueryTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            Query<Order> query = connection.Query<Order>();
+            query.Where(v => v.Remark.Contains("FD2"));
+            bool data = await query.AnyAsync();
+            Assert.IsTrue(data);
+            List<Task> tasks1 = Enumerable.Range(0, 10).Select((_) => CreateStringTasks()).ToList();
+            List<Task> tasks2 = Enumerable.Range(0, 10).Select((_) => CreateGuidTasks()).ToList();
+            List<Task> tasks3 = Enumerable.Range(0, 10).Select((_) => CreateDateTimeTasks()).ToList();
+            List<Task> tasks4 = Enumerable.Range(0, 10).Select((_) => CreateAddDaysTasks()).ToList();
+            await Task.WhenAll(tasks1.Concat(tasks2).Concat(tasks3).Concat(tasks4));
+        }
+
+        private Task CreateStringTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            return Task.Run(() => connection.Query<Order>().Where(x => new List<string> { "abcd" }.Contains(x.SerialNo)).GetCommandText());
+        }
+
+        private Task CreateGuidTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            connection.Open();
+            return Task.Run(() => connection.Query<Order>().Where(x => new List<Guid> { Guid.NewGuid() }.Contains(x.Id)).GetCommandText());
+        }
+
+        private Task CreateDateTimeTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            return Task.Run(() => connection.Query<Order>().Where(x => new List<DateTime> { DateTime.Now }.Contains(x.CreateTime)).GetCommandText());
+        }
+
+        private Task CreateAddDaysTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            return Task.Run(() => connection.Query<Order>().Where(x => x.CreateTime.AddDays(1) > DateTime.Now).GetCommandText());
+        }
 
         private static string TrimAllEmpty(string content)
         {
