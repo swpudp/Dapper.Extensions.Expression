@@ -3,17 +3,17 @@
 	<PropertyGroup>
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 		<Description>将表达式翻译为sql语句</Description>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Copyright>swpudp</Copyright>
 		<Company>swpudp</Company>
 		<Authors>swpudp@163.com</Authors>
-		<PackageReleaseNotes>support sql server</PackageReleaseNotes>
+		<PackageReleaseNotes>bug fixed</PackageReleaseNotes>
 		<EnableNETAnalyzers>True</EnableNETAnalyzers>
 		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-		<AssemblyVersion>1.1.0</AssemblyVersion>
-		<FileVersion>1.1.0</FileVersion>
+		<AssemblyVersion>1.1.1</AssemblyVersion>
+		<FileVersion>1.1.1</FileVersion>
 		<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
 		<IncludeSymbols>True</IncludeSymbols>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -25,10 +25,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Include="..\README.md">
-	    <Pack>True</Pack>
-	    <PackagePath>\</PackagePath>
-	  </None>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
