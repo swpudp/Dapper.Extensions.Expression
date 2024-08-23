@@ -1,5 +1,4 @@
-﻿using Dapper.Extensions.Expression.Visitors;
-using System;
+﻿using System;
 using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -94,13 +93,25 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
 
         public JoinQuery<T1, T2> OrderBy<TK>(Expression<Func<T1, T2, TK>> keySelector)
         {
-            base.OrderBy(keySelector);
+            OrderByExpression(keySelector, ConstantDefined.OrderAsc);
             return this;
         }
 
         public JoinQuery<T1, T2> OrderByDescending<TK>(Expression<Func<T1, T2, TK>> keySelector)
         {
-            base.OrderByDescending(keySelector);
+            OrderByExpression(keySelector, ConstantDefined.OrderDesc);
+            return this;
+        }
+
+        public JoinQuery<T1, T2> OrderBy(string propertyName)
+        {
+            OrderByPropertyName(propertyName, ConstantDefined.OrderAsc);
+            return this;
+        }
+
+        public JoinQuery<T1, T2> OrderByDescending(string propertyName)
+        {
+            OrderByPropertyName(propertyName, ConstantDefined.OrderDesc);
             return this;
         }
 

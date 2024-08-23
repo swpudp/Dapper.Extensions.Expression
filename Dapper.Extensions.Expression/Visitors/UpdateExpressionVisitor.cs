@@ -118,7 +118,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters)
         {
-            var newExp = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
+            LambdaExpression newExp = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
             Visit(newExp.Body, adapter, builder, parameters);
         }
 

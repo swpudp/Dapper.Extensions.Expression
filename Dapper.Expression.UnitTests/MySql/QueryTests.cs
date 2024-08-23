@@ -1,5 +1,6 @@
 ﻿using Dapper.Extensions.Expression;
 using Dapper.Extensions.Expression.Queries;
+using Dapper.Extensions.Expression.Queries.JoinQueries;
 using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -281,7 +282,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         public void QueryConditionBlock1Test()
         {
             using IDbConnection connection = CreateConnection();
-            Expression<Func<Order, bool>> where = v => v.Status == Status.Draft && (v.IsDelete == false || v.Remark.Contains("FD")) && (v.SerialNo.Contains("FD") || v.SerialNo == "FD") && (v.CreateTime > new DateTime(2021, 3, 12) || v.UpdateTime < DateTime.Now.Date);
+            Expression<Func<Order, bool>> where = v => v.Status == Status.Draft && (v.IsDelete == false || v.Remark.Contains("FD")) && (v.SerialNo.Contains("FD") || v.SerialNo == "GD") && (v.CreateTime > new DateTime(2021, 3, 12) || v.UpdateTime < DateTime.Now.Date);
             Query<Order> query = connection.Query<Order>();
             query.Where(where);
             IEnumerable<Order> data = query.ToList<Order>();
@@ -1376,6 +1377,24 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
                   .Select(g => g.Id);
             string commandText = query.GetCommandText();
             Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2", commandText, true);
+        }
+
+        /// <summary>
+        /// 按常量排序
+        /// </summary>
+        [TestMethod]
+        public void OrderByConstTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            QueryParam queryParam = new QueryParam { Key = "CreateTime" };
+            Query<Order> query = connection.Query<Order>();
+            query.Where((f) => !f.IsDelete)
+                  .OrderBy(queryParam.Key)
+                  .OrderBy("Amount")
+                  .OrderBy((f) => f.Index);
+            Order order = query.FirstOrDefault<Order>();
+            Assert.IsNotNull(order);
+            //ORDER BY `t1`.`CreateTime` ASC ,`t1`.`Amount` ASC ,`t1`.`Index` ASC  
         }
 
         /// <summary>

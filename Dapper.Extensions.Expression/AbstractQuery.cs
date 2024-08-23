@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Dapper.Extensions.Expression.Visitors;
 using Dapper.Extensions.Expression.Queries;
+using System.Collections.ObjectModel;
 
 namespace Dapper.Extensions.Expression
 {
@@ -114,7 +115,7 @@ namespace Dapper.Extensions.Expression
         protected void SetOn(JoinType joinType, LambdaExpression on, int index)
         {
             _joinTypes[index] = joinType;
-            _onExpressions[index] = on;// ReplaceParameterVisitor.Replace(on, on.Parameters);
+            _onExpressions[index] = on;
         }
 
         /// <summary>
@@ -132,7 +133,6 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            //WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(ex, ex.Parameters), _adapter, _whereBuilder, Parameters, true);
             WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
         }
 
@@ -178,7 +178,6 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            //LambdaExpression ex = ReplaceParameterVisitor.Replace(selector, selector.Parameters);
             SelectExpressionVisitor.Visit(selector, _adapter, _whereBuilder, true);
             _whereBuilder.Append(" BETWEEN ");
             WhereExpressionVisitor.AddParameter(_whereBuilder, Parameters, left);
@@ -206,7 +205,23 @@ namespace Dapper.Extensions.Expression
             _pageSize = Math.Max(1, pageSize);
         }
 
-        protected void OrderBy(LambdaExpression keySelector)
+        private static MemberInfo GetMemberInfo(string name, ReadOnlyCollection<ParameterExpression> parameters, out ParameterExpression p)
+        {
+            p = null;
+            MemberInfo member = null;
+            foreach (ParameterExpression parameter in parameters)
+            {
+                p = parameter;
+                member = TypeProvider.GetCanQueryProperties(parameter.Type).FirstOrDefault(x => x.Name == name);
+                if (member != null)
+                {
+                    break;
+                }
+            }
+            return member;
+        }
+
+        protected void OrderByPropertyName(string propertyName, string order)
         {
             if (_orderBuilder == null)
             {
@@ -216,11 +231,12 @@ namespace Dapper.Extensions.Expression
             {
                 _orderBuilder.Append(',');
             }
-            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, "ASC", _orderBuilder, true);
-            OrderExpressionVisitor.Visit(keySelector, _adapter, "ASC", _orderBuilder, true);
+            MemberInfo member = GetMemberInfo(propertyName, DefaultSelector.Parameters, out ParameterExpression p) ?? throw new NotSupportedException($"类型{string.Join(",", DefaultSelector.Parameters.Select(x => x.Type.FullName))}未找到成员{propertyName}");
+            MemberExpression memberExpression = System.Linq.Expressions.Expression.MakeMemberAccess(p, member);
+            OrderExpressionVisitor.Visit(memberExpression, _adapter, order, _orderBuilder, true);
         }
 
-        protected void OrderByDescending(LambdaExpression keySelector)
+        protected void OrderByExpression(LambdaExpression keySelector, string order)
         {
             if (_orderBuilder == null)
             {
@@ -230,8 +246,7 @@ namespace Dapper.Extensions.Expression
             {
                 _orderBuilder.Append(',');
             }
-            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, "DESC", _orderBuilder, true);
-            OrderExpressionVisitor.Visit(keySelector, _adapter, "DESC", _orderBuilder, true);
+            OrderExpressionVisitor.Visit(keySelector, _adapter, order, _orderBuilder, true);
         }
 
         protected void GroupBy(LambdaExpression keySelector)
@@ -244,7 +259,6 @@ namespace Dapper.Extensions.Expression
             {
                 _groupBuilder.Append(',');
             }
-            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _groupBuilder, true);
             OrderExpressionVisitor.Visit(keySelector, _adapter, null, _groupBuilder, true);
         }
 
@@ -254,7 +268,6 @@ namespace Dapper.Extensions.Expression
             {
                 _having = new StringBuilder();
             }
-            //WhereExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, _having, Parameters, true);
             WhereExpressionVisitor.Visit(keySelector, _adapter, _having, Parameters, true);
         }
 
@@ -283,7 +296,6 @@ namespace Dapper.Extensions.Expression
                 _aggregateBuilder.Clear();
             }
             _aggregateBuilder.Append("MAX(");
-            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
             OrderExpressionVisitor.Visit(keySelector, _adapter, null, _aggregateBuilder, true);
             _aggregateBuilder.Append(')');
         }
@@ -313,7 +325,6 @@ namespace Dapper.Extensions.Expression
                 _aggregateBuilder.Clear();
             }
             _aggregateBuilder.Append("MIN(");
-            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
             OrderExpressionVisitor.Visit(keySelector, _adapter, null, _aggregateBuilder, true);
             _aggregateBuilder.Append(')');
         }
@@ -347,7 +358,6 @@ namespace Dapper.Extensions.Expression
                 _aggregateBuilder.Clear();
             }
             _aggregateBuilder.Append("SUM(");
-            //OrderExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(keySelector, keySelector.Parameters), _adapter, null, _aggregateBuilder, true);
             OrderExpressionVisitor.Visit(keySelector, _adapter, null, _aggregateBuilder, true);
             _aggregateBuilder.Append(')');
         }
@@ -365,23 +375,6 @@ namespace Dapper.Extensions.Expression
                 p = System.Linq.Expressions.Expression.Parameter(bodyParameter.Type, "t" + (lambda.Parameters.IndexOf(bodyParameter) + 1));
                 return true;
             }
-            //foreach (LambdaExpression onExpression in _onExpressions)
-            //{
-            //    foreach (ParameterExpression parameter in lambda.Parameters)
-            //    {
-            //        int index = lambda.Parameters.IndexOf(parameter);
-            //        if (index > lambda.Parameters.Count - 1)
-            //        {
-            //            continue;
-            //        }
-            //        if (parameter.Name != bodyParameter.Name)
-            //        {
-            //            continue;
-            //        }
-            //        p = System.Linq.Expressions.Expression.Parameter(parameter.Type, "t" + (index + 1));//  onExpression.Parameters[index];
-            //        return true;
-            //    }
-            //}
             return false;
         }
 
@@ -397,15 +390,14 @@ namespace Dapper.Extensions.Expression
             }
             else
             {
-                //SelectExpressionVisitor.Visit(ReplaceParameterVisitor.Replace(selector, selector.Parameters), _adapter, _selectBuilder, true);
                 SelectExpressionVisitor.Visit(selector, _adapter, _selectBuilder, true);
             }
         }
 
         private void ParseSelect(ParameterExpression p)
         {
-            IList<PropertyInfo> validPropertyInfos = TypeProvider.GetCanQueryProperties(p.Type);
-            foreach (var property in validPropertyInfos)
+            List<PropertyInfo> validPropertyInfos = TypeProvider.GetCanQueryProperties(p.Type);
+            foreach (PropertyInfo property in validPropertyInfos)
             {
                 _selectBuilder.Append(_adapter.GetQuoteName(p.Name)).Append('.');
                 bool isAlias = _adapter.AppendColumnName(_selectBuilder, property);

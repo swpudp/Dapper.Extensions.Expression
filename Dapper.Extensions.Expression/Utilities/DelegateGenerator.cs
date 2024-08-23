@@ -22,7 +22,7 @@ namespace Dapper.Extensions.Expression.Utilities
                 instance = System.Linq.Expressions.Expression.Convert(p, propertyOrField.DeclaringType);
             }
 
-            var memberAccess = System.Linq.Expressions.Expression.MakeMemberAccess(instance, propertyOrField);
+            MemberExpression memberAccess = System.Linq.Expressions.Expression.MakeMemberAccess(instance, propertyOrField);
 
             Type type = GetMemberType(propertyOrField);
 
@@ -32,7 +32,7 @@ namespace Dapper.Extensions.Expression.Utilities
                 body = System.Linq.Expressions.Expression.Convert(memberAccess, typeof(object));
             }
 
-            var lambda = System.Linq.Expressions.Expression.Lambda<MemberValueGetter>(body, p);
+            Expression<MemberValueGetter> lambda = System.Linq.Expressions.Expression.Lambda<MemberValueGetter>(body, p);
             MemberValueGetter ret = lambda.Compile();
 
             return ret;
@@ -56,16 +56,16 @@ namespace Dapper.Extensions.Expression.Utilities
             ParameterInfo[] parameters = method.GetParameters();
             List<System.Linq.Expressions.Expression> argExpressions = new List<System.Linq.Expressions.Expression>(parameters.Length);
 
-            var getItemMethod = typeof(object[]).GetMethod("GetValue", new[] { typeof(int) });
+            MethodInfo getItemMethod = typeof(object[]).GetMethod("GetValue", new[] { typeof(int) });
 
             for (int i = 0; i < parameters.Length; i++)
             {
                 ParameterInfo parameter = parameters[i];
 
                 //object parameter = parameters[i];
-                var parameterExp = System.Linq.Expressions.Expression.Call(pParameterArray, getItemMethod, System.Linq.Expressions.Expression.Constant(i));
+                MethodCallExpression parameterExp = System.Linq.Expressions.Expression.Call(pParameterArray, getItemMethod, System.Linq.Expressions.Expression.Constant(i));
                 //T argument = (T)parameter;
-                var argumentExp = System.Linq.Expressions.Expression.Convert(parameterExp, parameter.ParameterType);
+                UnaryExpression argumentExp = System.Linq.Expressions.Expression.Convert(parameterExp, parameter.ParameterType);
                 argExpressions.Add(argumentExp);
             }
 
@@ -75,7 +75,7 @@ namespace Dapper.Extensions.Expression.Utilities
             MethodInvoker ret;
             if (method.ReturnType == typeof(void))
             {
-                var act = System.Linq.Expressions.Expression.Lambda<Action<object, object[]>>(methodCallExp, parameterExpressions).Compile();
+                Action<object, object[]> act = System.Linq.Expressions.Expression.Lambda<Action<object, object[]>>(methodCallExp, parameterExpressions).Compile();
                 ret = MakeMethodInvoker(act);
             }
             else

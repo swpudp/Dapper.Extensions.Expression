@@ -98,7 +98,7 @@ namespace Dapper.Extensions.Expression
             string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos, out int maxParameterCount);
             StringBuilder parameterList = new StringBuilder();
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
-            var parameters = new Dictionary<string, object>();
+            Dictionary<string, object> parameters = new Dictionary<string, object>();
             int index = 0;
             int count = 0;
             foreach (T entity in entities)
@@ -115,7 +115,7 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(", ");
                     }
                     MemberInfo property = validPropertyInfos[i];
-                    var value = property.GetValue(entity);
+                    object value = property.GetValue(entity);
 
                     if (value == null)
                     {

@@ -48,7 +48,7 @@ namespace Dapper.Extensions.Expression.Utilities
         private static object VisitMemberAccess(MemberExpression exp)
         {
             if (exp.Expression == null) return exp.Member.GetValue(null);
-            var instance = Visit(exp.Expression);
+            object instance = Visit(exp.Expression);
             if (instance != null) return exp.Member.GetValue(instance);
             if (exp.Member.Name == "HasValue" && exp.Member.DeclaringType.IsNullable())
             {

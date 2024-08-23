@@ -52,7 +52,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
         {
-            var newExp = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
+            LambdaExpression newExp = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
             Visit(newExp.Body, adapter, builder, appendParameter);
         }
 
@@ -121,7 +121,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 sqlBuilder.Append("NULL");
                 return;
             }
-            var objType = exp.Value.GetType();
+            Type objType = exp.Value.GetType();
             if (objType == ConstantDefined.TypeOfBoolean)
             {
                 sqlBuilder.Append((bool)exp.Value ? "1" : "0");

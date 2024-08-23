@@ -1,5 +1,4 @@
-﻿using Dapper.Extensions.Expression.Visitors;
-using System;
+﻿using System;
 using System.Data;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -18,10 +17,7 @@ namespace Dapper.Extensions.Expression.Queries
         /// </summary>
         protected override LambdaExpression DefaultSelector => FirstSelector;
 
-        internal Query(IDbConnection connection) : base(connection, 0)
-        {
-            Expression<Func<T, T>> selector = t1 => t1;
-        }
+        internal Query(IDbConnection connection) : base(connection, 0) { }
 
         /// <summary>
         /// 设置条件
@@ -72,13 +68,25 @@ namespace Dapper.Extensions.Expression.Queries
 
         public Query<T> OrderBy<TK>(Expression<Func<T, TK>> keySelector)
         {
-            base.OrderBy(keySelector);
+            OrderByExpression(keySelector, ConstantDefined.OrderAsc);
             return this;
         }
 
         public Query<T> OrderByDescending<TK>(Expression<Func<T, TK>> keySelector)
         {
-            base.OrderByDescending(keySelector);
+            OrderByExpression(keySelector, ConstantDefined.OrderDesc);
+            return this;
+        }
+
+        public Query<T> OrderBy(string propertyName)
+        {
+            OrderByPropertyName(propertyName, ConstantDefined.OrderAsc);
+            return this;
+        }
+
+        public Query<T> OrderByDescending(string propertyName)
+        {
+            OrderByPropertyName(propertyName, ConstantDefined.OrderDesc);
             return this;
         }
 

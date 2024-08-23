@@ -33,12 +33,12 @@ namespace Dapper.Extensions.Expression.Utilities
             {
                 return name;
             }
-            var builder = new StringBuilder(name.Length + Math.Min(2, name.Length / 5));
-            var previousCategory = default(UnicodeCategory?);
+            StringBuilder builder = new StringBuilder(name.Length + Math.Min(2, name.Length / 5));
+            UnicodeCategory? previousCategory = default(UnicodeCategory?);
 
-            for (var currentIndex = 0; currentIndex < name.Length; currentIndex++)
+            for (int currentIndex = 0; currentIndex < name.Length; currentIndex++)
             {
-                var currentChar = name[currentIndex];
+                char currentChar = name[currentIndex];
                 if (currentChar == '_')
                 {
                     builder.Append('_');
@@ -46,7 +46,7 @@ namespace Dapper.Extensions.Expression.Utilities
                     continue;
                 }
 
-                var currentCategory = char.GetUnicodeCategory(currentChar);
+                UnicodeCategory currentCategory = char.GetUnicodeCategory(currentChar);
                 switch (currentCategory)
                 {
                     case UnicodeCategory.UppercaseLetter:

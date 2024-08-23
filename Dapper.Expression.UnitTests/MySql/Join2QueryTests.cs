@@ -549,6 +549,44 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             Assert.IsTrue(models.Any());
         }
 
+        /// <summary>
+        /// 按常量排序
+        /// </summary>
+        [TestMethod]
+        public void JoinOrderByConstTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            QueryParam queryParam1 = new QueryParam { Key = "CreateTime" };
+            QueryParam queryParam2 = new QueryParam { Key = "Price" };
+            JoinQuery<Order, Item> query = connection.JoinQuery<Order, Item>().On(JoinType.Left, (a, b) => a.Id == b.OrderId);
+            query.Where((f, g) => !f.IsDelete)
+                  .OrderBy(queryParam1.Key)
+                  .OrderBy(queryParam2.Key)
+                  .OrderBy("Amount")
+                  .OrderBy("Discount")
+                  .OrderBy((f, g) => f.Index)
+                  .OrderBy((f, g) => g.Code);
+            Order order = query.FirstOrDefault<Order>();
+            Assert.IsNotNull(order);
+            //ORDER BY `t1`.`CreateTime` ASC ,`t2`.`Price` ASC ,`t1`.`Amount` ASC ,`t2`.`Discount` ASC ,`t1`.`Index` ASC ,`t2`.`Code` ASC  
+        }
+
+        /// <summary>
+        /// 按常量排序
+        /// </summary>
+        [TestMethod]
+        public void JoinOrderByNewObjectTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            JoinQuery<Order, Item> query = connection.JoinQuery<Order, Item>().On(JoinType.Left, (a, b) => a.Id == b.OrderId);
+            query.Where((f, g) => !f.IsDelete)
+                  .OrderBy((_, _) => new QueryParam { Key = "CreateTime" })
+                  .OrderBy((_, _) => new QueryParam { Key = "Price" });
+            Order order = query.FirstOrDefault<Order>();
+            Assert.IsNotNull(order);
+            //ORDER BY `t1`.`CreateTime` ASC ,`t2`.`Price` ASC ,`t1`.`Amount` ASC ,`t2`.`Discount` ASC ,`t1`.`Index` ASC ,`t2`.`Code` ASC  
+        }
+
         [TestMethod]
         public void JoinGroupByTest()
         {

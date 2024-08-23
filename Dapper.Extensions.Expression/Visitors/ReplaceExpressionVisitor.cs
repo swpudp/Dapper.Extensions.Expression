@@ -1,17 +1,9 @@
-﻿using Dapper.Extensions.Expression.Adapters;
-using Dapper.Extensions.Expression.Extensions;
-using Dapper.Extensions.Expression.MethodCalls;
-using Dapper.Extensions.Expression.Providers;
-using Dapper.Extensions.Expression.Utilities;
+﻿using Dapper.Extensions.Expression.Providers;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace Dapper.Extensions.Expression.Visitors
 {
@@ -82,7 +74,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 left = um.Expression;
                 right = um.Member.Name == ConstantDefined.MemberNameHasValue ? TypeProvider.GetNullExpression(um.Expression.Type) : TypeProvider.GetFalseExpression(um.Expression.Type);
             }
-            var ub = System.Linq.Expressions.Expression.Equal(left, right);
+            BinaryExpression ub = System.Linq.Expressions.Expression.Equal(left, right);
             return base.Visit(ub);
         }
 

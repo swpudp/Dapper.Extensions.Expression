@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -12,24 +12,22 @@ namespace Dapper.Extensions.Expression.Providers
 {
     internal static class TypeProvider
     {
-        //private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> TypeTableName = new ConcurrentDictionary<RuntimeTypeHandle, string>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> AutoIncrementProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> NotMappedProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> CanWriteProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> CanUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> CanQueryProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> AutoIncrementProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> ExplicitKeyProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> NotMappedProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> CanWriteProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> CanUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> CanQueryProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression> ConstantTrueExpressions = new ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression> ConstantFalseExpressions = new ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression> ConstantNullExpressions = new ConcurrentDictionary<RuntimeTypeHandle, ConstantExpression>();
-        private static readonly ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>> ColumnProperties = new ConcurrentDictionary<RuntimeTypeHandle, IList<PropertyInfo>>();
-
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> ColumnProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
 
         private static IEnumerable<PropertyInfo> GetComputedProperties(Type type)
         {
-            if (ComputedProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
+            if (ComputedProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
             {
                 return pi;
             }
@@ -40,7 +38,7 @@ namespace Dapper.Extensions.Expression.Providers
 
         public static MemberInfo GetColumnProperty(Type type, MemberInfo member)
         {
-            if (ColumnProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> propertyInfos))
+            if (ColumnProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> propertyInfos))
             {
                 return propertyInfos.FirstOrDefault(f => f.Name == member.Name) ?? member;
             }
@@ -54,49 +52,49 @@ namespace Dapper.Extensions.Expression.Providers
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        internal static IList<PropertyInfo> GetCanQueryProperties(Type type)
+        internal static List<PropertyInfo> GetCanQueryProperties(Type type)
         {
-            if (CanQueryProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> propertyInfos))
+            if (CanQueryProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> propertyInfos))
             {
                 return propertyInfos;
             }
-            IList<PropertyInfo> props = GetAllProperties(type);
+            List<PropertyInfo> props = GetAllProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
-            IList<PropertyInfo> canQueryProperties = props.Except(notMappedProperties).ToList();
+            List<PropertyInfo> canQueryProperties = props.Except(notMappedProperties).ToList();
             CanQueryProperties[type.TypeHandle] = canQueryProperties;
             return canQueryProperties;
         }
 
         private static IEnumerable<PropertyInfo> GetNotMappedProperties(Type type)
         {
-            if (NotMappedProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
+            if (NotMappedProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
             {
                 return pi;
             }
-            IList<PropertyInfo> notMappedPropertyInfos = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is NotMappedAttribute)).ToList();
+            List<PropertyInfo> notMappedPropertyInfos = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is NotMappedAttribute)).ToList();
             NotMappedProperties[type.TypeHandle] = notMappedPropertyInfos;
             return notMappedPropertyInfos;
         }
 
-        private static IList<PropertyInfo> GetAllProperties(Type type)
+        private static List<PropertyInfo> GetAllProperties(Type type)
         {
-            if (TypeProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pis))
+            if (TypeProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pis))
             {
                 return pis;
             }
-            IList<PropertyInfo> properties = type.GetProperties().ToList();
+            List<PropertyInfo> properties = type.GetProperties().ToList();
             TypeProperties[type.TypeHandle] = properties;
             return properties;
         }
 
-        private static IList<PropertyInfo> GetAutoIncrementProperties(Type type)
+        private static List<PropertyInfo> GetAutoIncrementProperties(Type type)
         {
-            if (AutoIncrementProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
+            if (AutoIncrementProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
             {
                 return pi;
             }
-            IList<PropertyInfo> allProperties = GetAllProperties(type);
-            IList<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => (a is KeyAttribute keyAttribute) && keyAttribute.IsAutoIncrement)).ToList();
+            List<PropertyInfo> allProperties = GetAllProperties(type);
+            List<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => (a is KeyAttribute keyAttribute) && keyAttribute.IsAutoIncrement)).ToList();
             AutoIncrementProperties[type.TypeHandle] = keyProperties;
             return keyProperties;
         }
@@ -106,17 +104,17 @@ namespace Dapper.Extensions.Expression.Providers
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        internal static IList<PropertyInfo> GetCanWriteProperties(Type type)
+        internal static List<PropertyInfo> GetCanWriteProperties(Type type)
         {
-            if (CanWriteProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> propertyInfos))
+            if (CanWriteProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> propertyInfos))
             {
                 return propertyInfos;
             }
-            IList<PropertyInfo> allProperties = GetAllProperties(type);
+            List<PropertyInfo> allProperties = GetAllProperties(type);
             IEnumerable<PropertyInfo> keyProperties = GetAutoIncrementProperties(type);
             IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
-            IList<PropertyInfo> canWriteProperties = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
+            List<PropertyInfo> canWriteProperties = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
             CanWriteProperties[type.TypeHandle] = canWriteProperties;
             return canWriteProperties;
         }
@@ -126,14 +124,14 @@ namespace Dapper.Extensions.Expression.Providers
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        internal static IList<PropertyInfo> GetCanUpdateProperties(Type type)
+        internal static List<PropertyInfo> GetCanUpdateProperties(Type type)
         {
-            if (CanUpdateProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> properties))
+            if (CanUpdateProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> properties))
             {
                 return properties;
             }
-            IList<PropertyInfo> keyProperties = GetKeyProperties(type);
-            IList<PropertyInfo> allProperties = GetAllProperties(type);
+            List<PropertyInfo> keyProperties = GetKeyProperties(type);
+            List<PropertyInfo> allProperties = GetAllProperties(type);
             IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
             List<PropertyInfo> nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
@@ -141,9 +139,9 @@ namespace Dapper.Extensions.Expression.Providers
             return nonIdProps;
         }
 
-        internal static IList<PropertyInfo> GetKeyProperties(Type type)
+        internal static List<PropertyInfo> GetKeyProperties(Type type)
         {
-            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out IList<PropertyInfo> pi))
+            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
             {
                 return pi;
             }
@@ -215,21 +213,7 @@ namespace Dapper.Extensions.Expression.Providers
             return methodInfo.IsStatic && declaringType == typeof(Enumerable);
         }
 
-        //internal static PropertyInfo GetSingleKey<T>(string method)
-        //{
-        //    var type = typeof(T);
-        //    var keys = GetAutoIncrementProperties(type);
-        //    var explicitKeys = GetExplicitKeyProperties(type);
-        //    var keyCount = keys.Count + explicitKeys.Count;
-        //    if (keyCount > 1)
-        //        throw new DataException($"{method}<T> only supports an entity with a single [Key] or [ExplicitKey] property. [Key] Count: {keys.Count}, [ExplicitKey] Count: {explicitKeys.Count}");
-        //    if (keyCount == 0)
-        //        throw new DataException($"{method}<T> only supports an entity with a [Key] or an [ExplicitKey] property");
-
-        //    return keys.Count > 0 ? keys[0] : explicitKeys[0];
-        //}
-
-        internal static readonly IList<Type> AllowTypes = new List<Type>
+        internal static readonly List<Type> AllowTypes = new List<Type>
         {
             typeof(int),
             typeof(int?),
@@ -243,7 +227,6 @@ namespace Dapper.Extensions.Expression.Providers
             typeof(float?)
         };
 
-
         internal static ConstantExpression GetTrueExpression(Type type)
         {
             if (ConstantTrueExpressions.TryGetValue(type.TypeHandle, out ConstantExpression constantExpression))
@@ -254,7 +237,6 @@ namespace Dapper.Extensions.Expression.Providers
             ConstantTrueExpressions[type.TypeHandle] = constantExpression;
             return constantExpression;
         }
-
         internal static ConstantExpression GetFalseExpression(Type type)
         {
             if (ConstantFalseExpressions.TryGetValue(type.TypeHandle, out ConstantExpression constantExpression))
