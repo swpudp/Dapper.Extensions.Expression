@@ -193,7 +193,6 @@ namespace Dapper.Extensions.Expression.Adapters
                 AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(SECOND,", appendParameter);
                 return;
             }
-            /* MySql is not supports MILLISECOND */
             if (member == ConstantDefined.PropertyDateTimeDayOfWeek)
             {
                 sqlBuilder.Append('(');
