@@ -145,6 +145,13 @@ namespace Dapper.Extensions.Expression.Visitors
             throw new NotSupportedException();
         }
 
+        /// <summary>
+        /// 三元表达式
+        /// </summary>
+        /// <param name="e">表达式</param>
+        /// <param name="adapter">适配器</param>
+        /// <param name="builder">sql</param>
+        /// <param name="appendParameter">是否追加参数</param>
         private static void VisitCoalesce(BinaryExpression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
         {
             adapter.VisitCoalesce(e, builder, appendParameter, Visit);

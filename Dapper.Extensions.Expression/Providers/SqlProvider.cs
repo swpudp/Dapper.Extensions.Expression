@@ -12,6 +12,7 @@ namespace Dapper.Extensions.Expression.Providers
             ["MySqlConnection"] = new MySqlAdapter(),
             ["NpgsqlConnection"] = new NpgSqlAdapter(),
             ["SqlConnection"] = new MsSqlAdapter(),
+            ["OracleConnection"] = new OracleAdapter(),
         };
 
         internal static ISqlAdapter GetFormatter(IDbConnection connection)
