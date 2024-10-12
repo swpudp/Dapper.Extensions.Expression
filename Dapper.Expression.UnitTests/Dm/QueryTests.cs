@@ -11,10 +11,10 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 
-namespace Dapper.Extensions.Expression.UnitTests.NpgSql
+namespace Dapper.Extensions.Expression.UnitTests.Dm
 {
     [TestClass]
-    public class QueryTests : NpgSqlBaseTest
+    public class QueryTests : DmBaseTest
     {
         /// <summary>
         /// 查询测试
@@ -279,7 +279,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         public void QueryConditionBlock1Test()
         {
             using IDbConnection connection = CreateConnection();
-            Expression<Func<Order, bool>> where = v => v.Status == Status.Draft && (v.IsDelete == false || v.Remark.Contains("FD")) && (v.SerialNo.Contains("FD") || v.SerialNo == "FD") && (v.CreateTime > new DateTime(2021, 3, 12) || v.UpdateTime < DateTime.Now.Date);
+            Expression<Func<Order, bool>> where = v => v.Status == Status.Draft && (v.IsDelete == false || v.Remark.Contains("FD")) && (v.SerialNo.Contains("FD") || v.SerialNo == "GD") && (v.CreateTime > new DateTime(2021, 3, 12) || v.UpdateTime < DateTime.Now.Date);
             Query<Order> query = connection.Query<Order>();
             query.Where(where);
             IEnumerable<Order> data = query.ToList<Order>();
@@ -1194,7 +1194,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                   .Select(f => f.Id)
                   .GetCommandText();
             string expectSql =
-                "SELECT `t1`.`Id` from `order` AS `t1` WHERE `t1`.`Status`>=@w_p_1 AND (`t1`.`Number` LIKE @w_p_2 OR `t1`.`Remark` LIKE @w_p_3)";
+                "SELECT \"t1\".\"Id\" from \"order\" AS \"t1\" WHERE \"t1\".\"Status\">=:w_p_1 AND (\"t1\".\"Number\" LIKE :w_p_2 OR \"t1\".\"Remark\" LIKE :w_p_3)";
             Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);
         }
 
@@ -1207,7 +1207,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                 .Select(f => f.Id)
                 .GetCommandText();
             string expectSql =
-                "SELECT `t1`.`Id` from `order` AS `t1` WHERE (`t1`.`Status`=@w_p_1 OR `t1`.`IsDelete`=@w_p_2) AND (`t1`.`Number` LIKE @w_p_3 OR `t1`.`Remark` LIKE @w_p_4)";
+                "SELECT \"t1\".\"Id\" from \"order\" AS \"t1\" WHERE (\"t1\".\"Status\"=:w_p_1 OR \"t1\".\"IsDelete\"=:w_p_2) AND (\"t1\".\"Number\" LIKE :w_p_3 OR \"t1\".\"Remark\" LIKE :w_p_4)";
             Debug.WriteLine(sql);
             Debug.WriteLine(expectSql);
             Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);
@@ -1222,7 +1222,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                 .Select(f => f.Id)
                 .GetCommandText();
             string expectSql =
-                "SELECT `t1`.`Id` from `order` AS `t1` WHERE ((`t1`.`Status`=@w_p_1 OR `t1`.`IsDelete`=@w_p_2) AND `t1`.`IsActive`=@w_p_3) AND (`t1`.`Number` LIKE @w_p_4 OR `t1`.`Remark` LIKE @w_p_5)";
+                "SELECT \"t1\".\"Id\" from \"order\" AS \"t1\" WHERE ((\"t1\".\"Status\"=:w_p_1 OR \"t1\".\"IsDelete\"=:w_p_2) AND \"t1\".\"IsActive\"=:w_p_3) AND (\"t1\".\"Number\" LIKE :w_p_4 OR \"t1\".\"Remark\" LIKE :w_p_5)";
             Debug.WriteLine(sql);
             Debug.WriteLine(expectSql);
             Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);
@@ -1235,7 +1235,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
             string sql = connection.Query<Order>().Where(f => f.Status == Status.Running || f.IsDelete && (f.SerialNo.Contains("abc") || f.Remark.Contains("abc")))
                 .Select(f => f.Id)
                 .GetCommandText();
-            var expectSql = "SELECT `t1`.`Id` from `order` AS `t1` WHERE (`t1`.`Status`=@w_p_1 OR (`t1`.`IsDelete`=@w_p_2 AND (`t1`.`Number` LIKE @w_p_3 OR `t1`.`Remark` LIKE @w_p_4)))";
+            var expectSql = "SELECT \"t1\".\"Id\" from \"order\" AS \"t1\" WHERE (\"t1\".\"Status\"=:w_p_1 OR (\"t1\".\"IsDelete\"=:w_p_2 AND (\"t1\".\"Number\" LIKE :w_p_3 OR \"t1\".\"Remark\" LIKE :w_p_4)))";
             Debug.WriteLine(sql);
             Debug.WriteLine(expectSql);
             Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);
@@ -1249,7 +1249,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                 .Select(f => f.Id)
                 .GetCommandText();
             string expectSql =
-                "SELECT `t1`.`Id` from `order` AS `t1` WHERE (((`t1`.`Status`=@w_p_1 OR `t1`.`IsDelete`=@w_p_2) AND `t1`.`CreateTime`> NOW()) OR `t1`.`Number` LIKE @w_p_3 OR `t1`.`Remark` LIKE @w_p_4)";
+                "SELECT \"t1\".\"Id\" from \"order\" AS \"t1\" WHERE (((\"t1\".\"Status\"=:w_p_1 OR \"t1\".\"IsDelete\"=:w_p_2) AND \"t1\".\"CreateTime\"> NOW()) OR \"t1\".\"Number\" LIKE :w_p_3 OR \"t1\".\"Remark\" LIKE :w_p_4)";
             Debug.WriteLine(sql);
             Debug.WriteLine(expectSql);
             Assert.IsTrue(string.Compare(TrimAllEmpty(sql), TrimAllEmpty(expectSql), StringComparison.OrdinalIgnoreCase) == 0);
@@ -1339,7 +1339,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                   .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), f => f.Remark.Contains(queryParam.Key))
                   .Select(g => g.Id);
             string commandText = query.GetCommandText();
-            Assert.AreEqual("select `t1`.`Id` from `order` AS `t1`", commandText, true);
+            Assert.AreEqual("select \"t1\".\"Id\" from \"order\" AS \"t1\"", commandText, true);
         }
 
         /// <summary>
@@ -1356,7 +1356,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                   .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), f => f.Remark.Contains(queryParam.Key))
                   .Select(g => g.Id);
             string commandText = query.GetCommandText();
-            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2 AND `t1`.`Remark` LIKE @w_p_3", commandText, true);
+            Assert.AreEqual("SELECT \"t1\".\"Id\" FROM \"order\" AS \"t1\" WHERE \"t1\".\"CreateTime\" > :w_p_1 AND \"t1\".\"IsDelete\" = :w_p_2 AND \"t1\".\"Remark\" LIKE :w_p_3", commandText, true);
         }
 
         /// <summary>
@@ -1373,9 +1373,69 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                   .WhereIf(!string.IsNullOrWhiteSpace(queryParam.Key), f => f.Remark.Contains(queryParam.Key))
                   .Select(g => g.Id);
             string commandText = query.GetCommandText();
-            Assert.AreEqual("SELECT `t1`.`Id` FROM `order` AS `t1` WHERE `t1`.`CreateTime` > @w_p_1 AND `t1`.`IsDelete` = @w_p_2", commandText, true);
+            Assert.AreEqual("SELECT \"t1\".\"Id\" FROM \"order\" AS \"t1\" WHERE \"t1\".\"CreateTime\" > :w_p_1 AND \"t1\".\"IsDelete\" = :w_p_2", commandText, true);
         }
 
+        /// <summary>
+        /// 按常量排序
+        /// </summary>
+        [TestMethod]
+        public void OrderByConstTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            QueryParam queryParam = new QueryParam { Key = "CreateTime" };
+            Query<Order> query = connection.Query<Order>();
+            query.Where((f) => !f.IsDelete)
+                  .OrderBy(queryParam.Key)
+                  .OrderBy("Amount")
+                  .OrderBy((f) => f.Index);
+            Order order = query.FirstOrDefault<Order>();
+            Assert.IsNotNull(order);
+            //ORDER BY \"t1\".\"CreateTime\" ASC ,\"t1\".\"Amount\" ASC ,\"t1\".\"Index\" ASC  
+        }
+
+        /// <summary>
+        /// 并发查询测试
+        /// </summary>
+        [TestMethod]
+        public async Task ConcurrentQueryTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            Query<Order> query = connection.Query<Order>();
+            query.Where(v => v.Remark.Contains("FD2"));
+            bool data = await query.AnyAsync();
+            Assert.IsTrue(data);
+            List<Task> tasks1 = Enumerable.Range(0, 10).Select((_) => CreateStringTasks()).ToList();
+            List<Task> tasks2 = Enumerable.Range(0, 10).Select((_) => CreateGuidTasks()).ToList();
+            List<Task> tasks3 = Enumerable.Range(0, 10).Select((_) => CreateDateTimeTasks()).ToList();
+            List<Task> tasks4 = Enumerable.Range(0, 10).Select((_) => CreateAddDaysTasks()).ToList();
+            await Task.WhenAll(tasks1.Concat(tasks2).Concat(tasks3).Concat(tasks4));
+        }
+
+        private Task CreateStringTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            return Task.Run(() => connection.Query<Order>().Where(x => new List<string> { "abcd" }.Contains(x.SerialNo)).GetCommandText());
+        }
+
+        private Task CreateGuidTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            connection.Open();
+            return Task.Run(() => connection.Query<Order>().Where(x => new List<Guid> { Guid.NewGuid() }.Contains(x.Id)).GetCommandText());
+        }
+
+        private Task CreateDateTimeTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            return Task.Run(() => connection.Query<Order>().Where(x => new List<DateTime> { DateTime.Now }.Contains(x.CreateTime)).GetCommandText());
+        }
+
+        private Task CreateAddDaysTasks()
+        {
+            using IDbConnection connection = CreateConnection();
+            return Task.Run(() => connection.Query<Order>().Where(x => x.CreateTime.AddDays(1) > DateTime.Now).GetCommandText());
+        }
 
         private static string TrimAllEmpty(string content)
         {

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -96,5 +97,36 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="appendParameter">是否追加参数</param>
         /// <param name="action">访问表达式动作</param>
         void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action);
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数容器</param>
+        /// <param name="name">列名称</param>
+        /// <param name="parameterName">参数名称</param>
+        void AddBinaryParameter(StringBuilder builder, string colName, string parameterName);
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数容器</param>
+        /// <param name="name">参数名称</param>
+        void AddParameter(StringBuilder builder, string name);
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数列表</param>
+        /// <param name="name">参数名称</param>
+        /// <param name="value">参数值</param>
+        void AddParameter(Dictionary<string, object> parameters, string name, object value);
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数列表</param>
+        /// <param name="name">参数名称</param>
+        /// <param name="value">参数值</param>
+        void AddParameter(DynamicParameters parameters, string name, object value);
     }
 }

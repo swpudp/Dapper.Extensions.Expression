@@ -3,10 +3,10 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace Dapper.Extensions.Expression.UnitTests.MySql
+namespace Dapper.Extensions.Expression.UnitTests.Dm
 {
     [TestClass]
-    public class NamingPolicyTests : MysqlBaseTest
+    public class NamingPolicyTests : DmBaseTest
     {
         /// <summary>
         /// 获取SnakeCase表名测试
@@ -26,8 +26,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         public async Task SnakeCaseInsertTest()
         {
             using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = MySqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
-            int count = await connection.InsertBulkAsync(data, null);
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = DmObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            int count = await connection.InsertBulkAsync<NamingPolicySnakeCase>(data, null);
             Assert.AreEqual(100, count);
         }
 

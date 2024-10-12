@@ -26,7 +26,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public async Task SnakeCaseInsertTest()
         {
             using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = MsSqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
             int count = await connection.InsertBulkAsync<NamingPolicySnakeCase>(data, null);
             Assert.AreEqual(100, count);
         }
@@ -83,7 +83,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             {
                 UpdateTime = DateTime.Now,
                 Amount = amount,
-                Number = GetRandomString(10),
+                Number = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = f.IsDelete,
                 Version = f.Version + 1,
@@ -102,7 +102,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             string id = "7e198311-0bdc-4dec-97a1-01b03c356eba";
             int updated = connection.Update<Order>(f => f.Id == Guid.Parse(id), f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = f.IsDelete,
                 Version = f.Version + 1,
@@ -119,7 +119,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("2bcba2b6-6a84-4b77-90f6-01e477d8594d");
-            int updated = connection.Update<Order>(f => f.Id == id, f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = connection.Update<Order>(f => f.Id == id, f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -131,7 +131,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             string id = "4e9395b0-56eb-41b6-95a4-020dc083014d";
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == Guid.Parse(id), f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == Guid.Parse(id), f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -143,7 +143,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("36783f7f-1e22-4d24-b592-029a5775e21d");
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -159,7 +159,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 Version = f.Version + 1,
                 Amount = f.Amount * 2,
@@ -180,7 +180,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
                 Version = f.Version - 1
@@ -200,7 +200,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsEnable && !f.IsDelete && !f.IsActive.Value, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = false,
                 IsActive = id != Guid.Empty,
                 Version = f.Version - 1,

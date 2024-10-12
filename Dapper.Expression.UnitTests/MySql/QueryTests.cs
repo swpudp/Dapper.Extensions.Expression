@@ -1,7 +1,5 @@
 ﻿using Dapper.Extensions.Expression;
 using Dapper.Extensions.Expression.Queries;
-using Dapper.Extensions.Expression.Queries.JoinQueries;
-using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -10,7 +8,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
 using System.Threading.Tasks;
 
 

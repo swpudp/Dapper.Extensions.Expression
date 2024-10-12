@@ -15,22 +15,10 @@ namespace Dapper.Extensions.Expression.Visitors
 {
     internal class WhereBuilderVisitor : ExpressionVisitor
     {
-
-
-
-
         protected override System.Linq.Expressions.Expression VisitBinary(BinaryExpression node)
         {
             return base.VisitBinary(node);
         }
-
-
-
-
-
-
-
-
 
         /// <summary>
         /// 表达式访问方法
@@ -60,20 +48,20 @@ namespace Dapper.Extensions.Expression.Visitors
             [ExpressionType.Parameter] = VisitParameter
         };
 
-        internal static void AddParameter(StringBuilder sqlBuilder, DynamicParameters parameters, object value)
+        internal static void AddParameter(ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, object value)
         {
             int paramIndex = parameters.ParameterNames.Count();
-            string parameterName = $"@w_p_{paramIndex + 1}";
-            sqlBuilder.Append(parameterName);
-            parameters.Add(parameterName, value);
+            string parameterName = $"w_p_{paramIndex + 1}";
+            adapter.AddParameter(sqlBuilder, parameterName);
+            adapter.AddParameter(parameters, parameterName, value);
         }
 
-        private static void AddParameter(StringBuilder sqlBuilder, DynamicParameters parameters, string columnName, object value)
+        private static void AddParameter(ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, string columnName, object value)
         {
             int paramIndex = parameters.ParameterNames.Count();
-            string parameterName = $"@w_p_{paramIndex + 1}";
-            sqlBuilder.AppendFormat("{0}={1}", columnName, parameterName);
-            parameters.Add(parameterName, value);
+            string parameterName = $"w_p_{paramIndex + 1}";
+            adapter.AddBinaryParameter(sqlBuilder, columnName, parameterName);
+            adapter.AddParameter(parameters, parameterName, value);
         }
 
         private static void VisitLambda(System.Linq.Expressions.Expression e, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -232,7 +220,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             else
             {
-                AddParameter(sqlBuilder, parameters, constant.Value);
+                AddParameter(adapter, sqlBuilder, parameters, constant.Value);
             }
         }
 
@@ -310,12 +298,12 @@ namespace Dapper.Extensions.Expression.Visitors
                     }
                     object value = memberInfo.GetValue(instance);
                     string columnName = adapter.GetQuoteName(memberInfo, out _);
-                    AddParameter(sqlBuilder, parameters, columnName, value);
+                    AddParameter(adapter, sqlBuilder, parameters, columnName, value);
                 }
             }
             else
             {
-                AddParameter(sqlBuilder, parameters, instance);
+                AddParameter(adapter, sqlBuilder, parameters, instance);
             }
         }
 
@@ -343,7 +331,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 MemberAssignment memberAssignment = (MemberAssignment)memberBinding;
                 object value = ExpressionEvaluator.Visit(memberAssignment.Expression);
                 string columnName = adapter.GetQuoteName(memberBinding.Member, out _);
-                AddParameter(sqlBuilder, parameters, columnName, value);
+                AddParameter(adapter, sqlBuilder, parameters, columnName, value);
             }
         }
 
@@ -355,7 +343,7 @@ namespace Dapper.Extensions.Expression.Visitors
             Debug.WriteLine(nameof(VisitNewArray) + sqlBuilder);
             if (!(e is NewArrayExpression arrayExpression)) return;
             object value = ExpressionEvaluator.Visit(arrayExpression);
-            AddParameter(sqlBuilder, parameters, value);
+            AddParameter(adapter, sqlBuilder, parameters, value);
         }
 
         /// <summary>
@@ -365,7 +353,7 @@ namespace Dapper.Extensions.Expression.Visitors
         {
             if (!(e is ListInitExpression initExpression)) return;
             object value = ExpressionEvaluator.Visit(initExpression);
-            AddParameter(sqlBuilder, parameters, value);
+            AddParameter(adapter, sqlBuilder, parameters, value);
         }
 
         /// <summary>

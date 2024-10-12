@@ -75,7 +75,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             {
                 UpdateTime = DateTime.Now,
                 Amount = amount,
-                Number = GetRandomString(10),
+                Number = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = f.IsDelete,
                 Version = f.Version + 1,
@@ -94,7 +94,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             string id = "000c70b3-fccc-4838-a524-9b7edc4f9c9a";
             int updated = connection.Update<Order>(f => f.Id == Guid.Parse(id), f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = f.IsDelete,
                 Version = f.Version + 1,
@@ -111,7 +111,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            int updated = connection.Update<Order>(f => f.Id == id, f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = connection.Update<Order>(f => f.Id == id, f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -123,7 +123,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             string id = "000c70b3-fccc-4838-a524-9b7edc4f9c9a";
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == Guid.Parse(id), f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == Guid.Parse(id), f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -135,7 +135,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -151,7 +151,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 Version = f.Version + 1,
                 Amount = f.Amount * 2,
@@ -172,7 +172,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
                 Version = f.Version + 1
@@ -192,7 +192,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsDelete && !f.IsEnable && !f.IsActive.Value, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
                 Version = f.Version + 1,

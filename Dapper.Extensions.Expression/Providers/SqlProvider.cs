@@ -13,6 +13,7 @@ namespace Dapper.Extensions.Expression.Providers
             ["NpgsqlConnection"] = new NpgSqlAdapter(),
             ["SqlConnection"] = new MsSqlAdapter(),
             ["OracleConnection"] = new OracleAdapter(),
+            ["DmConnection"] = new DmSqlAdapter(),
         };
 
         internal static ISqlAdapter GetFormatter(IDbConnection connection)

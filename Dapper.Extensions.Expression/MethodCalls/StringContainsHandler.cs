@@ -20,7 +20,7 @@ namespace Dapper.Extensions.Expression.MethodCalls
             WhereExpressionVisitor.InternalVisit(e.Object, sqlAdapter, builder, parameters, appendParameter);
             builder.Append(" LIKE ");
             object v = ExpressionEvaluator.Visit(e.Arguments[0]);
-            WhereExpressionVisitor.AddParameter(builder, parameters, "%" + v + "%");
+            WhereExpressionVisitor.AddParameter(sqlAdapter, builder, parameters, "%" + v + "%");
         }
     }
 }

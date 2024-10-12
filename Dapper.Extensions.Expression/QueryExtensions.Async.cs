@@ -1,4 +1,6 @@
-﻿using Dapper.Extensions.Expression.Extensions;
+﻿using Dapper.Extensions.Expression.Adapters;
+using Dapper.Extensions.Expression.Extensions;
+using Dapper.Extensions.Expression.Providers;
 using Dapper.Extensions.Expression.Queries;
 using System;
 using System.Collections.Generic;
@@ -24,7 +26,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static Task<int> InsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql(connection,entity, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -40,7 +42,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static Task<int> UniqueInsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql(connection,entity, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert ignore into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -59,6 +61,7 @@ namespace Dapper.Extensions.Expression
             string tableName = GetEntityPropertyInfos<T>(connection, out StringBuilder columnList, out IList<PropertyInfo> validPropertyInfos, out int maxParameterCount);
             StringBuilder parameterList = new StringBuilder();
             Dictionary<string, object> parameters = new Dictionary<string, object>();
+            ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             int index = 0;
             int count = 0;
             foreach (T entity in entities)
@@ -103,9 +106,9 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(value.ToString());
                         continue;
                     }
-                    string parameterName = $"@{property.Name}_{index}";
-                    parameters.Add(parameterName, value);
-                    parameterList.Append(parameterName);
+                    string parameterName = $"{property.Name}_{index}";
+                    adapter.AddParameter(parameters, parameterName, value);
+                    adapter.AddParameter(parameterList, parameterName);
                 }
                 parameterList.Append(')');
                 if (parameters.Count() > maxParameterCount || index + 1 == entities.Count)

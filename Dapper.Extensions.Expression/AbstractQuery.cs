@@ -180,9 +180,9 @@ namespace Dapper.Extensions.Expression
             }
             SelectExpressionVisitor.Visit(selector, _adapter, _whereBuilder, true);
             _whereBuilder.Append(" BETWEEN ");
-            WhereExpressionVisitor.AddParameter(_whereBuilder, Parameters, left);
+            WhereExpressionVisitor.AddParameter(_adapter, _whereBuilder, Parameters, left);
             _whereBuilder.Append(" AND ");
-            WhereExpressionVisitor.AddParameter(_whereBuilder, Parameters, right);
+            WhereExpressionVisitor.AddParameter(_adapter, _whereBuilder, Parameters, right);
         }
 
         /// <summary>

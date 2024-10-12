@@ -1,5 +1,4 @@
-﻿using Dapper.Extensions.Expression.Utilities;
-using Dapper.Extensions.Expression.Visitors;
+﻿using Dapper.Extensions.Expression.Visitors;
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -10,120 +9,15 @@ namespace Dapper.Extensions.Expression.Adapters
     /// <summary>
     /// The Oracle database adapter.
     /// </summary>
-    internal class OracleAdapter : ISqlAdapter
+    internal class OracleAdapter : AbstractSqlAdapter, ISqlAdapter
     {
-        public int MaxParameterCount => 4000;
+        public override int MaxParameterCount => 4000;
 
-        /// <summary>
-        /// Adds the name of a column.
-        /// </summary>
-        /// <param name="sb">The string builder  to append to.</param>
-        /// <param name="memberInfo">The column name.</param>
-        public bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo, Type type = null)
-        {
-            string name = GetQuoteName(memberInfo, out bool isAlias, type);
-            sb.Append(name);
-            return isAlias;
-        }
+        public override string ParameterPrefix => "@";
 
-        /// <summary>
-        /// Adds the name of a column.
-        /// </summary>
-        /// <param name="sb">The string builder  to append to.</param>
-        /// <param name="memberInfo">The column name.</param>
-        /// <param name="aliasMemberInfo">别名</param>
-        public void AppendAliasColumnName(StringBuilder sb, MemberInfo memberInfo, MemberInfo aliasMemberInfo)
-        {
-            string columnName = GetQuoteName(memberInfo, out _);
-            sb.AppendFormat("{0} AS \"{1}\"", columnName, aliasMemberInfo.Name);
-        }
+        public override string LeftQuote => "\"";
 
-        public void AppendQuoteName(StringBuilder sb, string name)
-        {
-            sb.AppendFormat("\"{0}\"", name);
-        }
-
-        /// <summary>
-        /// Adds the name of a table.
-        /// </summary>
-        /// <param name="tableName">The table name.</param>
-        public string GetQuoteName(string tableName)
-        {
-            return $"\"{tableName}\"";
-        }
-
-        public string GetTableName(Type type)
-        {
-            string tableName;
-            TableNamingAttribute namingAttribute = type.GetCustomAttribute<TableNamingAttribute>();
-            if (namingAttribute != null)
-            {
-                tableName = NamingUtils.GetName(namingAttribute.Policy, type.Name);
-            }
-            else
-            {
-                TableAttribute tableAttr = type.GetCustomAttribute<TableAttribute>();
-                tableName = tableAttr != null ? tableAttr.Name : type.Name;
-            }
-            return GetQuoteName(tableName);
-        }
-
-        /// <summary>
-        /// Adds the name of a column.
-        /// </summary>
-        /// <param name="memberInfo">The column name.</param>
-        /// <param name="isAlias"></param>
-        public string GetQuoteName(MemberInfo memberInfo, out bool isAlias, Type type = null)
-        {
-            //todo 疑问，是否能获取到真实类型
-            FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
-            if (namingAttribute == null && type != null)
-            {
-                namingAttribute = type.GetCustomAttribute<FieldNamingAttribute>(true);
-            }
-            if (namingAttribute != null)
-            {
-                isAlias = true;
-                return $"\"{NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name)}\"";
-            }
-            ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
-            if (columnAttribute == null)
-            {
-                isAlias = false;
-                return $"\"{memberInfo.Name}\"";
-            }
-            isAlias = true;
-            return $"\"{columnAttribute.Name}\"";
-        }
-
-        /// <summary>
-        /// Adds a column equality to a parameter.
-        /// </summary>
-        /// <param name="sb">The string builder  to append to.</param>
-        /// <param name="memberInfo">The column name.</param>
-        /// <param name="name"></param>
-        public void AppendColumnNameEqualsValue(StringBuilder sb, MemberInfo memberInfo, out string name)
-        {
-            //todo 疑问，是否能获取到真实类型
-            FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
-            if (namingAttribute != null)
-            {
-                name = NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name);
-                sb.AppendFormat("\"{0}\" = @{1}", name, memberInfo.Name);
-                return;
-            }
-            ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
-            if (columnAttribute == null)
-            {
-                sb.AppendFormat("\"{0}\" = @{1}", memberInfo.Name, memberInfo.Name);
-                name = memberInfo.Name;
-            }
-            else
-            {
-                sb.AppendFormat("\"{0}\" = @{1}", columnAttribute.Name, columnAttribute.Name);
-                name = columnAttribute.Name;
-            }
-        }
+        public override string RightQuote => "\"";
 
         /// <summary>
         /// 增加分页信息
@@ -200,7 +94,6 @@ namespace Dapper.Extensions.Expression.Adapters
                 sqlBuilder.Append(" - 1)");
             }
         }
-
         private void AppendDatePart(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, string functionName, bool appendParameter)
         {
             sqlBuilder.Append("EXTRACT(");
@@ -236,8 +129,7 @@ namespace Dapper.Extensions.Expression.Adapters
             return true;
         }
 
-
-        public string ParseBool(bool v)
+        public override string ParseBool(bool v)
         {
             return v ? "true" : "false";
         }

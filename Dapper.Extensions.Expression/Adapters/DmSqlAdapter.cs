@@ -7,13 +7,13 @@ using System.Text;
 namespace Dapper.Extensions.Expression.Adapters
 {
     /// <summary>
-    /// The PostgreSQL database adapter.
+    /// The DaMeng database adapter.
     /// </summary>
-    internal class NpgSqlAdapter : AbstractSqlAdapter, ISqlAdapter
+    internal class DmSqlAdapter : AbstractSqlAdapter, ISqlAdapter
     {
         public override int MaxParameterCount => 4000;
 
-        public override string ParameterPrefix => "@";
+        public override string ParameterPrefix => ":";
 
         public override string LeftQuote => "\"";
 
@@ -29,7 +29,7 @@ namespace Dapper.Extensions.Expression.Adapters
                 return;
             }
             int currentPage = page > 1 ? page - 1 : 0;
-            sb.AppendFormat(" LIMIT {0} OFFSET {1}", currentPage * pageSize, pageSize);
+            sb.AppendFormat(" LIMIT {0},{1}", currentPage * pageSize, pageSize);
         }
 
         public void HandleDateTime(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -128,15 +128,9 @@ namespace Dapper.Extensions.Expression.Adapters
             return true;
         }
 
-
-        public override string ParseBool(bool v)
-        {
-            return v ? "true" : "false";
-        }
-
         public void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action)
         {
-            builder.Append("CAST(COALESCE(");
+            builder.Append("CAST(IFNULL(");
             action(e.Left, this, builder, appendParameter);
             builder.Append(',');
             action(e.Right, this, builder, appendParameter);

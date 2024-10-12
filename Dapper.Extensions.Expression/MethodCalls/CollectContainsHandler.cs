@@ -42,7 +42,7 @@ namespace Dapper.Extensions.Expression.MethodCalls
                         builder.Append(',');
                     }
                     idx++;
-                    WhereExpressionVisitor.AddParameter(builder, parameters, v);
+                    WhereExpressionVisitor.AddParameter(sqlAdapter, builder, parameters, v);
                 }
                 builder.Append(')');
             }

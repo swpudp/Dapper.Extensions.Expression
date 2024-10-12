@@ -3,32 +3,20 @@ using System;
 using System.Data;
 using System.Threading.Tasks;
 
-namespace Dapper.Extensions.Expression.UnitTests.MySql
+namespace Dapper.Extensions.Expression.UnitTests.Dm
 {
     [TestClass]
-    public class NamingPolicyTests : MysqlBaseTest
+    public class UpdateTests : DmBaseTest
     {
         /// <summary>
-        /// 获取SnakeCase表名测试
+        /// 获取表名测试
         /// </summary>
         [TestMethod]
-        public void GetSnakeCaseTableNameTest()
+        public void GetTableNameTest()
         {
             using IDbConnection connection = CreateConnection();
-            string tableName = connection.GetTableName<NamingPolicySnakeCase>();
-            Assert.AreEqual("`naming_policy_snake_case`", tableName);
-        }
-
-        /// <summary>
-        /// SnakeCase写入测试
-        /// </summary>
-        [TestMethod]
-        public async Task SnakeCaseInsertTest()
-        {
-            using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = MySqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
-            int count = await connection.InsertBulkAsync(data, null);
-            Assert.AreEqual(100, count);
+            string tableName = connection.GetTableName<Order>();
+            Assert.AreEqual("`order`", tableName);
         }
 
         /// <summary>
@@ -38,8 +26,12 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         public void UpdateTest()
         {
             using IDbConnection connection = CreateConnection();
-            NamingPolicySnakeCase snakeCase = connection.Get<NamingPolicySnakeCase>(f => f.Id == new Guid("000c70b3-fccc-4838-a524-9b7edc4f9c9a"));
-            Assert.IsNotNull(snakeCase);
+            Order order = connection.Get<Order>(f => f.Id == new Guid("000c70b3-fccc-4838-a524-9b7edc4f9c9a"));
+            Assert.IsNotNull(order);
+            order.UpdateTime = DateTime.Now;
+            order.Amount = Convert.ToDecimal(new Random().NextDouble() * 100);
+            int updated = connection.Update(order);
+            Assert.IsTrue(updated > 0);
         }
 
         /// <summary>
@@ -178,12 +170,12 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
             Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version + 1, f => new Order
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
                 SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
-                Version = f.Version - 1
+                Version = f.Version + 1
             });
             Assert.IsTrue(updated > 0);
         }
@@ -198,12 +190,12 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
             Order order = connection.Get<Order>(f => f.Id == id);
             Assert.IsNotNull(order);
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsDelete && !f.IsDelete && !f.IsActive.Value, f => new Order
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsDelete && !f.IsEnable && !f.IsActive.Value, f => new Order
             {
                 SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
-                Version = f.Version - 1,
+                Version = f.Version + 1,
                 UpdateTime = DateTime.Now
             });
             Assert.IsTrue(updated > 0);

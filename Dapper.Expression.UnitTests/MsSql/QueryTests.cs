@@ -1,6 +1,5 @@
 ﻿using Dapper.Extensions.Expression;
 using Dapper.Extensions.Expression.Queries;
-using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;

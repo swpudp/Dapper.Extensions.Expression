@@ -39,7 +39,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static int Insert<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.Execute(cmd, entity, transaction, commandTimeout);
         }
@@ -52,7 +52,7 @@ namespace Dapper.Extensions.Expression
         /// <param name="columnList"></param>
         /// <param name="parameterList"></param>
         /// <returns></returns>
-        private static string BuildInsertSql<T>(IDbConnection connection, out StringBuilder columnList, out StringBuilder parameterList)
+        private static string BuildInsertSql<T>(IDbConnection connection, T entity, out StringBuilder columnList, out StringBuilder parameterList)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
@@ -75,7 +75,14 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
-                parameterList.AppendFormat("@{0}", property.Name);
+                if (property.PropertyType == typeof(Guid))
+                {
+                    parameterList.Append('\'').Append(property.GetValue(entity)).Append('\'');
+                }
+                else
+                {
+                    adapter.AddParameter(parameterList, property.Name);
+                }
                 if (i < canWriteProperties.Count - 1)
                 {
                     parameterList.Append(", ");
@@ -143,9 +150,9 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(value.ToString());
                         continue;
                     }
-                    string parameterName = $"@{property.Name}_{index}";
-                    parameters.Add(parameterName, value);
-                    parameterList.Append(parameterName);
+                    string parameterName = $"{property.Name}_{index}";
+                    adapter.AddParameter(parameterList, parameterName);
+                    adapter.AddParameter(parameters, parameterName, value);
                 }
                 parameterList.Append(')');
                 if (parameters.Count() > maxParameterCount || index + 1 == entities.Count)
@@ -236,7 +243,7 @@ namespace Dapper.Extensions.Expression
             {
                 MemberInfo property = canUpdateProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
-                parameters.Add("@" + columnName, property.GetValue(entity));
+                adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < canUpdateProperties.Count - 1)
                     sb.Append(", ");
             }
@@ -245,7 +252,7 @@ namespace Dapper.Extensions.Expression
             {
                 MemberInfo property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
-                parameters.Add("@" + columnName, property.GetValue(entity));
+                adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }
@@ -376,7 +383,7 @@ namespace Dapper.Extensions.Expression
             {
                 MemberInfo property = keyProperties[i];
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
-                parameters.Add("@" + columnName, property.GetValue(entity));
+                adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
                     sb.Append(" and ");
             }

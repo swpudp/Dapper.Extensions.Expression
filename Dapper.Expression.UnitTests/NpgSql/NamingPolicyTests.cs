@@ -1,5 +1,4 @@
 ﻿using Dapper.Extensions.Expression.Queries;
-using Dapper.Extensions.Expression.UnitTests.MySql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Data;
@@ -28,7 +27,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         public async Task SnakeCaseInsertTest()
         {
             using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = NpgSqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
             int count = await connection.InsertBulkAsync(data, null);
             Assert.AreEqual(100, count);
         }
@@ -104,7 +103,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
             {
                 UpdateTime = DateTime.Now,
                 Amount = amount,
-                Number = GetRandomString(10),
+                Number = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = f.IsDelete,
                 Version = f.Version + 1,
@@ -123,7 +122,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
             string id = "000c70b3-fccc-4838-a524-9b7edc4f9c9a";
             int updated = connection.Update<Order>(f => f.Id == Guid.Parse(id), f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = f.IsDelete,
                 Version = f.Version + 1,
@@ -140,7 +139,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            int updated = connection.Update<Order>(f => f.Id == id, f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = connection.Update<Order>(f => f.Id == id, f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -152,7 +151,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         {
             using IDbConnection connection = CreateConnection();
             string id = "000c70b3-fccc-4838-a524-9b7edc4f9c9a";
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == Guid.Parse(id), f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == Guid.Parse(id), f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -164,7 +163,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         {
             using IDbConnection connection = CreateConnection();
             Guid id = Guid.Parse("000c70b3-fccc-4838-a524-9b7edc4f9c9a");
-            int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order { SerialNo = GetRandomString(10), IsDelete = true });
+            int updated = await connection.UpdateAsync<Order>(f => f.Id == id, f => new Order { SerialNo = CommonTestUtils.GetRandomString(10), IsDelete = true });
             Assert.IsTrue(updated > 0);
         }
 
@@ -180,7 +179,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 Version = f.Version + 1,
                 Amount = f.Amount * 2,
@@ -201,7 +200,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.Version == order.Version + 1, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
                 Version = f.Version - 1
@@ -221,7 +220,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
             Assert.IsNotNull(order);
             int updated = await connection.UpdateAsync<Order>(f => f.Id == id && f.IsDelete && !f.IsDelete && !f.IsActive.Value, f => new Order
             {
-                SerialNo = GetRandomString(10),
+                SerialNo = CommonTestUtils.GetRandomString(10),
                 IsDelete = true,
                 IsActive = id != Guid.Empty,
                 Version = f.Version - 1,

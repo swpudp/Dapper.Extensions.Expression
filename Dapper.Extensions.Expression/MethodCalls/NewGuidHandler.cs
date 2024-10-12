@@ -16,7 +16,7 @@ namespace Dapper.Extensions.Expression.MethodCalls
 
         public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
-            WhereExpressionVisitor.AddParameter(builder, parameters, Guid.NewGuid());
+            WhereExpressionVisitor.AddParameter(sqlAdapter, builder, parameters, Guid.NewGuid());
         }
     }
 }

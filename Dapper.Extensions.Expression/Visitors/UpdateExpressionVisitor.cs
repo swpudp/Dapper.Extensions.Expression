@@ -58,7 +58,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     VisitBinaryEqual((BinaryExpression)e, builder);
                     break;
                 case ExpressionType.Call:
-                    VisitCall((MethodCallExpression)e, builder, parameters);
+                    VisitCall((MethodCallExpression)e, adapter, builder, parameters);
                     break;
                 default:
                     throw new NotSupportedException($"不支持{e.NodeType}");
@@ -66,10 +66,10 @@ namespace Dapper.Extensions.Expression.Visitors
         }
 
 
-        private static void VisitCall(MethodCallExpression call, StringBuilder builder, DynamicParameters parameters)
+        private static void VisitCall(MethodCallExpression call, ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters)
         {
             object value = ExpressionEvaluator.Visit(call);
-            AddParameter(builder, parameters, value);
+            AddParameter(adapter, builder, parameters, value);
         }
 
         private static void VisitBinaryAdd(BinaryExpression binary, ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters)
@@ -146,7 +146,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     continue;
                 }
                 object value = ExpressionEvaluator.Visit(argExpression);
-                AddParameter(builder, parameters, value);
+                AddParameter(adapter, builder, parameters, value);
             }
         }
 
@@ -175,7 +175,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     continue;
                 }
                 object value = ExpressionEvaluator.Visit(memberAssignment.Expression);
-                AddParameter(builder, parameters, value);
+                AddParameter(adapter, builder, parameters, value);
             }
         }
 
@@ -206,12 +206,12 @@ namespace Dapper.Extensions.Expression.Visitors
             }
         }
 
-        private static void AddParameter(StringBuilder builder, DynamicParameters parameters, object value)
+        private static void AddParameter(ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters, object value)
         {
             int index = parameters.ParameterNames.Count();
-            string parameterName = $"@u_p_{index + 1}";
-            builder.Append(parameterName);
-            parameters.Add(parameterName, value);
+            string parameterName = $"u_p_{index + 1}";
+            adapter.AddParameter(builder, parameterName);
+            adapter.AddParameter(parameters, parameterName, value);
         }
 
         private static void VisitMemberAccess(MemberExpression m, ISqlAdapter adapter, StringBuilder builder, DynamicParameters parameters)
@@ -219,7 +219,7 @@ namespace Dapper.Extensions.Expression.Visitors
             if (m.Type == ConstantDefined.TypeOfDateTime)
             {
                 object value = ExpressionEvaluator.Visit(m);
-                AddParameter(builder, parameters, value);
+                AddParameter(adapter, builder, parameters, value);
                 return;
             }
             if (m.Expression?.NodeType == ExpressionType.Parameter)
@@ -229,7 +229,7 @@ namespace Dapper.Extensions.Expression.Visitors
             else
             {
                 object value = ExpressionEvaluator.Visit(m);
-                AddParameter(builder, parameters, value);
+                AddParameter(adapter, builder, parameters, value);
             }
         }
 
