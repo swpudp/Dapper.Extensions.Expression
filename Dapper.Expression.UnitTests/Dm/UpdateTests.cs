@@ -16,7 +16,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
         {
             using IDbConnection connection = CreateConnection();
             string tableName = connection.GetTableName<Order>();
-            Assert.AreEqual("`order`", tableName);
+            Assert.AreEqual("\"ORDER\"", tableName);
         }
 
         /// <summary>

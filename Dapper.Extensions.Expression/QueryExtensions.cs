@@ -75,9 +75,26 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
-                if (property.PropertyType == typeof(Guid))
+                object value = property.GetValue(entity);
+                if (value == null)
                 {
-                    parameterList.Append('\'').Append(property.GetValue(entity)).Append('\'');
+                    parameterList.Append("NULL");
+                }
+                else if (value is bool v)
+                {
+                    parameterList.Append(adapter.ParseBool(v));
+                }
+                else if (value is Guid v1)
+                {
+                    parameterList.Append('\'').Append(v1).Append('\'');
+                }
+                else if (value.GetType().IsEnum)
+                {
+                    parameterList.Append(Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType())));
+                }
+                else if (value.GetType().IsNumericType())
+                {
+                    parameterList.Append(value);
                 }
                 else
                 {
@@ -136,7 +153,7 @@ namespace Dapper.Extensions.Expression
                     }
                     if (value is Guid v1)
                     {
-                        parameterList.Append('\'').Append(v1.ToString()).Append('\'');
+                        parameterList.Append('\'').Append(v1).Append('\'');
                         continue;
                     }
                     Type valType = value.GetType();
@@ -147,7 +164,7 @@ namespace Dapper.Extensions.Expression
                     }
                     if (value.GetType().IsNumericType())
                     {
-                        parameterList.Append(value.ToString());
+                        parameterList.Append(value);
                         continue;
                     }
                     string parameterName = $"{property.Name}_{index}";
@@ -155,7 +172,7 @@ namespace Dapper.Extensions.Expression
                     adapter.AddParameter(parameters, parameterName, value);
                 }
                 parameterList.Append(')');
-                if (parameters.Count() > maxParameterCount || index + 1 == entities.Count)
+                if (parameters.Count > maxParameterCount || index + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += connection.Execute(cmd, parameters, transaction, commandTimeout);
@@ -245,7 +262,9 @@ namespace Dapper.Extensions.Expression
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < canUpdateProperties.Count - 1)
+                {
                     sb.Append(", ");
+                }
             }
             sb.Append(" where ");
             for (int i = 0; i < keyProperties.Count; i++)
@@ -254,7 +273,9 @@ namespace Dapper.Extensions.Expression
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
+                {
                     sb.Append(" and ");
+                }
             }
             return sb.ToString();
         }
@@ -385,7 +406,9 @@ namespace Dapper.Extensions.Expression
                 adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
+                {
                     sb.Append(" and ");
+                }
             }
             return sb.ToString();
         }
@@ -485,9 +508,6 @@ namespace Dapper.Extensions.Expression
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
-                //PropertyInfo key = TypeProvider.GetSingleKey<T>(nameof(Get));
-                //string tableName = sqlAdapter.GetTableName(type);
-                //string keyName = sqlAdapter.GetQuoteName(key.Name);
                 IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
                 StringBuilder sqlBuilder = new StringBuilder();
                 sqlBuilder.Append("SELECT ");
@@ -506,20 +526,10 @@ namespace Dapper.Extensions.Expression
                 }
                 string tableName = sqlAdapter.GetTableName(type);
                 sqlBuilder.AppendFormat(" FROM {0} WHERE ", tableName);
-
-
-                //ISqlAdapter adapter = SqlProvider.GetFormatter(connection, namingPolicy);
-                //StringBuilder sb = new StringBuilder();
-                //string name = TypeProvider.GetTableName(typeof(T));
-                //sb.AppendFormat("delete from {0} where ", adapter.GetQuoteName(name));
-                //return sb.ToString();
-
                 WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters, false);
                 sql = sqlBuilder.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
-            //parameters = new DynamicParameters();
-            //parameters.Add("@id", id);
             return sql;
         }
 
