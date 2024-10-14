@@ -1,70 +1,66 @@
-﻿CREATE DATABASE  if not exists `dapper_exp`;
-
-use `dapper_exp`;
-
-CREATE TABLE `attachment` (
-  `Id` char(36) NOT NULL,
-  `OrderId` char(36) NOT NULL,
-  `Name` varchar(45) NOT NULL,
-  `Extend` varchar(45) NOT NULL,
-  `Version` int(11) NOT NULL,
-  PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `buyer` (
-  `Id` char(36) NOT NULL,
-  `Name` varchar(45) NOT NULL,
-  `Type` tinyint(1) NOT NULL,
-  `Code` varchar(45) NOT NULL,
-  `Identity` varchar(45) DEFAULT NULL,
-  `Email` varchar(45) DEFAULT NULL,
-  `Mobile` varchar(45) DEFAULT NULL,
-  `IsDelete` bit(1) NOT NULL,
-  `IsActive` bit(1) DEFAULT NULL,
-  `CreateTime` datetime NOT NULL,
-  `UpdateTime` datetime DEFAULT NULL,
-  `Version` int(11) NOT NULL,
-  PRIMARY KEY (`Id`,`CreateTime`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `items` (
-  `Id` char(36) NOT NULL,
-  `OrderId` char(36) NOT NULL,
-  `Index` int(11) NOT NULL,
-  `Code` varchar(45) NOT NULL,
-  `Name` varchar(45) NOT NULL,
-  `Price` float(16,4) NOT NULL,
-  `Quantity` float(16,4) NOT NULL,
-  `Discount` float(16,4) NOT NULL,
-  `Amount` float(16,4) NOT NULL,
-  `Unit` varchar(45) DEFAULT NULL,
-  `Version` int(11) NOT NULL,
-  PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `order` (
-  `Id` char(36) NOT NULL,
-  `BuyerId` char(36) NOT NULL,
-  `Number` varchar(45) NOT NULL,
-  `Remark` varchar(100) NOT NULL,
-  `Status` tinyint(1) NOT NULL,
-  `SignState` tinyint(1) DEFAULT NULL,
-  `Amount` float(16,4) NOT NULL,
-  `Freight` float(16,4) DEFAULT NULL,
-  `DocId` char(36) DEFAULT NULL,
-  `IsDelete` bit(1) NOT NULL,
-  `IsActive` bit(2) not NULL default 0,
-  `CreateTime` datetime NOT NULL,
-  `UpdateTime` datetime DEFAULT NULL,
-  `Index` INT(11) NOT NULL DEFAULT 0,
-  `Version` int(11) NOT NULL,
-  PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE `naming_policy_snake_case` (
-  `id` char(36) NOT NULL,
-  `naming_type` tinyint NOT NULL,
-  `create_time` datetime NOT NULL,
-  `version` int(11) NOT NULL,
-  PRIMARY KEY (`Id`,`Version`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+﻿CREATE TABLE "ITEMS"
+(
+ "ID" VARCHAR(50) NOT NULL,
+ "ORDERID" VARCHAR(50) NOT NULL,
+ "INDEX" INT NOT NULL,
+ "CODE" VARCHAR(45) NOT NULL,
+ "NAME" VARCHAR(45) NOT NULL,
+ "PRICE" REAL NOT NULL,
+ "QUANTITY" REAL NOT NULL,
+ "DISCOUNT" REAL NOT NULL,
+ "AMOUNT" REAL NOT NULL,
+ "UNIT" VARCHAR(45) NULL,
+ "VERSION" INT NOT NULL
+);
+CREATE TABLE "NAMING_POLICY_SNAKE_CASE"
+(
+ "ID" CHAR(36) NOT NULL,
+ "NAMING_TYPE" TINYINT NOT NULL,
+ "CREATE_TIME" TIMESTAMP(0) NOT NULL,
+ "VERSION" INT NOT NULL
+);
+CREATE TABLE "ORDER"
+(
+ "ID" CHAR(36) NOT NULL,
+ "BUYERID" CHAR(36) NOT NULL,
+ "NUMBER" VARCHAR(45) NOT NULL,
+ "REMARK" VARCHAR(100) NOT NULL,
+ "STATUS" INT NOT NULL,
+ "SIGNSTATE" INT NULL,
+ "AMOUNT" REAL NOT NULL,
+ "FREIGHT" REAL NULL,
+ "DOCID" CHAR(36) NULL,
+ "ISDELETE" BIT NOT NULL,
+ "ISACTIVE" BIT DEFAULT '0'
+ NOT NULL,
+ "CREATETIME" TIMESTAMP(0) NOT NULL,
+ "UPDATETIME" TIMESTAMP(0) NULL,
+ "INDEX" INT DEFAULT 0
+ NOT NULL,
+ "VERSION" INT NOT NULL,
+ "ISENABLE" BIT NULL
+);
+CREATE TABLE "ATTACHMENT"
+(
+ "ID" VARCHAR(36) NOT NULL,
+ "ORDERID" CHAR(36) NOT NULL,
+ "NAME" VARCHAR(45) NOT NULL,
+ "EXTEND" VARCHAR(45) NOT NULL,
+ "VERSION" INT NOT NULL,
+ "ENABLE" INT NULL
+);
+CREATE TABLE "BUYER"
+(
+ "ID" VARCHAR(50) NOT NULL,
+ "NAME" VARCHAR(45) NOT NULL,
+ "TYPE" TINYINT NOT NULL,
+ "CODE" VARCHAR(45) NOT NULL,
+ "IDENTITY" VARCHAR(45) NULL,
+ "EMAIL" VARCHAR(45) NULL,
+ "MOBILE" VARCHAR(45) NULL,
+ "ISDELETE" NUMBER(1,0) NOT NULL,
+ "ISACTIVE" NUMBER(1,0) NULL,
+ "CREATETIME" TIMESTAMP(0) NOT NULL,
+ "UPDATETIME" TIMESTAMP(0) NULL,
+ "VERSION" INT NOT NULL
+);
