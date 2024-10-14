@@ -188,7 +188,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 //访问参数，无法从父类获取子类特性
                 InternalVisit(memberExpression.Expression, adapter, sqlBuilder, parameters, appendParameter);
                 //MemberInfo columnProperty = TypeProvider.GetColumnProperty(memberExpression.Expression.Type, member);
-                adapter.AppendColumnName(sqlBuilder, member, memberExpression.Expression.Type);
+                adapter.AppendColumnName(sqlBuilder, member);
                 return;
             }
             if (member.DeclaringType == ConstantDefined.TypeOfString)

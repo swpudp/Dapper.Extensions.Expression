@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Dapper.Extensions.Expression.UnitTests.MsSql
+namespace Dapper.Extensions.Expression.UnitTests
 {
-    internal static class MsSqlObjectUtils
+    internal static class ObjectUtils
     {
         public static Buyer CreateBuyer()
         {
@@ -48,8 +48,6 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
                 }
             }
         }
-
-
         public static IEnumerable<Attachment> CreateAttachments(IEnumerable<Order> orders)
         {
             foreach (Order order in orders)
@@ -70,7 +68,6 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
                 }
             }
         }
-
         public static IEnumerable<Order> CreateOrders(int count, int max, Buyer buyer)
         {
             return Enumerable.Range(0, count).Select((f, index) => new Order

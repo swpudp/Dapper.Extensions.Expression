@@ -17,7 +17,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         {
             using IDbConnection connection = CreateConnection();
             string tableName = connection.GetTableName<NamingPolicySnakeCase>();
-            Assert.AreEqual("`naming_policy_snake_case`", tableName);
+            Assert.AreEqual("\"naming_policy_snake_case\"", tableName);
         }
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         public async Task SnakeCaseInsertTest()
         {
             using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = NpgSqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = ObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
             int count = await connection.InsertBulkAsync(data, null);
             Assert.AreEqual(100, count);
         }
@@ -38,12 +38,11 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
         [TestMethod]
         public async Task SnakeCaseInsertAsyncTest()
         {
-            IdentityUser user = new IdentityUser
+            NamingPolicySnakeCase user = new NamingPolicySnakeCase
             {
-                Id = Guid.NewGuid().ToString().Substring(0, 24),
-                TenantId = Guid.NewGuid().ToString().Substring(0, 24),
-                UserName = Guid.NewGuid().ToString().Substring(0, 8),
-                //LockoutEnd = DateTime.Now,
+                Id = Guid.NewGuid(),
+                NamingType = NamingPolicy.SnakeCase,
+                CreateTime = DateTime.Now,
                 Version = new Random().Next(DateTime.Now.Millisecond)
             };
             using IDbConnection connection = CreateConnection();
@@ -266,21 +265,6 @@ namespace Dapper.Extensions.Expression.UnitTests.NpgSql
                 DocId = docId
             });
             Assert.IsTrue(updated > 0);
-        }
-
-        /// <summary>
-        /// 查询测试
-        /// </summary>
-        [TestMethod]
-        public async Task QueryWhereCountAsyncTest()
-        {
-            using IDbConnection connection = CreateConnection();
-            Query<IdentityUser> query = connection.Query<IdentityUser>();
-            query.Where(v => v.Version > 0);
-            int data = await query.CountAsync();
-            Assert.IsTrue(data > 0);
-            IdentityUser identityUser = await query.FirstOrDefaultAsync<IdentityUser>();
-            Assert.IsNotNull(identityUser);
         }
     }
 }

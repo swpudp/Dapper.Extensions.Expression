@@ -24,7 +24,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo, Type type = null);
+        bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo);
 
         /// <summary>
         /// Adds the name of a column.
@@ -52,7 +52,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="memberInfo">The column name.</param>
         /// <param name="isAlias">别名</param>
-        string GetQuoteName(MemberInfo memberInfo, out bool isAlias, Type type = null);
+        string GetQuoteName(MemberInfo memberInfo, out bool isAlias);
 
         /// <summary>
         /// Adds a column equality to a parameter.
@@ -60,7 +60,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
         /// <param name="name">The column name.</param>
-        void AppendColumnNameEqualsValue(StringBuilder sb, MemberInfo memberInfo, out string name);
+        void AppendBinaryColumn(StringBuilder sb, MemberInfo memberInfo, out string name);
 
         /// <summary>
         /// 增加分页信息

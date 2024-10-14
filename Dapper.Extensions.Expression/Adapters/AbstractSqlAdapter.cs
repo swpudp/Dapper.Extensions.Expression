@@ -24,9 +24,9 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        public bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo, Type type = null)
+        public bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo)
         {
-            string name = GetQuoteName(memberInfo, out bool isAlias, type);
+            string name = GetQuoteName(memberInfo, out bool isAlias);
             sb.Append(name);
             return isAlias;
         }
@@ -59,10 +59,11 @@ namespace Dapper.Extensions.Expression.Adapters
 
         public string GetTableName(Type type)
         {
-            TableNamingAttribute namingAttribute = type.GetCustomAttribute<TableNamingAttribute>();
+            //TableNamingAttribute namingAttribute = type.GetCustomAttribute<TableNamingAttribute>();
             TableAttribute tableAttr = type.GetCustomAttribute<TableAttribute>();
             string originTableName = tableAttr != null ? tableAttr.Name : type.Name;
-            string tableName = namingAttribute == null ? originTableName : NamingUtils.GetName(namingAttribute.Policy, originTableName);
+            //string tableName = namingAttribute == null ? originTableName : NamingUtils.GetTableName( originTableName);
+            string tableName = NamingUtils.GetName(originTableName);
             return GetQuoteName(tableName);
         }
 
@@ -71,21 +72,21 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="memberInfo">The column name.</param>
         /// <param name="isAlias"></param>
-        public string GetQuoteName(MemberInfo memberInfo, out bool isAlias, Type type = null)
+        public string GetQuoteName(MemberInfo memberInfo, out bool isAlias)
         {
-            FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
-            if (namingAttribute == null && type != null)
-            {
-                namingAttribute = type.GetCustomAttribute<FieldNamingAttribute>(true);
-            }
+            //FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
+            //if (namingAttribute == null && type != null)
+            //{
+            //    namingAttribute = type.GetCustomAttribute<FieldNamingAttribute>(true);
+            //}
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
             if (columnAttribute == null)
             {
-                isAlias = namingAttribute != null;
-                return $"{LeftQuote}{(namingAttribute == null ? memberInfo.Name : NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name))}{RightQuote}";
+                isAlias = false;
+                return $"{LeftQuote}{NamingUtils.GetName(memberInfo.Name)}{RightQuote}";
             }
             isAlias = true;
-            return $"{LeftQuote}{(namingAttribute == null ? columnAttribute.Name : NamingUtils.GetName(namingAttribute.Policy, columnAttribute.Name))}{RightQuote}";
+            return $"{LeftQuote}{NamingUtils.GetName(columnAttribute.Name)}{RightQuote}";
         }
 
         /// <summary>
@@ -94,19 +95,19 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
         /// <param name="name"></param>
-        public void AppendColumnNameEqualsValue(StringBuilder sb, MemberInfo memberInfo, out string name)
+        public void AppendBinaryColumn(StringBuilder sb, MemberInfo memberInfo, out string name)
         {
-            FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
+            //FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
             if (columnAttribute == null)
             {
-                name = namingAttribute == null ? memberInfo.Name : NamingUtils.GetName(namingAttribute.Policy, memberInfo.Name);
-                sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, name, RightQuote, ParameterPrefix, memberInfo.Name);
+                name = memberInfo.Name;
+                sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, NamingUtils.GetName(memberInfo.Name), RightQuote, ParameterPrefix, memberInfo.Name);
             }
             else
             {
-                name = namingAttribute == null ? columnAttribute.Name : NamingUtils.GetName(namingAttribute.Policy, columnAttribute.Name);
-                sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, name, RightQuote, ParameterPrefix, columnAttribute.Name);
+                name = columnAttribute.Name;
+                sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, NamingUtils.GetName(columnAttribute.Name), RightQuote, ParameterPrefix, columnAttribute.Name);
             }
         }
 

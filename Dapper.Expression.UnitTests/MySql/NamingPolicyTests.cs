@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Dapper.Extensions.Expression.Utilities;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Data;
 using System.Threading.Tasks;
@@ -8,6 +9,12 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
     [TestClass]
     public class NamingPolicyTests : MysqlBaseTest
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            NamingUtils.SetNamingPolicy(NamingPolicy.SnakeCase);
+        }
+
         /// <summary>
         /// 获取SnakeCase表名测试
         /// </summary>
@@ -26,7 +33,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         public async Task SnakeCaseInsertTest()
         {
             using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = MySqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = ObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
             int count = await connection.InsertBulkAsync(data, null);
             Assert.AreEqual(100, count);
         }

@@ -21,10 +21,10 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         {
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 10, buyer).ToList();
-            IList<Item> items = MsSqlObjectUtils.CreateItems(orders).ToList();
-            IList<Attachment> attachments = MsSqlObjectUtils.CreateAttachments(orders).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
+            IList<Item> items = ObjectUtils.CreateItems(orders).ToList();
+            IList<Attachment> attachments = ObjectUtils.CreateAttachments(orders).ToList();
             Execute(connection => connection.Insert(buyer));
             int orderCount = Execute(connection => connection.InsertBulk(orders));
             int itemCount = Execute(connection => connection.InsertBulk(items));
@@ -56,8 +56,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
             IDbConnection connection = CreateConnection();
             connection.Open();
             IDbTransaction transaction = connection.BeginTransaction(IsolationLevel.ReadCommitted);
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(500, 100, buyer).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(500, 100, buyer).ToList();
             try
             {
                 Stopwatch stopwatch = new Stopwatch();
@@ -84,8 +84,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertBulkPartFailWithTransactionScopeTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(50, 50, buyer).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(50, 50, buyer).ToList();
             Assert.ThrowsException<SqlException>(() =>
             {
                 using var trans = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions { IsolationLevel = System.Transactions.IsolationLevel.ReadCommitted });
@@ -107,9 +107,9 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertOneTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
+            Buyer buyer = ObjectUtils.CreateBuyer();
             Execute(connection => connection.Insert(buyer));
-            Order insertEntity = MsSqlObjectUtils.CreateOrders(1, 1, buyer).First();
+            Order insertEntity = ObjectUtils.CreateOrders(1, 1, buyer).First();
             int value = Execute(connection => connection.Insert(insertEntity));
             Assert.AreEqual(1, value);
         }
@@ -120,9 +120,9 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertManyTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
+            Buyer buyer = ObjectUtils.CreateBuyer();
             Execute(connection => connection.Insert(buyer));
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 10, buyer).ToList();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
             int values = Execute(connection => connection.Insert(orders));
             Assert.AreEqual(values, orders.Count);
         }
@@ -133,8 +133,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertManyPartFailTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 100, buyer).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 100, buyer).ToList();
             Assert.ThrowsException<SqlException>(() =>
             {
                 Execute(connection => connection.Insert(buyer));
@@ -153,8 +153,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertManyPartFailUseDbTransactionTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 100, buyer).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 100, buyer).ToList();
             Assert.ThrowsException<SqlException>(() => ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.InsertBulk(orders, transaction) }));
             bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsFalse(exist);
@@ -169,8 +169,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertManyPartFailUseTransactionScopeTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 100, buyer).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 100, buyer).ToList();
             Assert.ThrowsException<SqlException>(() =>
             {
                 using TransactionScope trans = new TransactionScope();
@@ -191,9 +191,9 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertManySuccessUseTransactionTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 10, buyer).ToList();
-            IList<Item> items = MsSqlObjectUtils.CreateItems(orders).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
+            IList<Item> items = ObjectUtils.CreateItems(orders).ToList();
             int values = ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.Insert(orders, transaction), connection.Insert(items, transaction) });
             Assert.IsTrue(values > 0);
             bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
@@ -212,9 +212,9 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertManySuccessUseTransactionScopeTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 10, buyer).ToList();
-            IList<Item> items = MsSqlObjectUtils.CreateItems(orders).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
+            IList<Item> items = ObjectUtils.CreateItems(orders).ToList();
             using (TransactionScope trans = new TransactionScope())
             {
                 Execute(connection => connection.Insert(buyer));
@@ -238,9 +238,9 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertBulkSuccessUseTransactionTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 10, buyer).ToList();
-            IList<Item> items = MsSqlObjectUtils.CreateItems(orders).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
+            IList<Item> items = ObjectUtils.CreateItems(orders).ToList();
             ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.InsertBulk(orders, transaction), connection.InsertBulk(items, transaction) });
             bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
@@ -258,9 +258,9 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public void InsertBulkSuccessUseTransactionScopeTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(100, 10, buyer).ToList();
-            IList<Item> items = MsSqlObjectUtils.CreateItems(orders).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
+            IList<Item> items = ObjectUtils.CreateItems(orders).ToList();
             using (TransactionScope trans = new TransactionScope())
             {
                 Execute(connection => connection.Insert(buyer));
@@ -285,7 +285,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public async Task InsertOneAsyncTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
+            Buyer buyer = ObjectUtils.CreateBuyer();
             int result = await Execute(connection => connection.InsertAsync(buyer));
             Assert.IsTrue(result > 0);
         }
@@ -297,7 +297,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public async Task InsertManyAsyncTest()
         {
-            IEnumerable<Buyer> buyers = Enumerable.Range(0, 100).Select(f => MsSqlObjectUtils.CreateBuyer());
+            IEnumerable<Buyer> buyers = Enumerable.Range(0, 100).Select(f => ObjectUtils.CreateBuyer());
             int result = await Execute(connection => connection.InsertAsync(buyers));
             Assert.IsTrue(result > 0);
         }
@@ -309,7 +309,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public async Task InsertBulkAsyncTest()
         {
-            IList<Buyer> buyers = Enumerable.Range(0, 100).Select(f => MsSqlObjectUtils.CreateBuyer()).ToList();
+            IList<Buyer> buyers = Enumerable.Range(0, 100).Select(f => ObjectUtils.CreateBuyer()).ToList();
             int result = await Execute(connection => connection.InsertBulkAsync(buyers));
             Assert.IsTrue(result > 0);
         }
@@ -321,8 +321,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         [TestMethod]
         public async Task InsertBulkAsyncGivenTest()
         {
-            Buyer buyer = MsSqlObjectUtils.CreateBuyer();
-            IList<Order> orders = MsSqlObjectUtils.CreateOrders(10, 50, buyer).ToList();
+            Buyer buyer = ObjectUtils.CreateBuyer();
+            IList<Order> orders = ObjectUtils.CreateOrders(10, 50, buyer).ToList();
             IList<string> serialNoList = new List<string> { "ABC", "BCD", "EFC", "C0A3", "A82639", "8064C0A3", "A8FD2639", "C0CDFA3" };
             foreach (var no in serialNoList)
             {

@@ -26,7 +26,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public async Task SnakeCaseInsertTest()
         {
             using IDbConnection connection = CreateConnection();
-            System.Collections.Generic.IList<NamingPolicySnakeCase> data = MsSqlObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
+            System.Collections.Generic.IList<NamingPolicySnakeCase> data = ObjectUtils.CreateNamingPolicyTestList(100, NamingPolicy.SnakeCase).AsList();
             int count = await connection.InsertBulkAsync<NamingPolicySnakeCase>(data, null);
             Assert.AreEqual(100, count);
         }

@@ -72,7 +72,7 @@ namespace Dapper.Extensions.Expression
     /// 字段命名策略
     /// </summary>
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+    [Obsolete("全局设置", true), AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
     public class FieldNamingAttribute : Attribute
     {
         public FieldNamingAttribute(NamingPolicy policy)
@@ -87,7 +87,7 @@ namespace Dapper.Extensions.Expression
     /// 表名命名策略
     /// </summary>
 
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
+    [Obsolete("全局设置", true), AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Interface)]
     public class TableNamingAttribute : Attribute
     {
         public TableNamingAttribute(NamingPolicy policy, string prefix = null)

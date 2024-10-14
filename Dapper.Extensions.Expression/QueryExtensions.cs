@@ -259,7 +259,7 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < canUpdateProperties.Count; i++)
             {
                 MemberInfo property = canUpdateProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
+                adapter.AppendBinaryColumn(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < canUpdateProperties.Count - 1)
                 {
@@ -270,7 +270,7 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < keyProperties.Count; i++)
             {
                 MemberInfo property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
+                adapter.AppendBinaryColumn(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
                 {
@@ -403,7 +403,7 @@ namespace Dapper.Extensions.Expression
             for (int i = 0; i < keyProperties.Count; i++)
             {
                 MemberInfo property = keyProperties[i];
-                adapter.AppendColumnNameEqualsValue(sb, property, out string columnName);
+                adapter.AppendBinaryColumn(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
                 {

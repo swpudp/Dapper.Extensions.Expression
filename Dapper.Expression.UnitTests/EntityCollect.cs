@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNetCore.Identity;
-using System;
+﻿using System;
 
-namespace Dapper.Extensions.Expression.UnitTests.MsSql
+namespace Dapper.Extensions.Expression.UnitTests
 {
-    [Table("buyer")]
+    //[TableNaming(NamingPolicy.UpperCase), FieldNaming(NamingPolicy.UpperCase)]
     public class Buyer : IEntity
     {
         [Key] public Guid Id { get; set; }
@@ -35,6 +34,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
     }
 
     [Table("items")]
+    //[TableNaming(NamingPolicy.UpperCase), FieldNaming(NamingPolicy.UpperCase)]
     public class Item : IEntity
     {
         [Key]
@@ -64,7 +64,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public int Version { get; set; }
     }
 
-    [Table("attachment")]
+    //[TableNaming(NamingPolicy.UpperCase), FieldNaming(NamingPolicy.UpperCase)]
     public class Attachment : IEntity
     {
         [Key]
@@ -81,7 +81,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public int Version { get; set; }
     }
 
-    [Table("order")]
+    //[TableNaming(NamingPolicy.UpperCase), FieldNaming(NamingPolicy.UpperCase)]
     public class Order : IEntity
     {
         [Key] public Guid Id { get; set; }
@@ -130,7 +130,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public int Version { get; set; }
     }
 
-    [Table("emit")]
+    //[TableNaming(NamingPolicy.UpperCase), FieldNaming(NamingPolicy.UpperCase)]
     public class Emit : IEntity
     {
         [Key]
@@ -144,7 +144,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public int Version { get; set; }
     }
 
-    [Table("log")]
+    //[TableNaming(NamingPolicy.UpperCase), FieldNaming(NamingPolicy.UpperCase)]
     public class Log : IEntity
     {
         [Key]
@@ -160,7 +160,7 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
     /// <summary>
     /// 测试命名策略
     /// </summary>
-    [TableNaming(NamingPolicy.SnakeCase), FieldNaming(NamingPolicy.SnakeCase)]
+    //[TableNaming(NamingPolicy.UpperSnakeCase), FieldNaming(NamingPolicy.UpperSnakeCase)]
     public class NamingPolicySnakeCase : IEntity
     {
         [Key]
@@ -171,14 +171,5 @@ namespace Dapper.Extensions.Expression.UnitTests.MsSql
         public NamingPolicy NamingType { get; set; }
 
         public DateTime CreateTime { get; set; }
-    }
-
-    [Table("identity_user")]
-    [TableNaming(NamingPolicy.CamelCase)]
-    public class IdentityUser : IdentityUser<string>
-    {
-        public string TenantId { get; set; }
-
-        public int Version { get; set; }
     }
 }

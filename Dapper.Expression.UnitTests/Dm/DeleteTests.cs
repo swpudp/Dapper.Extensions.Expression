@@ -1,4 +1,5 @@
 ﻿using Dapper.Extensions.Expression;
+using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,13 +11,19 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
     [TestClass]
     public class DeleteTests : DmBaseTest
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            NamingUtils.SetNamingPolicy(NamingPolicy.UpperCase);
+        }
+
         /// <summary>
         /// 删除测试
         /// </summary>
         [TestMethod]
         public void DeleteTest()
         {
-            Log log = DmObjectUtils.CreateLogs(1).First();
+            Log log = ObjectUtils.CreateLogs(1).First();
             int value = Execute(connection => connection.Insert(log));
             Assert.AreEqual(1, value);
             int deleted = Execute(connection => connection.Delete(log));
@@ -29,7 +36,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
         [TestMethod]
         public async Task DeleteAsyncTest()
         {
-            Log log = DmObjectUtils.CreateLogs(1).First();
+            Log log = ObjectUtils.CreateLogs(1).First();
             int deleted = await Execute(connection => connection.DeleteAsync(log));
             Assert.IsFalse(deleted > 0);
             int result = await Execute(connection => connection.InsertAsync(log));
@@ -44,7 +51,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
         [TestMethod]
         public void DeleteAllTest()
         {
-            IList<Log> data = DmObjectUtils.CreateLogs(100).ToList();
+            IList<Log> data = ObjectUtils.CreateLogs(100).ToList();
             Execute(connection => connection.InsertBulk(data));
             int deleted = Execute(connection => connection.DeleteAll<Log>());
             Assert.IsTrue(deleted > 0);
@@ -58,7 +65,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
         [TestMethod]
         public async Task DeleteAllAsyncTest()
         {
-            IList<Log> data = DmObjectUtils.CreateLogs(10).ToList();
+            IList<Log> data = ObjectUtils.CreateLogs(10).ToList();
             await Execute(connection => connection.InsertBulkAsync(data));
             int deleted = await Execute(connection => connection.DeleteAllAsync<Log>());
             Assert.IsTrue(deleted > 0);
@@ -72,7 +79,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
         [TestMethod]
         public void DeleteByExpressionTest()
         {
-            IList<Log> data = DmObjectUtils.CreateLogs(100).ToList();
+            IList<Log> data = ObjectUtils.CreateLogs(100).ToList();
             Execute(connection => connection.InsertBulk(data));
             int deleted = Execute(connection => connection.Delete<Log>(f => f.LogType == LogType.Trace));
             Assert.IsTrue(deleted > 0);
@@ -84,7 +91,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
         [TestMethod]
         public async Task DeleteByExpressionAsyncTest()
         {
-            IList<Log> data = DmObjectUtils.CreateLogs(100).ToList();
+            IList<Log> data = ObjectUtils.CreateLogs(100).ToList();
             await Execute(connection => connection.InsertBulkAsync(data));
             int deleted = await Execute(connection => connection.DeleteAsync<Log>(f => f.LogType == LogType.Trace));
             Assert.IsTrue(deleted > 0);

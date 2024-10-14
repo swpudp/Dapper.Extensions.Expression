@@ -1,6 +1,7 @@
 ﻿using Dapper.Extensions.Expression;
 using Dapper.Extensions.Expression.Queries;
 using Dapper.Extensions.Expression.Queries.JoinQueries;
+using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,12 @@ namespace Dapper.Extensions.Expression.UnitTests.Dm
     [TestClass]
     public class Join2QueryTests : DmBaseTest
     {
+        [TestInitialize]
+        public void Initialize()
+        {
+            NamingUtils.SetNamingPolicy(NamingPolicy.UpperCase);
+        }
+
         /// <summary>
         /// 查询测试
         /// </summary>

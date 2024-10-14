@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Dapper.Extensions.Expression.Utilities
 {
-    internal static class NamingUtils
+    public static class NamingUtils
     {
         private static readonly Dictionary<NamingPolicy, Func<string, string>> NamingPolicyHandlers = new Dictionary<NamingPolicy, Func<string, string>>
         {
@@ -93,11 +93,25 @@ namespace Dapper.Extensions.Expression.Utilities
             return GetSnakeCaseName(name).ToUpper();
         }
 
+        private static NamingPolicy? currentNamingPolicy;
+
+        public static void SetNamingPolicy(NamingPolicy namingPolicy)
+        {
+            currentNamingPolicy = namingPolicy;
+        }
+
+        internal static string GetName(string name)
+        {
+            return currentNamingPolicy == null ? name : NamingPolicyHandlers[currentNamingPolicy.Value](name);
+        }
+
+        [Obsolete("使用全局设置", true)]
         internal static string GetName(NamingPolicy namingPolicy, string name)
         {
             return NamingPolicyHandlers[namingPolicy](name);
         }
 
+        [Obsolete("使用全局设置", true)]
         internal static FieldNamingAttribute GetNamingAttribute(MemberInfo member)
         {
             FieldNamingAttribute namingAttribute = member.ReflectedType.GetCustomAttribute<FieldNamingAttribute>(true);
