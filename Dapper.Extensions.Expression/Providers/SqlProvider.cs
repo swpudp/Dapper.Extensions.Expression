@@ -14,6 +14,7 @@ namespace Dapper.Extensions.Expression.Providers
             ["SqlConnection"] = new MsSqlAdapter(),
             ["OracleConnection"] = new OracleAdapter(),
             ["DmConnection"] = new DmSqlAdapter(),
+            ["SqliteConnection"] = new SqliteAdapter()
         };
 
         internal static ISqlAdapter GetFormatter(IDbConnection connection)
