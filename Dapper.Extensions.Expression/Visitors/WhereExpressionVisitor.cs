@@ -13,6 +13,9 @@ using System.Text;
 
 namespace Dapper.Extensions.Expression.Visitors
 {
+    /// <summary>
+    /// where语句部分构建
+    /// </summary>
     internal static class WhereExpressionVisitor
     {
         /// <summary>

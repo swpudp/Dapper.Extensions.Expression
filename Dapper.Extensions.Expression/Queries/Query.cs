@@ -26,6 +26,7 @@ namespace Dapper.Extensions.Expression.Queries
         /// <returns></returns>
         public Query<T> Where(Expression<Func<T, bool>> ex)
         {
+            //todo Where(f => houseList.Select(h => h.Id).Contains(f.HouseId))待解决
             base.Where(ex);
             return this;
         }

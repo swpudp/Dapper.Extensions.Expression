@@ -1,9 +1,11 @@
+using Dapper.Extensions.Expression.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System.Text.Encodings.Web;
 
 namespace Dapper.Extensions.Expression.WebTest
 {
@@ -19,8 +21,11 @@ namespace Dapper.Extensions.Expression.WebTest
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
-            services.AddControllers();
+            NamingUtils.SetNamingPolicy(NamingPolicy.CamelCase);
+            services.AddControllers().AddJsonOptions(c =>
+            {
+                c.JsonSerializerOptions.Encoder = JavaScriptEncoder.Default;
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dapper.Extensions.Expression.WebTest", Version = "v1" });
