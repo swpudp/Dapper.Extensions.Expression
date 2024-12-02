@@ -21,4 +21,13 @@ namespace Dapper.Extensions.Expression.WebTest.Model
 
         public int Version { get; set; }
     }
+
+    public class AddGuardLogReq
+    {
+        public string OwnerId { get; set; }
+
+        public DateTime OpenTime { get; set; }
+
+        public GuardMode OpenMode { get; set; }
+    }
 }

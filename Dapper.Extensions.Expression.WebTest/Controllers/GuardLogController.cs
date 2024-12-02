@@ -11,21 +11,25 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
     [Route("[controller]")]
     public class GuardLogController : ControllerBase
     {
-        [HttpPost("init")]
-        public async Task<bool> Init([FromBody] GuardLog guardLog)
+        [HttpPost("open")]
+        public async Task<bool> OpenGuard([FromBody] AddGuardLogReq addGuardLogReq)
         {
             DateTime openTime = DateTime.Now.AddDays(Random.Shared.Next(0, 30) * -1);
             using IDbConnection connection = CreateConnection();
-            guardLog.Id = ObjectId.GenerateNewId().ToString();
-            guardLog.OpenTime = openTime;
-            guardLog.CreateTime = openTime;
-            guardLog.Version = 1;
-            guardLog.OpenMode = guardModes[Random.Shared.Next(0, guardModes.Length)];
+            GuardLog guardLog = new GuardLog
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = addGuardLogReq.OwnerId,
+                OpenTime = openTime,
+                CreateTime = openTime,
+                Version = 1,
+                OpenMode = addGuardLogReq.OpenMode
+            };
             await connection.InsertAsync(guardLog);
             return true;
         }
 
-        private static readonly GuardMode[] guardModes = [GuardMode.Card, GuardMode.Password, GuardMode.Face, GuardMode.Remote];
+        //private static readonly GuardMode[] guardModes = [GuardMode.Card, GuardMode.Password, GuardMode.Face, GuardMode.Remote];
 
         [HttpGet("{id}")]
         public async Task<GuardLog> Get(string id)

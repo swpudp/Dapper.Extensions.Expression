@@ -11,33 +11,39 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
     [Route("[controller]")]
     public class CarLogController : ControllerBase
     {
-        [HttpPost("init")]
-        public async Task<bool> Init([FromBody] CarLog carLog)
+        [HttpPost("drive-in")]
+        public async Task<bool> DriveIn([FromBody] AddCarLogReq carLog)
         {
-            using IDbConnection connection = CreateConnection();
-            DateTime start = carLog.OpenTime;
-            DateTime end = start.AddHours(Random.Shared.Next(4, 10));
             CarLog driveIn = new CarLog
             {
                 Id = ObjectId.GenerateNewId().ToString(),
                 CommunityId = carLog.CommunityId,
                 CarNo = carLog.CarNo,
                 Type = CarLogType.DriveIn,
-                OpenTime = start,
+                OpenTime = carLog.OpenTime,
                 CreateTime = DateTime.Now,
                 Version = 1
             };
+            using IDbConnection connection = CreateConnection();
+            await connection.InsertAsync(driveIn);
+            return true;
+        }
+
+        [HttpPost("drive-out")]
+        public async Task<bool> DriveOut([FromBody] AddCarLogReq carLog)
+        {
             CarLog driveOut = new CarLog
             {
                 Id = ObjectId.GenerateNewId().ToString(),
                 CommunityId = carLog.CommunityId,
                 CarNo = carLog.CarNo,
                 Type = CarLogType.DriveOut,
-                OpenTime = end,
+                OpenTime = carLog.OpenTime,
                 CreateTime = DateTime.Now,
                 Version = 1
             };
-            await connection.InsertBulkAsync([driveIn, driveOut]);
+            using IDbConnection connection = CreateConnection();
+            await connection.InsertAsync(driveOut);
             return true;
         }
 

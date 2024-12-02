@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System.Text.Encodings.Web;
+using System.Text.Unicode;
 
 namespace Dapper.Extensions.Expression.WebTest
 {
@@ -24,7 +25,8 @@ namespace Dapper.Extensions.Expression.WebTest
             NamingUtils.SetNamingPolicy(NamingPolicy.SnakeCase);
             services.AddControllers().AddJsonOptions(c =>
             {
-                c.JsonSerializerOptions.Encoder = JavaScriptEncoder.Default;
+                c.JsonSerializerOptions.WriteIndented = true;
+                c.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
             });
             services.AddSwaggerGen(c =>
             {

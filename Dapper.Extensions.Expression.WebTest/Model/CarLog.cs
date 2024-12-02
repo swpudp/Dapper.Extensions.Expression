@@ -23,4 +23,13 @@ namespace Dapper.Extensions.Expression.WebTest.Model
 
         public int Version { get; set; }
     }
+
+    public class AddCarLogReq
+    {
+        public string CommunityId { get; set; }
+
+        public DateTime OpenTime { get; set; }
+
+        public string CarNo { get; set; }
+    }
 }
