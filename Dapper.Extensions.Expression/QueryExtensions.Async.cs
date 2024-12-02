@@ -26,7 +26,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static Task<int> InsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql(connection,entity, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -42,7 +42,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static Task<int> UniqueInsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql(connection,entity, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert ignore into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -77,7 +77,7 @@ namespace Dapper.Extensions.Expression
                     {
                         parameterList.Append(", ");
                     }
-                    MemberInfo property = validPropertyInfos[i];
+                    PropertyInfo property = validPropertyInfos[i];
                     object value = property.GetValue(entity);
 
                     if (value == null)
@@ -111,7 +111,7 @@ namespace Dapper.Extensions.Expression
                     adapter.AddParameter(parameterList, parameterName);
                 }
                 parameterList.Append(')');
-                if (parameters.Count() > maxParameterCount || index + 1 == entities.Count)
+                if (parameters.Count > maxParameterCount || index + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += await connection.ExecuteAsync(cmd, parameters, transaction, commandTimeout);

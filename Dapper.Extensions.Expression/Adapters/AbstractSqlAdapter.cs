@@ -24,11 +24,10 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        public bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo)
+        public void AppendColumnName(StringBuilder sb, MemberInfo memberInfo)
         {
-            string name = GetQuoteName(memberInfo, out bool isAlias);
+            string name = GetQuoteName(memberInfo);
             sb.Append(name);
-            return isAlias;
         }
 
         /// <summary>
@@ -39,7 +38,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="aliasMemberInfo">别名</param>
         public void AppendAliasColumnName(StringBuilder sb, MemberInfo memberInfo, MemberInfo aliasMemberInfo)
         {
-            string columnName = GetQuoteName(memberInfo, out _);
+            string columnName = GetQuoteName(memberInfo);
             sb.AppendFormat("{0} AS {1}{2}{3}", columnName, LeftQuote, aliasMemberInfo.Name, RightQuote);
         }
 
@@ -71,22 +70,24 @@ namespace Dapper.Extensions.Expression.Adapters
         /// Adds the name of a column.
         /// </summary>
         /// <param name="memberInfo">The column name.</param>
-        /// <param name="isAlias"></param>
-        public string GetQuoteName(MemberInfo memberInfo, out bool isAlias)
+        public string GetQuoteName(MemberInfo memberInfo)
         {
             //FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
             //if (namingAttribute == null && type != null)
             //{
             //    namingAttribute = type.GetCustomAttribute<FieldNamingAttribute>(true);
             //}
+            string quoteName;
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
             if (columnAttribute == null)
             {
-                isAlias = false;
-                return $"{LeftQuote}{NamingUtils.GetName(memberInfo.Name)}{RightQuote}";
+                quoteName = NamingUtils.GetName(memberInfo.Name);
             }
-            isAlias = true;
-            return $"{LeftQuote}{NamingUtils.GetName(columnAttribute.Name)}{RightQuote}";
+            else
+            {
+                quoteName = NamingUtils.GetName(columnAttribute.Name);
+            }
+            return $"{LeftQuote}{quoteName}{RightQuote}";
         }
 
         /// <summary>

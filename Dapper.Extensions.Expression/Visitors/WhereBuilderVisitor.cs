@@ -297,7 +297,7 @@ namespace Dapper.Extensions.Expression.Visitors
                         sqlBuilder.Append(',');
                     }
                     object value = memberInfo.GetValue(instance);
-                    string columnName = adapter.GetQuoteName(memberInfo, out _);
+                    string columnName = adapter.GetQuoteName(memberInfo);
                     AddParameter(adapter, sqlBuilder, parameters, columnName, value);
                 }
             }
@@ -330,7 +330,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 MemberAssignment memberAssignment = (MemberAssignment)memberBinding;
                 object value = ExpressionEvaluator.Visit(memberAssignment.Expression);
-                string columnName = adapter.GetQuoteName(memberBinding.Member, out _);
+                string columnName = adapter.GetQuoteName(memberBinding.Member);
                 AddParameter(adapter, sqlBuilder, parameters, columnName, value);
             }
         }

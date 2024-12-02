@@ -6,7 +6,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -39,7 +38,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static int Insert<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql<T>(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.Execute(cmd, entity, transaction, commandTimeout);
         }
@@ -60,7 +59,7 @@ namespace Dapper.Extensions.Expression
                 type = eleType;
             }
             columnList = new StringBuilder();
-            IList<PropertyInfo> canWriteProperties = TypeProvider.GetCanWriteProperties(type);
+            List<PropertyInfo> canWriteProperties = TypeProvider.GetCanWriteProperties(type);
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
@@ -138,7 +137,7 @@ namespace Dapper.Extensions.Expression
                     {
                         parameterList.Append(", ");
                     }
-                    MemberInfo property = validPropertyInfos[i];
+                    PropertyInfo property = validPropertyInfos[i];
                     object value = property.GetValue(entity);
 
                     if (value == null)
@@ -241,13 +240,13 @@ namespace Dapper.Extensions.Expression
             {
                 type = eleType;
             }
-            IList<PropertyInfo> keyProperties = TypeProvider.GetKeyProperties(type);
-            if (!keyProperties.Any())
+            List<PropertyInfo> keyProperties = TypeProvider.GetKeyProperties(type);
+            if (keyProperties.Count == 0)
             {
                 throw new DataException($"{type} only supports an entity with a [Key] property");
             }
-            IList<PropertyInfo> canUpdateProperties = TypeProvider.GetCanUpdateProperties(type);
-            if (!canUpdateProperties.Any())
+            List<PropertyInfo> canUpdateProperties = TypeProvider.GetCanUpdateProperties(type);
+            if (canUpdateProperties.Count == 0)
             {
                 throw new DataException($"{type} no columns to update");
             }
@@ -258,7 +257,7 @@ namespace Dapper.Extensions.Expression
             parameters = new DynamicParameters();
             for (int i = 0; i < canUpdateProperties.Count; i++)
             {
-                MemberInfo property = canUpdateProperties[i];
+                PropertyInfo property = canUpdateProperties[i];
                 adapter.AppendBinaryColumn(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < canUpdateProperties.Count - 1)
@@ -269,7 +268,7 @@ namespace Dapper.Extensions.Expression
             sb.Append(" where ");
             for (int i = 0; i < keyProperties.Count; i++)
             {
-                MemberInfo property = keyProperties[i];
+                PropertyInfo property = keyProperties[i];
                 adapter.AppendBinaryColumn(sb, property, out string columnName);
                 adapter.AddParameter(parameters, columnName, property.GetValue(entity));
                 if (i < keyProperties.Count - 1)
@@ -390,8 +389,8 @@ namespace Dapper.Extensions.Expression
             {
                 type = eleType;
             }
-            IList<PropertyInfo> keyProperties = TypeProvider.GetKeyProperties(type);
-            if (!keyProperties.Any())
+            List<PropertyInfo> keyProperties = TypeProvider.GetKeyProperties(type);
+            if (keyProperties.Count == 0)
             {
                 throw new DataException($"{type} only supports an entity with a [Key] property");
             }
@@ -508,17 +507,14 @@ namespace Dapper.Extensions.Expression
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
                 ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
-                IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
+                List<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
                 StringBuilder sqlBuilder = new StringBuilder();
                 sqlBuilder.Append("SELECT ");
                 foreach (PropertyInfo propertyInfo in queryProperties)
                 {
-                    bool isAlias = sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
-                    if (isAlias)
-                    {
-                        sqlBuilder.Append(" AS ");
-                        sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
-                    }
+                    sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                    sqlBuilder.Append(" AS ");
+                    sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
                     if (queryProperties.IndexOf(propertyInfo) < queryProperties.Count - 1)
                     {
                         sqlBuilder.Append(',');
@@ -565,17 +561,15 @@ namespace Dapper.Extensions.Expression
                 return sql;
             }
             ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
-            IList<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
+            List<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
             StringBuilder sqlBuilder = new StringBuilder();
             sqlBuilder.Append("SELECT ");
             foreach (PropertyInfo propertyInfo in queryProperties)
             {
-                bool isAlias = sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
-                if (isAlias)
-                {
-                    sqlBuilder.Append(" AS ");
-                    sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
-                }
+                sqlAdapter.AppendColumnName(sqlBuilder, propertyInfo);
+                sqlBuilder.Append(" AS ");
+                sqlAdapter.AppendQuoteName(sqlBuilder, propertyInfo.Name);
+
                 if (queryProperties.IndexOf(propertyInfo) < queryProperties.Count - 1)
                 {
                     sqlBuilder.Append(',');

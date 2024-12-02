@@ -98,7 +98,7 @@ namespace Dapper.Extensions.Expression.Extensions
                 ((PropertyInfo)propertyOrField).SetValue(obj, value, null);
                 return;
             }
-            if (propertyOrField.MemberType != MemberTypes.Field) throw new ArgumentException();
+            if (propertyOrField.MemberType != MemberTypes.Field) throw new ArgumentException(null, nameof(propertyOrField));
             ((FieldInfo)propertyOrField).SetValue(obj, value);
         }
 

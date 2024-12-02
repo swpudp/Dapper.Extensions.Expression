@@ -69,6 +69,13 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             return $"{prefixNames[Random.Shared.Next(0, prefixNames.Length)]}{suffixNames[Random.Shared.Next(0, suffixNames.Length)]}";
         }
 
+        [HttpGet("{id}")]
+        public async Task<Community> Get(string id)
+        {
+            using IDbConnection connection = CreateConnection();
+            return await connection.Query<Community>().Where(f => f.Id == id).FirstOrDefaultAsync<Community>();
+        }
+
         private static IDbConnection CreateConnection()
         {
             IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=big_data_tutorial;uid=root;pwd=Q1@we34r;charset=utf8");

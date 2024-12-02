@@ -254,5 +254,19 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
             });
             Assert.IsTrue(updated > 0);
         }
+
+        /// <summary>
+        /// 更新测试
+        /// </summary>
+        [TestMethod]
+        public void QueryTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            NamingPolicySnakeCase snakeCase = connection.Query<NamingPolicySnakeCase>().FirstOrDefault<NamingPolicySnakeCase>();
+            Assert.IsNotNull(snakeCase);
+            Assert.IsNotNull(snakeCase.NamingType);
+            Assert.IsNotNull(snakeCase.CreateTime);
+            Assert.AreNotEqual(snakeCase.CreateTime, DateTime.MinValue);
+        }
     }
 }

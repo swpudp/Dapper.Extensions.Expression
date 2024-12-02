@@ -151,11 +151,13 @@ namespace Dapper.Extensions.Expression.Utilities
 
             throw new NotSupportedException($"Does not support the type '{operandValueType.FullName}' converted to type '{exp.Type.FullName}'.");
         }
-        private static object VisitUnaryQuote(UnaryExpression exp)
+
+        private static System.Linq.Expressions.Expression VisitUnaryQuote(UnaryExpression exp)
         {
             System.Linq.Expressions.Expression e = exp.StripQuotes();
             return e;
         }
+
         private static object VisitConstant(ConstantExpression exp)
         {
             return exp.Value;
@@ -177,13 +179,15 @@ namespace Dapper.Extensions.Expression.Utilities
 
             return exp.Method.Invoke(instance, arguments);
         }
+
         private static object VisitNew(NewExpression exp)
         {
             object[] arguments = exp.Arguments.Select(Visit).ToArray();
 
             return exp.Constructor.Invoke(arguments);
         }
-        private static object VisitNewArray(NewArrayExpression exp)
+
+        private static Array VisitNewArray(NewArrayExpression exp)
         {
             Array arr = Array.CreateInstance(exp.Type.GetElementType() ?? throw new InvalidOperationException(), exp.Expressions.Count);
             for (int i = 0; i < exp.Expressions.Count; i++)
@@ -194,6 +198,7 @@ namespace Dapper.Extensions.Expression.Utilities
 
             return arr;
         }
+
         private static object VisitMemberInit(MemberInitExpression exp)
         {
             object instance = Visit(exp.NewExpression);

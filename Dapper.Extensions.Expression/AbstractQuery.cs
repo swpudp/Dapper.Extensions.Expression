@@ -400,12 +400,9 @@ namespace Dapper.Extensions.Expression
             foreach (PropertyInfo property in validPropertyInfos)
             {
                 _selectBuilder.Append(_adapter.GetQuoteName(p.Name)).Append('.');
-                bool isAlias = _adapter.AppendColumnName(_selectBuilder, property);
-                if (isAlias)
-                {
-                    _selectBuilder.Append(" AS ");
-                    _adapter.AppendQuoteName(_selectBuilder, property.Name);
-                }
+                _adapter.AppendColumnName(_selectBuilder, property);
+                _selectBuilder.Append(" AS ");
+                _adapter.AppendQuoteName(_selectBuilder, property.Name);
                 if (validPropertyInfos.IndexOf(property) < validPropertyInfos.Count - 1)
                 {
                     _selectBuilder.Append(',');

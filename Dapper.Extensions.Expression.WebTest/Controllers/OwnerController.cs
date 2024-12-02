@@ -1,6 +1,5 @@
 ﻿using Dapper.Extensions.Expression.WebTest.Model;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -41,6 +40,13 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             counter.Populations += owners.Count;
             counter.CommunityIds.Add(communityId);
             return counter;
+        }
+
+        [HttpGet("{id}")]
+        public async Task<Owner> Get(string id)
+        {
+            using IDbConnection connection = CreateConnection();
+            return await connection.Query<Owner>().Where(f => f.Id == id).FirstOrDefaultAsync<Owner>();
         }
 
         private static IEnumerable<Owner> Convert(IList<Room> roomList, District town)

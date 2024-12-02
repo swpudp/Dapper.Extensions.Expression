@@ -137,7 +137,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     builder.Append(',');
                 }
-                string columnName = adapter.GetQuoteName(memberInfo, out _);
+                string columnName = adapter.GetQuoteName(memberInfo);
                 builder.Append(columnName).Append('=');
 
                 System.Linq.Expressions.Expression argExpression = e.Arguments[index];
@@ -167,7 +167,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     builder.Append(',');
                 }
-                string columnName = adapter.GetQuoteName(memberBinding.Member, out _);
+                string columnName = adapter.GetQuoteName(memberBinding.Member);
                 builder.Append(columnName).Append('=');
                 MemberAssignment memberAssignment = (MemberAssignment)memberBinding;
                 if (!CanEvaluate(memberAssignment.Expression, adapter, builder, parameters))
@@ -224,7 +224,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             if (m.Expression?.NodeType == ExpressionType.Parameter)
             {
-                builder.AppendFormat("{0}", adapter.GetQuoteName(m.Member, out _));
+                builder.AppendFormat("{0}", adapter.GetQuoteName(m.Member));
             }
             else
             {

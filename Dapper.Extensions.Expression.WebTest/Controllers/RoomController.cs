@@ -27,6 +27,13 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             return true;
         }
 
+        [HttpGet("{id}")]
+        public async Task<Room> Get(string id)
+        {
+            using IDbConnection connection = CreateConnection();
+            return await connection.Query<Room>().Where(f => f.Id == id).FirstOrDefaultAsync<Room>();
+        }
+
         private static IEnumerable<Room> Convert(Community community, IList<House> houseList)
         {
             foreach (var house in houseList)

@@ -97,8 +97,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 if (member.Name == expMember.Name)
                 {
-                    bool isAlias = adapter.AppendColumnName(builder, expMember);
-                    if (!isAlias) continue;
+                    adapter.AppendColumnName(builder, expMember);
                     builder.Append(" AS ");
                     adapter.AppendQuoteName(builder, member.Name);
                 }
@@ -230,8 +229,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 }
                 else
                 {
-                    bool isAlias = adapter.AppendColumnName(builder, member.Member);
-                    if (!isAlias) continue;
+                    adapter.AppendColumnName(builder, member.Member);
                     builder.Append(" AS ");
                     adapter.AppendQuoteName(builder, binding.Member.Name);
                 }

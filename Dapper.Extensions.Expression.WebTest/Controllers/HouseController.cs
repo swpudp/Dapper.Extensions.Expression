@@ -37,6 +37,20 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             return true;
         }
 
+        [HttpGet("{id}")]
+        public async Task<House> Get(string id)
+        {
+            using IDbConnection connection = CreateConnection();
+            return await connection.Query<House>().Where(f => f.Id == id).FirstOrDefaultAsync<House>();
+        }
+
+        [HttpGet("Planning/{id}")]
+        public async Task<HousePlanning> GetHousePlanning(string id)
+        {
+            using IDbConnection connection = CreateConnection();
+            return await connection.Query<HousePlanning>().Where(f => f.Id == id).FirstOrDefaultAsync<HousePlanning>();
+        }
+
         /// <summary>
         /// 房屋配置
         /// 房屋类型,最小人数比例,最大人数比例，楼层数，最小房间数，最大房间数

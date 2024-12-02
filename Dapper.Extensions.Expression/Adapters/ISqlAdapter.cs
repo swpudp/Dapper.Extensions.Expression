@@ -24,7 +24,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// </summary>
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
-        bool AppendColumnName(StringBuilder sb, MemberInfo memberInfo);
+        void AppendColumnName(StringBuilder sb, MemberInfo memberInfo);
 
         /// <summary>
         /// Adds the name of a column.
@@ -51,8 +51,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// Adds the name of a column.
         /// </summary>
         /// <param name="memberInfo">The column name.</param>
-        /// <param name="isAlias">别名</param>
-        string GetQuoteName(MemberInfo memberInfo, out bool isAlias);
+        string GetQuoteName(MemberInfo memberInfo);
 
         /// <summary>
         /// Adds a column equality to a parameter.

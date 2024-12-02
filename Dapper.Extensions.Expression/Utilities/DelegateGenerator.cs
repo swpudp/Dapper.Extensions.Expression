@@ -11,7 +11,7 @@ namespace Dapper.Extensions.Expression.Utilities
 
     internal static class DelegateGenerator
     {
-        private static readonly object[] EmptyArray = new object[0];
+        private static readonly object[] EmptyArray = Array.Empty<object>();
 
         internal static MemberValueGetter CreateValueGetter(MemberInfo propertyOrField)
         {
@@ -130,7 +130,7 @@ namespace Dapper.Extensions.Expression.Utilities
                 case MemberTypes.Field:
                     return ((FieldInfo)propertyOrField).FieldType;
                 default:
-                    throw new ArgumentException();
+                    throw new NotSupportedException(propertyOrField.MemberType.ToString());
             }
         }
     }
