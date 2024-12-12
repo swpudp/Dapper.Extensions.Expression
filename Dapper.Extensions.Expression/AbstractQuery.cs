@@ -168,6 +168,24 @@ namespace Dapper.Extensions.Expression
             _whereBuilder.Append(") ");
         }
 
+        protected void NotExist(LambdaExpression where)
+        {
+            if (_whereBuilder == null)
+            {
+                _whereBuilder = new StringBuilder();
+            }
+            if (_whereBuilder.Length > 0)
+            {
+                _whereBuilder.Append(" AND ");
+            }
+            LambdaExpression ex = ReplaceParameterVisitor.Replace(where, where.Parameters);
+            ParameterExpression p = ex.Parameters.Last();
+            string tableName = _adapter.GetTableName(p.Type);
+            _whereBuilder.AppendFormat("NOT EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", tableName, _adapter.GetQuoteName(p.Name));
+            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
+            _whereBuilder.Append(") ");
+        }
+
         protected void Between<TK>(LambdaExpression selector, TK left, TK right)
         {
             if (_whereBuilder == null)

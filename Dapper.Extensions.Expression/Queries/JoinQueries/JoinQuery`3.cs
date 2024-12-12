@@ -68,6 +68,12 @@ namespace Dapper.Extensions.Expression.Queries.JoinQueries
             return this;
         }
 
+        public JoinQuery<T1, T2, T3> NotExist<T4>(Expression<Func<T1, T2, T3, T4, bool>> where)
+        {
+            base.NotExist(where);
+            return this;
+        }
+
         public JoinQuery<T1, T2, T3> Between<TK>(Expression<Func<T1, T2, T3, TK>> selector, TK left, TK right)
         {
             base.Between(selector, left, right);

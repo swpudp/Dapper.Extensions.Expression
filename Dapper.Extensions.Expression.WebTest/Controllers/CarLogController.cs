@@ -47,6 +47,29 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             return true;
         }
 
+        [HttpGet("DriveIn")]
+        public async Task<ViewCar> DriveIn()
+        {
+            using IDbConnection connection = CreateConnection();
+            ViewCar viewCar = await connection.Query<ViewCar>().NotExist<CarLog>((c, v) => c.CarNo==v.CarNo &&  v.Type == CarLogType.DriveIn &&  v.CreateTime >= DateTime.Today).FirstOrDefaultAsync<ViewCar>();
+            if (viewCar == null)
+            {
+                return null;
+            }
+            CarLog driveIn = new CarLog
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                CommunityId = viewCar.CommunityId,
+                CarNo = viewCar.CarNo,
+                Type = CarLogType.DriveIn,
+                OpenTime = DateTime.Now,
+                CreateTime = DateTime.Now,
+                Version = 1
+            };
+            await connection.InsertAsync(driveIn);
+            return viewCar;
+        }
+
         [HttpGet("{id}")]
         public async Task<CarLog> Get(string id)
         {
@@ -56,7 +79,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
 
         private static IDbConnection CreateConnection()
         {
-            IDbConnection connection = new MySqlConnection("server=127.0.0.1;port=3306;database=big_data_tutorial;uid=root;pwd=Q1@we34r;charset=utf8");
+            IDbConnection connection = new MySqlConnection("server=192.168.100.10;port=3306;database=big_data_tutorial;uid=root;pwd=Q1@we34r;charset=utf8");
             return connection;
         }
     }

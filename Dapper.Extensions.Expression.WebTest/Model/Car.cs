@@ -25,4 +25,11 @@ namespace Dapper.Extensions.Expression.WebTest.Model
 
         public int Version { get; set; }
     }
+
+    public class ViewCar
+    {
+        public required string CommunityId { get; set; }
+
+        public required string CarNo { get; set; }
+    }
 }

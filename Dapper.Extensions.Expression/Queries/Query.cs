@@ -157,6 +157,12 @@ namespace Dapper.Extensions.Expression.Queries
             return this;
         }
 
+        public Query<T> NotExist<T1>(Expression<Func<T, T1, bool>> where)
+        {
+            base.NotExist(where);
+            return this;
+        }
+
         public Query<T> Between<TK>(Expression<Func<T, TK>> selector, TK left, TK right)
         {
             base.Between(selector, left, right);
