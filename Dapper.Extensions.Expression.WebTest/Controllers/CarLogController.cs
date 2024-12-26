@@ -77,7 +77,8 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             using IDbConnection connection = CreateConnection();
             ConnectionMultiplexer connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync("localhost");
             IDatabase database = connectionMultiplexer.GetDatabase();
-            RedisValue redisValue = await database.ListRightPopAsync("view_car");
+            long max = await database.ListLengthAsync("view_car");
+            RedisValue redisValue = await database.ListGetByIndexAsync("view_car", Random.Shared.NextInt64(0, max));
             if (!redisValue.HasValue)
             {
                 return null;
@@ -94,7 +95,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
                 Version = 1
             };
             await connection.InsertAsync(driveIn);
-            return new ViewCar { CarNo=values[1], CommunityId=values[0] };
+            return new ViewCar { CarNo = values[1], CommunityId = values[0] };
         }
 
         private static readonly CarLogType[] carLogTypes = { CarLogType.DriveIn, CarLogType.DriveOut };

@@ -1,6 +1,7 @@
 ﻿using Dapper.Extensions.Expression.WebTest.Model;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
+using StackExchange.Redis;
 using System;
 using System.Data;
 using System.Threading.Tasks;
@@ -32,16 +33,19 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         [HttpGet("open-rd")]
         public async Task<bool> OpenGuardRandom()
         {
-            using IDbConnection connection = CreateConnection();
-            Owner owner = await connection.Query<Owner>().Where(f => f.Age > 18 && f.Age < 65 && f.Tel.StartsWith("139")).NotExist<GuardLog>((o, g) => o.Id == g.OwnerId && g.CreateTime >= DateTime.Today).FirstOrDefaultAsync<Owner>();
-            if (owner == null)
+            ConnectionMultiplexer connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync("localhost");
+            IDatabase database = connectionMultiplexer.GetDatabase();
+            long listLength = await database.ListLengthAsync("view_owner");
+            RedisValue redisValue = await database.ListGetByIndexAsync("view_owner", Random.Shared.NextInt64(0, listLength));
+            if (!redisValue.HasValue)
             {
                 return false;
             }
+            using IDbConnection connection = CreateConnection();
             GuardLog guardLog = new GuardLog
             {
                 Id = ObjectId.GenerateNewId().ToString(),
-                OwnerId = owner.Id,
+                OwnerId = redisValue.ToString(),
                 OpenTime = DateTime.Now,
                 CreateTime = DateTime.Now,
                 Version = 1,
