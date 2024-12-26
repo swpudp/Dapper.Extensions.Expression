@@ -29,7 +29,29 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             return true;
         }
 
-        //private static readonly GuardMode[] guardModes = [GuardMode.Card, GuardMode.Password, GuardMode.Face, GuardMode.Remote];
+        [HttpGet("open-rd")]
+        public async Task<bool> OpenGuardRandom()
+        {
+            using IDbConnection connection = CreateConnection();
+            Owner owner = await connection.Query<Owner>().Where(f => f.Age > 18 && f.Age < 65 && f.Tel.StartsWith("139")).NotExist<GuardLog>((o, g) => o.Id == g.OwnerId && g.CreateTime >= DateTime.Today).FirstOrDefaultAsync<Owner>();
+            if (owner == null)
+            {
+                return false;
+            }
+            GuardLog guardLog = new GuardLog
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = owner.Id,
+                OpenTime = DateTime.Now,
+                CreateTime = DateTime.Now,
+                Version = 1,
+                OpenMode = guardModes[Random.Shared.Next(0, guardModes.Length)]
+            };
+            await connection.InsertAsync(guardLog);
+            return true;
+        }
+
+        private static readonly GuardMode[] guardModes = [GuardMode.Card, GuardMode.Password, GuardMode.Face, GuardMode.Remote];
 
         [HttpGet("{id}")]
         public async Task<GuardLog> Get(string id)

@@ -51,7 +51,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         public async Task<ViewCar> DriveIn()
         {
             using IDbConnection connection = CreateConnection();
-            ViewCar viewCar = await connection.Query<ViewCar>().NotExist<CarLog>((c, v) => c.CarNo==v.CarNo &&  v.Type == CarLogType.DriveIn &&  v.CreateTime >= DateTime.Today).FirstOrDefaultAsync<ViewCar>();
+            ViewCar viewCar = await connection.Query<ViewCar>().NotExist<CarLog>((c, v) => c.CarNo == v.CarNo && v.Type == CarLogType.DriveIn && v.CreateTime >= DateTime.Today).FirstOrDefaultAsync<ViewCar>();
             if (viewCar == null)
             {
                 return null;
@@ -74,7 +74,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         public async Task<ViewCar> DriveOut()
         {
             using IDbConnection connection = CreateConnection();
-            ViewCar viewCar = await connection.Query<ViewCar>().NotExist<CarLog>((c, v) => c.CarNo==v.CarNo &&  v.Type == CarLogType.DriveOut &&  v.CreateTime >= DateTime.Today).FirstOrDefaultAsync<ViewCar>();
+            ViewCar viewCar = await connection.Query<ViewCar>().NotExist<CarLog>((c, v) => c.CarNo == v.CarNo && v.Type == CarLogType.DriveOut && v.CreateTime >= DateTime.Today).FirstOrDefaultAsync<ViewCar>();
             if (viewCar == null)
             {
                 return null;
