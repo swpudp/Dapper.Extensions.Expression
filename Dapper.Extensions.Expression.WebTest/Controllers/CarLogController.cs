@@ -1,6 +1,7 @@
 ﻿using Dapper.Extensions.Expression.WebTest.Model;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
+using StackExchange.Redis;
 using System;
 using System.Data;
 using System.Threading.Tasks;
@@ -69,6 +70,34 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
             await connection.InsertAsync(driveIn);
             return viewCar;
         }
+
+        [HttpGet("DriveRd")]
+        public async Task<ViewCar> DriveRd()
+        {
+            using IDbConnection connection = CreateConnection();
+            ConnectionMultiplexer connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync("localhost");
+            IDatabase database = connectionMultiplexer.GetDatabase();
+            RedisValue redisValue = await database.ListRightPopAsync("view_car");
+            if (!redisValue.HasValue)
+            {
+                return null;
+            }
+            string[] values = redisValue.ToString().Split("|");
+            CarLog driveIn = new CarLog
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                CommunityId = values[0],
+                CarNo = values[1],
+                Type = carLogTypes[Random.Shared.Next(0, carLogTypes.Length)],
+                OpenTime = DateTime.Now,
+                CreateTime = DateTime.Now,
+                Version = 1
+            };
+            await connection.InsertAsync(driveIn);
+            return new ViewCar { CarNo=values[1], CommunityId=values[0] };
+        }
+
+        private static readonly CarLogType[] carLogTypes = { CarLogType.DriveIn, CarLogType.DriveOut };
 
         [HttpGet("DriveOut")]
         public async Task<ViewCar> DriveOut()
