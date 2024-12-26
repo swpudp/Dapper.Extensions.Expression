@@ -10,7 +10,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class GuardLogController : ControllerBase
+    public class GuardLogController(IConnectionMultiplexer connectionMultiplexer) : ControllerBase
     {
         [HttpPost("open")]
         public async Task<bool> OpenGuard([FromBody] AddGuardLogReq addGuardLogReq)
@@ -33,15 +33,17 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         [HttpGet("open-rd")]
         public async Task<bool> OpenGuardRandom()
         {
-            ConnectionMultiplexer connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync("localhost");
             IDatabase database = connectionMultiplexer.GetDatabase();
             long listLength = await database.ListLengthAsync("view_owner");
+            if (listLength == 0)
+            {
+                return false;
+            }
             RedisValue redisValue = await database.ListGetByIndexAsync("view_owner", Random.Shared.NextInt64(0, listLength));
             if (!redisValue.HasValue)
             {
                 return false;
             }
-            using IDbConnection connection = CreateConnection();
             GuardLog guardLog = new GuardLog
             {
                 Id = ObjectId.GenerateNewId().ToString(),
@@ -51,6 +53,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
                 Version = 1,
                 OpenMode = guardModes[Random.Shared.Next(0, guardModes.Length)]
             };
+            using IDbConnection connection = CreateConnection();
             await connection.InsertAsync(guardLog);
             return true;
         }

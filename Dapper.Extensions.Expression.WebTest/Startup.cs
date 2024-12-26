@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 
@@ -32,6 +34,8 @@ namespace Dapper.Extensions.Expression.WebTest
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Dapper.Extensions.Expression.WebTest", Version = "v1" });
             });
+            services.AddLogging(f => f.AddLog4Net());
+            services.AddSingleton<IConnectionMultiplexer>(p => ConnectionMultiplexer.Connect("localhost"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,6 +47,8 @@ namespace Dapper.Extensions.Expression.WebTest
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Dapper.Extensions.Expression.WebTest v1"));
             }
+
+            app.UseExceptionHandler(err => err.UseCustomErrors());
 
             app.UseRouting();
 

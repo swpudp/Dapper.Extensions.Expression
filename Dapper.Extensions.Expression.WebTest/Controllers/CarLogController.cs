@@ -10,7 +10,7 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class CarLogController : ControllerBase
+    public class CarLogController(IConnectionMultiplexer connectionMultiplexer) : ControllerBase
     {
         [HttpPost("drive-in")]
         public async Task<bool> DriveIn([FromBody] AddCarLogReq carLog)
@@ -72,16 +72,18 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
         }
 
         [HttpGet("DriveRd")]
-        public async Task<ViewCar> DriveRd()
+        public async Task<bool> DriveRd()
         {
-            using IDbConnection connection = CreateConnection();
-            ConnectionMultiplexer connectionMultiplexer = await ConnectionMultiplexer.ConnectAsync("localhost");
             IDatabase database = connectionMultiplexer.GetDatabase();
             long max = await database.ListLengthAsync("view_car");
+            if (max == 0)
+            {
+                return false;
+            }
             RedisValue redisValue = await database.ListGetByIndexAsync("view_car", Random.Shared.NextInt64(0, max));
             if (!redisValue.HasValue)
             {
-                return null;
+                return false;
             }
             string[] values = redisValue.ToString().Split("|");
             CarLog driveIn = new CarLog
@@ -94,8 +96,9 @@ namespace Dapper.Extensions.Expression.WebTest.Controllers
                 CreateTime = DateTime.Now,
                 Version = 1
             };
+            using IDbConnection connection = CreateConnection();
             await connection.InsertAsync(driveIn);
-            return new ViewCar { CarNo = values[1], CommunityId = values[0] };
+            return true;
         }
 
         private static readonly CarLogType[] carLogTypes = { CarLogType.DriveIn, CarLogType.DriveOut };
