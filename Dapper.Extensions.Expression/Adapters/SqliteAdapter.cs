@@ -15,9 +15,9 @@ namespace Dapper.Extensions.Expression.Adapters
 
         public override string ParameterPrefix => "@";
 
-        public override string LeftQuote => "";
+        public override string LeftQuote => "\"";
 
-        public override string RightQuote => "";
+        public override string RightQuote => "\"";
 
         /// <summary>
         /// 增加分页信息

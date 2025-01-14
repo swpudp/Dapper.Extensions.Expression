@@ -5,7 +5,6 @@ using Dapper.Extensions.Expression.Queries;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -62,7 +61,6 @@ namespace Dapper.Extensions.Expression
             StringBuilder parameterList = new StringBuilder();
             Dictionary<string, object> parameters = new Dictionary<string, object>();
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
-            int index = 0;
             int count = 0;
             foreach (T entity in entities)
             {
@@ -106,19 +104,18 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(value.ToString());
                         continue;
                     }
-                    string parameterName = $"{property.Name}_{index}";
+                    string parameterName = $"n_p_{entities.IndexOf(entity)}_{i}";
                     adapter.AddParameter(parameters, parameterName, value);
                     adapter.AddParameter(parameterList, parameterName);
                 }
                 parameterList.Append(')');
-                if (parameters.Count > maxParameterCount || index + 1 == entities.Count)
+                if (parameters.Count > maxParameterCount || entities.IndexOf(entity) + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += await connection.ExecuteAsync(cmd, parameters, transaction, commandTimeout);
                     parameterList.Clear();
                     parameters.Clear();
                 }
-                index++;
             }
             return count;
         }

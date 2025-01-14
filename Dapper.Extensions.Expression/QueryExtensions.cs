@@ -122,7 +122,7 @@ namespace Dapper.Extensions.Expression
             StringBuilder parameterList = new StringBuilder();
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             Dictionary<string, object> parameters = new Dictionary<string, object>();
-            int index = 0;
+            //int index = 0;
             int count = 0;
             foreach (T entity in entities)
             {
@@ -166,19 +166,18 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(value);
                         continue;
                     }
-                    string parameterName = $"{property.Name}_{index}";
+                    string parameterName = $"n_p_{entities.IndexOf(entity)}_{i}";
                     adapter.AddParameter(parameterList, parameterName);
                     adapter.AddParameter(parameters, parameterName, value);
                 }
                 parameterList.Append(')');
-                if (parameters.Count > maxParameterCount || index + 1 == entities.Count)
+                if (parameters.Count > maxParameterCount || entities.IndexOf(entity) + 1 == entities.Count)
                 {
                     string cmd = $"insert into {tableName} ({columnList}) values {parameterList}";
                     count += connection.Execute(cmd, parameters, transaction, commandTimeout);
                     parameterList.Clear();
                     parameters.Clear();
                 }
-                index++;
             }
             return count;
         }
