@@ -106,7 +106,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <summary>
         /// 处理日期
         /// </summary>
-        public void DateTimeAddMethod(MethodCallExpression e, string function, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
+        public void DateTimeAddMethod(MethodCallExpression e, string function, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
             sqlBuilder.AppendFormat("DateAdd({0},", function);
             WhereExpressionVisitor.InternalVisit(e.Arguments[0], this, sqlBuilder, parameters, appendParameter);

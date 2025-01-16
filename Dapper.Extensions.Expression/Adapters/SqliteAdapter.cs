@@ -1,4 +1,5 @@
-﻿using Dapper.Extensions.Expression.Visitors;
+﻿using Dapper.Extensions.Expression.Utilities;
+using Dapper.Extensions.Expression.Visitors;
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -29,7 +30,7 @@ namespace Dapper.Extensions.Expression.Adapters
                 return;
             }
             int currentPage = Math.Max(page - 1, 0);
-            sb.AppendFormat(" LIMIT {0} OFFSET {1}", currentPage * pageSize, pageSize);
+            sb.AppendFormat(" LIMIT {0},{1}", currentPage * pageSize, pageSize);
         }
 
         public void HandleDateTime(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -37,68 +38,57 @@ namespace Dapper.Extensions.Expression.Adapters
             MemberInfo member = exp.Member;
             if (member == ConstantDefined.PropertyDateTimeNow)
             {
-                sqlBuilder.Append("GETDATE()");
-                return;
+                sqlBuilder.Append("date('now')");
             }
-            if (member == ConstantDefined.PropertyDateTimeUtcNow)
+            else if (member == ConstantDefined.PropertyDateTimeUtcNow)
             {
-                sqlBuilder.Append("GETUTCDATE()");
-                return;
+                sqlBuilder.Append("date('now','utc')");
             }
-            if (member == ConstantDefined.PropertyDateTimeToday)
+            else if (member == ConstantDefined.PropertyDateTimeToday)
             {
-                sqlBuilder.Append("CONVERT(date, GETDATE())");
-                return;
+                sqlBuilder.Append("strftime('%Y-%m-%d','now')");
             }
-            if (member == ConstantDefined.PropertyDateTimeDate)
+            else if (member == ConstantDefined.PropertyDateTimeDate)
             {
-                sqlBuilder.Append("CONVERT(date,");
-                WhereExpressionVisitor.InternalVisit(exp.Expression, this, sqlBuilder, parameters, appendParameter);
-                sqlBuilder.Append(')');
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%Y-%m-%d", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeYear)
+            else if (member == ConstantDefined.PropertyDateTimeYear)
             {
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(YEAR,", appendParameter);
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%Y", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeMonth)
+            else if (member == ConstantDefined.PropertyDateTimeMonth)
             {
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(MONTH,", appendParameter);
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%m", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeDay)
+            else if (member == ConstantDefined.PropertyDateTimeDay)
             {
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(DAY,", appendParameter);
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%d", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeHour)
+            else if (member == ConstantDefined.PropertyDateTimeHour)
             {
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(HOUR,", appendParameter);
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%H", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeMinute)
+            else if (member == ConstantDefined.PropertyDateTimeMinute)
             {
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(HOUR,", appendParameter);
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%M", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeSecond)
+            else if (member == ConstantDefined.PropertyDateTimeSecond)
             {
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(SECOND,", appendParameter);
-                return;
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%S", appendParameter);
             }
-            if (member == ConstantDefined.PropertyDateTimeDayOfWeek)
+            else if (member == ConstantDefined.PropertyDateTimeDayOfWeek)
             {
-                sqlBuilder.Append('(');
-                AppendDatePart(exp, sqlBuilder, parameters, "DATEPART(WEEKDAY,", appendParameter);
-                sqlBuilder.Append(" - 1)");
+                AppendDatePart(exp, sqlBuilder, parameters, "strftime", "%w", appendParameter);
+            }
+            else
+            {
+                throw new NotSupportedException("not support");
             }
         }
 
-        private void AppendDatePart(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, string functionName, bool appendParameter)
+        private void AppendDatePart(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, string functionName, string fmt, bool appendParameter)
         {
-            sqlBuilder.Append(functionName);
-            sqlBuilder.Append('(');
+            sqlBuilder.Append(functionName).Append("(\'").Append(fmt).Append("\',");
             WhereExpressionVisitor.InternalVisit(exp.Expression, this, sqlBuilder, parameters, appendParameter);
             sqlBuilder.Append(')');
         }
@@ -106,13 +96,44 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <summary>
         /// 处理日期
         /// </summary>
-        public void DateTimeAddMethod(MethodCallExpression e, string function, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
+        public void DateTimeAddMethod(MethodCallExpression e, string function, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
         {
-            sqlBuilder.AppendFormat("DateAdd({0},", function);
-            WhereExpressionVisitor.InternalVisit(e.Arguments[0], this, sqlBuilder, parameters, appendParameter);
-            sqlBuilder.Append(',');
-            WhereExpressionVisitor.InternalVisit(e.Object, this, sqlBuilder, parameters, appendParameter);
-            sqlBuilder.Append(')');
+            if (!(e.Object is MemberExpression me))
+            {
+                throw new NotSupportedException("不支持的表达式:" + e);
+            }
+            sqlBuilder.Append("datetime(");
+            //不是属性访问
+            if (me.Expression == null)
+            {
+                sqlBuilder.Append("'now','");
+            }
+            else
+            {
+                if (me.Expression is MemberExpression pme)
+                {
+                    if (pme.Expression is ConstantExpression)
+                    {
+                        object v = ExpressionEvaluator.Visit(me);
+                        sqlBuilder.AppendFormat("'{0:yyyy-MM-dd HH:mm:ss}','", v);
+
+                        //sqlBuilder.Append('\'');
+                        //WhereExpressionVisitor.InternalVisit(ce, adapter, sqlBuilder, parameters, false);
+                        //sqlBuilder.Append("','");
+                    }
+                    else
+                    {
+                        WhereExpressionVisitor.InternalVisit(pme, adapter, sqlBuilder, parameters, appendParameter);
+                        sqlBuilder.Append(",'");
+                    }
+                }
+                else
+                {
+                    WhereExpressionVisitor.InternalVisit(me, adapter, sqlBuilder, parameters, appendParameter);
+                    sqlBuilder.Append(",'");
+                }
+            }
+            sqlBuilder.Append(e.Arguments[0]).Append(' ').Append(function.ToLower()).Append('s').Append('\'').Append(')');
         }
 
         public bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)

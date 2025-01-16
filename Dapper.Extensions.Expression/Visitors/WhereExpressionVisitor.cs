@@ -223,7 +223,14 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             else
             {
-                AddParameter(adapter, sqlBuilder, parameters, constant.Value);
+                if (appendParameter)
+                {
+                    AddParameter(adapter, sqlBuilder, parameters, constant.Value);
+                }
+                else
+                {
+                    sqlBuilder.Append(constant.Value);
+                }
             }
         }
 
@@ -285,7 +292,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             object[] arguments = newExpression.Arguments.Select(ExpressionEvaluator.Visit).ToArray();
             object instance = newExpression.Constructor.Invoke(arguments);
-            if (newExpression.Members != null && newExpression.Members.Any())
+            if (newExpression.Members != null && newExpression.Members.Count != 0)
             {
                 foreach (MemberInfo memberInfo in newExpression.Members)
                 {

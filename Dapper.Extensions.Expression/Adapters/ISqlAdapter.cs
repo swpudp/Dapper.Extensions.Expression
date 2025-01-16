@@ -74,7 +74,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <summary>
         /// 处理日期
         /// </summary>
-        void DateTimeAddMethod(MethodCallExpression e, string function, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter);
+        void DateTimeAddMethod(MethodCallExpression e, string function, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter);
 
         /// <summary>
         /// 求字符串长度函数

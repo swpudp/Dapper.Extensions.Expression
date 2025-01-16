@@ -47,7 +47,6 @@ namespace Dapper.Extensions.Expression
         internal static readonly PropertyInfo PropertyDateTimeToday = typeof(DateTime).GetProperty("Today");
         internal static readonly PropertyInfo PropertyDateTimeDate = typeof(DateTime).GetProperty("Date");
 
-
         internal static readonly PropertyInfo PropertyDateTimeYear = typeof(DateTime).GetProperty("Year");
         internal static readonly PropertyInfo PropertyDateTimeMonth = typeof(DateTime).GetProperty("Month");
         internal static readonly PropertyInfo PropertyDateTimeDay = typeof(DateTime).GetProperty("Day");

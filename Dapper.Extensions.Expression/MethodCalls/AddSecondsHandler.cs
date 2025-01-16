@@ -16,7 +16,7 @@ namespace Dapper.Extensions.Expression.MethodCalls
 
         public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
-            sqlAdapter.DateTimeAddMethod(e, "SECOND", builder, parameters, appendParameter);
+            sqlAdapter.DateTimeAddMethod(e, "SECOND", sqlAdapter, builder, parameters, appendParameter);
         }
     }
 }
