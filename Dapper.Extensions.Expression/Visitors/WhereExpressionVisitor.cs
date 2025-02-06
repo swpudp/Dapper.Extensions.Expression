@@ -524,23 +524,34 @@ namespace Dapper.Extensions.Expression.Visitors
 
         private static void ProcessUnaryNot(System.Linq.Expressions.UnaryExpression u, StringBuilder sqlBuilder, ISqlAdapter adapter, DynamicParameters parameters, bool appendParameter)
         {
-            if (!(u.Operand is MemberExpression um))
-            {
-                throw new NotSupportedException($"can not supported node type '{u.Operand.NodeType}'");
-            }
             System.Linq.Expressions.Expression left;
             ConstantExpression right;
-            if (um.Expression == null || um.Expression.NodeType == ExpressionType.Parameter)
+            ExpressionType op;
+            if (u.Operand is MethodCallExpression mce)
             {
-                left = um;
-                right = ConstantDefined.BooleanFalse;
+                op = ExpressionType.NotEqual;
+                left = mce.Arguments[0];
+                right = TypeProvider.GetNullExpression(mce.Method.DeclaringType);
             }
             else
             {
-                left = um.Expression;
-                right = um.Member.Name == ConstantDefined.MemberNameHasValue ? TypeProvider.GetNullExpression(um.Expression.Type) : TypeProvider.GetFalseExpression(um.Expression.Type);
+                if (!(u.Operand is MemberExpression um))
+                {
+                    throw new NotSupportedException($"can not supported node type '{u.Operand.NodeType}'");
+                }
+                op = ExpressionType.Equal;
+                if (um.Expression == null || um.Expression.NodeType == ExpressionType.Parameter)
+                {
+                    left = um;
+                    right = ConstantDefined.BooleanFalse;
+                }
+                else
+                {
+                    left = um.Expression;
+                    right = um.Member.Name == ConstantDefined.MemberNameHasValue ? TypeProvider.GetNullExpression(um.Expression.Type) : TypeProvider.GetFalseExpression(um.Expression.Type);
+                }
             }
-            BinaryExpression ub = System.Linq.Expressions.Expression.Equal(left, right);
+            BinaryExpression ub = System.Linq.Expressions.Expression.MakeBinary(op, left, right);
             Visit(ub, sqlBuilder, adapter, parameters, appendParameter);
         }
 

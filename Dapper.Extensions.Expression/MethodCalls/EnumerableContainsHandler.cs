@@ -24,19 +24,17 @@ namespace Dapper.Extensions.Expression.MethodCalls
             {
                 return;
             }
-            IList<object> values = array.Cast<object>().ToList();
-            if (values.Any())
+            List<object> values = array.Cast<object>().ToList();
+            if (values.Count != 0)
             {
                 WhereExpressionVisitor.InternalVisit(e.Arguments[1], sqlAdapter, builder, parameters, appendParameter);
                 builder.Append(" IN (");
-                int idx = 0;
                 foreach (object v in values)
                 {
-                    if (idx > 0)
+                    if (values.IndexOf(v) > 0)
                     {
                         builder.Append(',');
                     }
-                    idx++;
                     WhereExpressionVisitor.AddParameter(sqlAdapter, builder, parameters, v);
                 }
                 builder.Append(')');

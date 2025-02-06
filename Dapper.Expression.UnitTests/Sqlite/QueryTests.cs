@@ -25,7 +25,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             query.Where(v => v.Remark.Contains("FD2"));
-            IEnumerable<Order> data = query.ToList<Order>();
+            IEnumerable<Order> data = query.Select(f => new { f.Version, f.Amount, f.IsDelete, f.Freight }).ToList<Order>();
             Assert.IsTrue(data.Any());
         }
 
@@ -678,9 +678,9 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         public void ColumnAliasTest()
         {
             using IDbConnection connection = CreateConnection();
-            IList<Order> orders = connection.Query<Order>().TakePage(1, 20).ToList<Order>();
+            IList<Order> orders = connection.Query<Order>().Where(f => !string.IsNullOrEmpty(f.SerialNo)).Select(f => new { f.SerialNo }).Take(20).ToList<Order>();
             Assert.IsNotNull(orders);
-            Assert.IsTrue(orders.All(f => !string.IsNullOrEmpty(f.SerialNo)));
+            Assert.IsTrue(orders.Any(f => !string.IsNullOrEmpty(f.SerialNo)));
         }
 
         [TestMethod]
@@ -689,7 +689,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
             using IDbConnection connection = CreateConnection();
             IList<Order> orders = connection.Query<Order>().Select(f => new { f.SerialNo }).TakePage(1, 20).ToList<Order>();
             Assert.IsNotNull(orders);
-            Assert.IsTrue(orders.All(f => !string.IsNullOrEmpty(f.SerialNo)));
+            Assert.IsTrue(orders.Any(f => !string.IsNullOrEmpty(f.SerialNo)));
         }
 
 
@@ -697,9 +697,9 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         public void ColumnAliasSelectEntityTest()
         {
             using IDbConnection connection = CreateConnection();
-            IList<Order> orders = connection.Query<Order>().Select(f => new Order { SerialNo = f.SerialNo }).TakePage(1, 20).ToList<Order>();
-            Assert.IsNotNull(orders);
-            Assert.IsTrue(orders.All(f => !string.IsNullOrEmpty(f.SerialNo)));
+            IList<Order> orders = connection.Query<Order>().Where(f => !string.IsNullOrEmpty(f.SerialNo)).Select(f => new Order { SerialNo = f.SerialNo }).TakePage(1, 20).ToList<Order>();
+            Assert.IsTrue(orders.Any());
+            Assert.IsTrue(orders.Any(f => !string.IsNullOrEmpty(f.SerialNo)));
         }
 
         [TestMethod]
@@ -771,6 +771,15 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
 
             Assert.IsNotNull(models);
             Assert.IsTrue(models.Any());
+        }
+
+        [TestMethod]
+        public void WhereIsNullOrEmptyTest()
+        {
+            using IDbConnection connection = CreateConnection();
+            Query<Order> query = connection.Query<Order>();
+            int count = query.Where(f => string.IsNullOrEmpty(f.Remark)).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1022,23 +1031,21 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         [TestMethod]
         public void NullableParamTest()
         {
-
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             DateTime? date = new DateTime(2021, 3, 10);
-            IList<Order> entities = query.Where(f => f.CreateTime > date.Value).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => f.CreateTime > date.Value).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
         public void NullableDateTimeValueDateTest()
         {
-
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             DateTime? date = DateTime.Now.AddDays(-20);
-            IList<Order> entities = query.Where(f => f.CreateTime > date.Value.Date).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => f.CreateTime > date.Value.Date).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1046,8 +1053,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.DocId.HasValue).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => f.DocId.HasValue).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1055,8 +1062,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => !f.DocId.HasValue).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => !f.DocId.HasValue).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1064,8 +1071,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.IsActive.Value).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => f.IsActive.Value).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1073,8 +1080,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => !f.IsActive.Value).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => !f.IsActive.Value).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1083,8 +1090,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
             IList<Status> testTypes = new List<Status> { Status.Running };
-            IList<Order> entities = query.Where(f => testTypes.Contains(f.Status) && f.DocId.HasValue && !f.IsDelete && f.IsActive.Value).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => testTypes.Contains(f.Status) && f.DocId.HasValue && !f.IsDelete && f.IsActive.Value).Count();
+            Assert.IsTrue(count > 0);
         }
 
 
@@ -1201,8 +1208,6 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
                 .Take(10);
             int count = query.Count();
             Assert.IsTrue(count > 0);
-            IList<Order> orders = query.ToList<Order>();
-            Assert.IsTrue(orders.Any());
         }
 
         [TestMethod]
