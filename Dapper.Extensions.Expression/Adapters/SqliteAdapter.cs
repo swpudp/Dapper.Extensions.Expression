@@ -150,13 +150,13 @@ namespace Dapper.Extensions.Expression.Adapters
 
         public void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action)
         {
-            builder.Append("CAST(ISNULL(");
+            builder.Append("CAST(COALESCE(");
             //参数部分
             action(e.Left, this, builder, appendParameter);
             builder.Append(',');
             //值部分
             action(e.Right, this, builder, appendParameter);
-            builder.Append(") AS CHAR) AS ");
+            builder.Append(") AS TEXT) AS ");
         }
     }
 }

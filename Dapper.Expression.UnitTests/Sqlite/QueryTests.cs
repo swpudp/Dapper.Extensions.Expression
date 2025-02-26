@@ -1,5 +1,6 @@
 ﻿using Dapper.Extensions.Expression;
 using Dapper.Extensions.Expression.Queries;
+using Dapper.Extensions.Expression.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -8,6 +9,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
 
@@ -16,6 +18,11 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
     [TestClass]
     public class QueryTests : SqliteBaseTest
     {
+        public QueryTests()
+        {
+            TypeUtils.UseStringGuidHandler();
+        }
+
         /// <summary>
         /// 查询测试
         /// </summary>
@@ -1110,9 +1117,9 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Status> testTypes = new List<Status> { Status.Running };
-            IList<Order> entities = query.Where(f => testTypes.Contains(f.Status)).Select(f => new { f.Id, Name = (f.Freight ?? 0).ToString(CultureInfo.InvariantCulture), f.SerialNo }).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            List<Status> testTypes = new List<Status> { Status.Running };
+            int count = query.Where(f => testTypes.Contains(f.Status)).Select(f => new { f.Id, Name = (f.Freight ?? 0).ToString(CultureInfo.InvariantCulture), f.SerialNo }).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
@@ -1120,8 +1127,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.IsActive == true).ToList<Order>();
-            Assert.IsTrue(entities.Any());
+            int count = query.Where(f => f.IsActive == true).Count();
+            Assert.IsTrue(count > 0);
         }
 
         [TestMethod]
