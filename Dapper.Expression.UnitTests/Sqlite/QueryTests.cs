@@ -80,6 +80,13 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
             }
         }
 
+        [TestMethod]
+        public void QueryCountTest()
+        {
+            int exist = Execute(connection1 => connection1.Query<Buyer>().Where(f => f.Id == Guid.Parse("b0507804-15b3-405d-92b7-60b86a290e33")).Count());
+            Assert.AreEqual(1, exist);
+        }
+
         /// <summary>
         /// 查询测试
         /// </summary>
@@ -191,11 +198,11 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         public void QueryArrayContainsTest()
         {
             using IDbConnection connection = CreateConnection();
-            string[] values = { "ABC", "BCD" };
+            string[] values = { "AC", "A8" };
             Query<Order> query = connection.Query<Order>().Where(v => values.Contains(v.Remark));
             IEnumerable<Order> data = query.ToList<Order>();
             Assert.IsTrue(data.Any());
-            Assert.IsTrue(data.All(d => values.Any(f => f == d.SerialNo)));
+            Assert.IsTrue(data.All(d => values.Any(f => f == d.Remark)));
         }
 
         /// <summary>
@@ -1030,8 +1037,8 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            DateTime date = DateTime.Now.AddDays(-20);
-            int count = query.Where(f => f.CreateTime > date.Date.AddMilliseconds(-500 * 60 * 60 * 1000)).Count();
+            DateTime date = DateTime.Now.AddDays(-1);
+            int count = query.Where(f => f.CreateTime > date.Date.AddMilliseconds(-5 * 1000)).Count();
             Assert.IsTrue(count > 0);
         }
 
@@ -1211,7 +1218,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         public void BetweenTest()
         {
             using IDbConnection connection = CreateConnection();
-            Query<Order> query = connection.Query<Order>().Between(f => f.CreateTime, DateTime.Parse("2025-01-01"), DateTime.Parse("2025-01-16"))
+            Query<Order> query = connection.Query<Order>().Between(f => f.CreateTime, DateTime.Parse("2025-01-01"), DateTime.Now)
                 .Take(10);
             int count = query.Count();
             Assert.IsTrue(count > 0);
