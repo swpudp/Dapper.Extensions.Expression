@@ -8,8 +8,11 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         protected override IDbConnection CreateConnection()
         {
             string connectionString = "Data Source=dapper_exp.db";
-            SqliteConnection connection = new SqliteConnection(connectionString);
-            return connection;
+            string fullConnectionString = new SqliteConnectionStringBuilder(connectionString)
+            {
+                Mode=SqliteOpenMode.ReadWriteCreate
+            }.ToString();
+            return new SqliteConnection(fullConnectionString);
         }
     }
 }

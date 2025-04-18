@@ -123,7 +123,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
             Buyer buyer = ObjectUtils.CreateBuyer();
             IList<Order> orders = ObjectUtils.CreateOrders(100, 10, buyer).ToList();
             IList<Item> items = ObjectUtils.CreateItems(orders).ToList();
-            int values = ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.Insert(orders, transaction), connection.Insert(items, transaction) });
+            int values = ExecuteTransaction((connection, transaction) => new[] { connection.Insert(buyer, transaction), connection.InsertBulk(orders, transaction), connection.InsertBulk(items, transaction) });
             Assert.IsTrue(values > 0);
             bool exist = Execute(connection => connection.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
             Assert.IsTrue(exist);
@@ -147,12 +147,12 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
             using (TransactionScope trans = new TransactionScope())
             {
                 Execute(connection => connection.Insert(buyer));
-                Execute(connection => connection.Insert(orders));
-                Execute(connection => connection.Insert(items));
+                Execute(connection => connection.InsertBulk(orders));
+                Execute(connection => connection.InsertBulk(items));
                 trans.Complete();
             }
-            bool exist = Execute(connection1 => connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Any());
-            Assert.IsTrue(exist);
+            int exist = Execute(connection1 => connection1.Query<Buyer>().Where(f => f.Id == buyer.Id).Count());
+            Assert.IsTrue(exist>0);
             IEnumerable<Guid> orderIds = orders.Select(f => f.Id);
             int count = Execute(connection1 => connection1.Query<Order>().Where(f => orderIds.Contains(f.Id)).Count());
             Assert.AreEqual(orders.Count, count);

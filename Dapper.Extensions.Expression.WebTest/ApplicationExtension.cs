@@ -54,7 +54,7 @@ public static class ApplicationExtension
             logger = loggerFactory.CreateLogger(typeof(ApplicationExtension));
         }
         IExceptionHandlerFeature exceptionDetails = httpContext.Features.Get<IExceptionHandlerFeature>();
-        Exception? ex = exceptionDetails?.Error;
+        Exception ex = exceptionDetails?.Error;
         if (ex == null)
         {
             return;
