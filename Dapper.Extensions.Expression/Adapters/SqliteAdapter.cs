@@ -116,10 +116,6 @@ namespace Dapper.Extensions.Expression.Adapters
                     {
                         object v = ExpressionEvaluator.Visit(me);
                         sqlBuilder.AppendFormat("'{0:yyyy-MM-dd HH:mm:ss}','", v);
-
-                        //sqlBuilder.Append('\'');
-                        //WhereExpressionVisitor.InternalVisit(ce, adapter, sqlBuilder, parameters, false);
-                        //sqlBuilder.Append("','");
                     }
                     else
                     {
@@ -133,7 +129,11 @@ namespace Dapper.Extensions.Expression.Adapters
                     sqlBuilder.Append(",'");
                 }
             }
-            sqlBuilder.Append(e.Arguments[0]).Append(' ').Append(function.ToLower()).Append('s').Append('\'').Append(')');
+            bool isMills = function == "Millisecond";
+            string supportFunction = isMills ? "second" : function;
+            //毫秒，转化为秒
+            long ev = isMills ? Convert.ToInt64(e.Arguments[0].ToString()) : Convert.ToInt64(e.Arguments[0].ToString());
+            sqlBuilder.Append(ev).Append(' ').Append(supportFunction.ToLower()).Append('s').Append('\'').Append(')');
         }
 
         public bool HandleStringLength(MemberExpression memberExpression, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -148,14 +148,14 @@ namespace Dapper.Extensions.Expression.Adapters
             return true;
         }
 
-        public void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action)
+        public void VisitCoalesce(BinaryExpression e, StringBuilder builder, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder> action)
         {
             builder.Append("CAST(COALESCE(");
             //参数部分
-            action(e.Left, this, builder, appendParameter);
+            action(e.Left, this, builder);
             builder.Append(',');
             //值部分
-            action(e.Right, this, builder, appendParameter);
+            action(e.Right, this, builder);
             builder.Append(") AS TEXT) AS ");
         }
     }

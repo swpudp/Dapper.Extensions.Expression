@@ -133,7 +133,7 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
+            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters);
         }
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace Dapper.Extensions.Expression
             ParameterExpression p = ex.Parameters.Last();
             string tableName = _adapter.GetTableName(p.Type);
             _whereBuilder.AppendFormat("EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", tableName, _adapter.GetQuoteName(p.Name));
-            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
+            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters);
             _whereBuilder.Append(") ");
         }
 
@@ -182,7 +182,7 @@ namespace Dapper.Extensions.Expression
             ParameterExpression p = ex.Parameters.Last();
             string tableName = _adapter.GetTableName(p.Type);
             _whereBuilder.AppendFormat("NOT EXISTS (SELECT 1 FROM {0} AS {1} WHERE ", tableName, _adapter.GetQuoteName(p.Name));
-            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters, true);
+            WhereExpressionVisitor.Visit(ex, _adapter, _whereBuilder, Parameters);
             _whereBuilder.Append(") ");
         }
 
@@ -196,7 +196,7 @@ namespace Dapper.Extensions.Expression
             {
                 _whereBuilder.Append(" AND ");
             }
-            SelectExpressionVisitor.Visit(selector, _adapter, _whereBuilder, true);
+            SelectExpressionVisitor.Visit(selector, _adapter, _whereBuilder);
             _whereBuilder.Append(" BETWEEN ");
             WhereExpressionVisitor.AddParameter(_adapter, _whereBuilder, Parameters, left);
             _whereBuilder.Append(" AND ");
@@ -286,7 +286,7 @@ namespace Dapper.Extensions.Expression
             {
                 _having = new StringBuilder();
             }
-            WhereExpressionVisitor.Visit(keySelector, _adapter, _having, Parameters, true);
+            WhereExpressionVisitor.Visit(keySelector, _adapter, _having, Parameters);
         }
 
         protected TResult Max<TResult>(LambdaExpression keySelector)
@@ -408,7 +408,7 @@ namespace Dapper.Extensions.Expression
             }
             else
             {
-                SelectExpressionVisitor.Visit(selector, _adapter, _selectBuilder, true);
+                SelectExpressionVisitor.Visit(selector, _adapter, _selectBuilder);
             }
         }
 

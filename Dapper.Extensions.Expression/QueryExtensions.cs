@@ -315,7 +315,7 @@ namespace Dapper.Extensions.Expression
             UpdateExpressionVisitor.Visit(content, adapter, sb, parameters);
 
             sb.AppendFormat(" where ");
-            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
+            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters);
 
             return sb.ToString();
         }
@@ -356,7 +356,7 @@ namespace Dapper.Extensions.Expression
             UpdateExpressionVisitor.Visit(content, adapter, sb, parameters);
 
             sb.Append(" where ");
-            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
+            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters);
 
             return sb.ToString();
         }
@@ -469,7 +469,7 @@ namespace Dapper.Extensions.Expression
             StringBuilder sb = new StringBuilder();
             parameters = new DynamicParameters();
             sb.AppendFormat("delete from {0} where ", adapter.GetTableName(typeof(T)));
-            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters, false);
+            WhereExpressionVisitor.Visit(condition, adapter, sb, parameters);
             return sb.ToString();
         }
 
@@ -521,7 +521,7 @@ namespace Dapper.Extensions.Expression
                 }
                 string tableName = sqlAdapter.GetTableName(type);
                 sqlBuilder.AppendFormat(" FROM {0} WHERE ", tableName);
-                WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters, false);
+                WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters);
                 sql = sqlBuilder.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }

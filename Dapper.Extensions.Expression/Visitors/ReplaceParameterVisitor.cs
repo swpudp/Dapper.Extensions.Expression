@@ -25,7 +25,7 @@ namespace Dapper.Extensions.Expression.Visitors
         internal static LambdaExpression Replace(System.Linq.Expressions.Expression ex, ReadOnlyCollection<ParameterExpression> parameterExpressions)
         {
             Debug.WriteLine($"new ReplaceParameterVisitor for ex.{ex.Type},parameterExpressions.{string.Join(",", parameterExpressions.Select(x => x.Name))}");
-            return new ReplaceParameterVisitor(parameterExpressions).Visit(ex) as LambdaExpression;
+            return parameterExpressions.Count > 1 ? new ReplaceParameterVisitor(parameterExpressions).Visit(ex) as LambdaExpression : ex as LambdaExpression;
         }
 
         protected override System.Linq.Expressions.Expression VisitParameter(ParameterExpression node)

@@ -947,7 +947,7 @@ namespace Dapper.Extensions.Expression.UnitTests.Sqlite
         {
             using IDbConnection connection = CreateConnection();
             Query<Order> query = connection.Query<Order>();
-            IList<Order> entities = query.Where(f => f.CreateTime > DateTime.Now.AddYears(-2).AddYears(1)).ToList<Order>();
+            IList<Order> entities = query.Where(f => f.CreateTime > DateTime.Now.AddYears(-1)).ToList<Order>();
             Assert.IsTrue(entities.Any());
         }
 

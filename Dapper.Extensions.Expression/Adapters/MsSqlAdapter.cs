@@ -127,14 +127,14 @@ namespace Dapper.Extensions.Expression.Adapters
             return true;
         }
 
-        public void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action)
+        public void VisitCoalesce(BinaryExpression e, StringBuilder builder, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder> action)
         {
             builder.Append("CAST(ISNULL(");
             //参数部分
-            action(e.Left, this, builder, appendParameter);
+            action(e.Left, this, builder);
             builder.Append(',');
             //值部分
-            action(e.Right, this, builder, appendParameter);
+            action(e.Right, this, builder);
             builder.Append(") AS CHAR) AS ");
         }
     }

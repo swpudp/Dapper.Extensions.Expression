@@ -14,33 +14,33 @@ namespace Dapper.Extensions.Expression.Visitors
     /// </summary>
     internal static class SelectExpressionVisitor
     {
-        public static void Visit(System.Linq.Expressions.Expression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        public static void Visit(System.Linq.Expressions.Expression e, ISqlAdapter adapter, StringBuilder builder)
         {
             switch (e.NodeType)
             {
                 case ExpressionType.Lambda:
-                    VisitLambda((LambdaExpression)e, adapter, builder, appendParameter);
+                    VisitLambda((LambdaExpression)e, adapter, builder);
                     break;
                 case ExpressionType.New:
-                    VisitNew((NewExpression)e, adapter, builder, appendParameter);
+                    VisitNew((NewExpression)e, adapter, builder);
                     break;
                 case ExpressionType.MemberInit:
-                    VisitMemberInit((MemberInitExpression)e, adapter, builder, appendParameter);
+                    VisitMemberInit((MemberInitExpression)e, adapter, builder);
                     break;
                 case ExpressionType.Convert:
-                    VisitUnary((UnaryExpression)e, adapter, builder, appendParameter);
+                    VisitUnary((UnaryExpression)e, adapter, builder);
                     break;
                 case ExpressionType.MemberAccess:
-                    VisitMemberAccess((MemberExpression)e, adapter, builder, appendParameter);
+                    VisitMemberAccess((MemberExpression)e, adapter, builder);
                     break;
                 case ExpressionType.Parameter:
                     VisitParameter((ParameterExpression)e, adapter, builder);
                     break;
                 case ExpressionType.Call:
-                    VisitCall((MethodCallExpression)e, adapter, builder, appendParameter);
+                    VisitCall((MethodCallExpression)e, adapter, builder);
                     break;
                 case ExpressionType.Coalesce:
-                    VisitCoalesce((BinaryExpression)e, adapter, builder, appendParameter);
+                    VisitCoalesce((BinaryExpression)e, adapter, builder);
                     break;
                 case ExpressionType.Constant:
                     VisitConstant((ConstantExpression)e, builder);
@@ -50,13 +50,13 @@ namespace Dapper.Extensions.Expression.Visitors
             }
         }
 
-        private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitLambda(LambdaExpression lambda, ISqlAdapter adapter, StringBuilder builder)
         {
             LambdaExpression newExp = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
-            Visit(newExp.Body, adapter, builder, appendParameter);
+            Visit(newExp.Body, adapter, builder);
         }
 
-        private static void VisitNew(NewExpression nex, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitNew(NewExpression nex, ISqlAdapter adapter, StringBuilder builder)
         {
             foreach (MemberInfo member in nex.Members)
             {
@@ -78,7 +78,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     {
                         builder.Append(',');
                     }
-                    Visit(argExp, adapter, builder, appendParameter);
+                    Visit(argExp, adapter, builder);
                     adapter.AppendColumnName(builder, member);
                     continue;
                 }
@@ -91,10 +91,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     builder.Append(',');
                 }
-                if (appendParameter)
-                {
-                    Visit(memberExp.Expression, adapter, builder, true);
-                }
+                Visit(memberExp.Expression, adapter, builder);
                 if (member.Name == expMember.Name)
                 {
                     adapter.AppendColumnName(builder, expMember);
@@ -151,17 +148,17 @@ namespace Dapper.Extensions.Expression.Visitors
         /// <param name="adapter">适配器</param>
         /// <param name="builder">sql</param>
         /// <param name="appendParameter">是否追加参数</param>
-        private static void VisitCoalesce(BinaryExpression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitCoalesce(BinaryExpression e, ISqlAdapter adapter, StringBuilder builder)
         {
-            adapter.VisitCoalesce(e, builder, appendParameter, Visit);
+            adapter.VisitCoalesce(e, builder, Visit);
         }
 
-        private static void VisitCall(MethodCallExpression e, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitCall(MethodCallExpression e, ISqlAdapter adapter, StringBuilder builder)
         {
             if (e.Method.DeclaringType == typeof(Function))
             {
                 AbstractMethodCallHandler handler = MethodCallProvider.GetCallHandler(e);
-                handler.Handle(e, adapter, builder, null, appendParameter);
+                handler.Handle(e, adapter, builder, null, true);
                 return;
             }
             if (e.Object == null)
@@ -170,13 +167,13 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             if (e.Object.Type == ConstantDefined.TypeOfString)
             {
-                Visit(e.Object, adapter, builder, appendParameter);
+                Visit(e.Object, adapter, builder);
                 return;
             }
-            Visit(e.Object, adapter, builder, appendParameter);
+            Visit(e.Object, adapter, builder);
         }
 
-        private static void VisitMemberInit(MemberInitExpression init, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitMemberInit(MemberInitExpression init, ISqlAdapter adapter, StringBuilder builder)
         {
             foreach (MemberBinding binding in init.Bindings)
             {
@@ -207,7 +204,7 @@ namespace Dapper.Extensions.Expression.Visitors
                     {
                         builder.Append(',');
                     }
-                    Visit(assignExp, adapter, builder, appendParameter);
+                    Visit(assignExp, adapter, builder);
                     adapter.AppendColumnName(builder, binding.Member);
                     continue;
                 }
@@ -219,10 +216,7 @@ namespace Dapper.Extensions.Expression.Visitors
                 {
                     builder.Append(',');
                 }
-                if (appendParameter)
-                {
-                    Visit(member.Expression, adapter, builder, true);
-                }
+                Visit(member.Expression, adapter, builder);
                 if (member.Member.Name != binding.Member.Name)
                 {
                     adapter.AppendAliasColumnName(builder, member.Member, binding.Member);
@@ -236,17 +230,14 @@ namespace Dapper.Extensions.Expression.Visitors
             }
         }
 
-        private static void VisitUnary(UnaryExpression u, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitUnary(UnaryExpression u, ISqlAdapter adapter, StringBuilder builder)
         {
-            Visit(u.Operand, adapter, builder, appendParameter);
+            Visit(u.Operand, adapter, builder);
         }
 
-        private static void VisitMemberAccess(MemberExpression m, ISqlAdapter adapter, StringBuilder builder, bool appendParameter)
+        private static void VisitMemberAccess(MemberExpression m, ISqlAdapter adapter, StringBuilder builder)
         {
-            if (appendParameter)
-            {
-                Visit(m.Expression, adapter, builder, true);
-            }
+            Visit(m.Expression, adapter, builder);
             adapter.AppendColumnName(builder, m.Member);
         }
 

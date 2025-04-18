@@ -71,16 +71,6 @@ namespace Dapper.Extensions.Expression.Visitors
                 return;
             }
             InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
-
-            //if (lambda.Body.NodeType != ExpressionType.MemberAccess)
-            //{
-            //    InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
-            //}
-            //else
-            //{
-            //    lambda = System.Linq.Expressions.Expression.Lambda(System.Linq.Expressions.Expression.Equal(lambda.Body, ConstantDefined.BooleanTrue), lambda.Parameters.ToArray());
-            //    InternalVisit(lambda.Body, adapter, sqlBuilder, parameters, appendParameter);
-            //}
         }
 
         private static void VisitBinary(System.Linq.Expressions.Expression ex, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
@@ -200,11 +190,6 @@ namespace Dapper.Extensions.Expression.Visitors
                     return;
                 }
             }
-            //if (memberExpression.Expression.Type.IsNullable())
-            //{
-            //    ProcessUnaryMemberAccess(memberExpression, sqlBuilder, adapter, parameters, appendParameter);
-            //    return;
-            //}
             System.Linq.Expressions.Expression memberNewExpression = ExpressionEvaluator.MakeExpression(memberExpression);
             InternalVisit(memberNewExpression, adapter, sqlBuilder, parameters, appendParameter);
         }
@@ -223,14 +208,7 @@ namespace Dapper.Extensions.Expression.Visitors
             }
             else
             {
-                if (appendParameter)
-                {
-                    AddParameter(adapter, sqlBuilder, parameters, constant.Value);
-                }
-                else
-                {
-                    sqlBuilder.Append(constant.Value);
-                }
+                AddParameter(adapter, sqlBuilder, parameters, constant.Value);
             }
         }
 
@@ -422,13 +400,14 @@ namespace Dapper.Extensions.Expression.Visitors
             [ExpressionType.OrElse] = "OR"
         };
 
-        internal static void Visit(System.Linq.Expressions.Expression exp, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
+        internal static void Visit(System.Linq.Expressions.Expression exp, ISqlAdapter adapter, StringBuilder sqlBuilder, DynamicParameters parameters)
         {
             if (!(exp is LambdaExpression lambda))
             {
                 throw new NotSupportedException();
             }
             LambdaExpression ex = ReplaceParameterVisitor.Replace(lambda, lambda.Parameters);
+            bool appendParameter = ex.Parameters.Count > 1;
             if (ex.Body.NodeType == ExpressionType.Not)
             {
                 ProcessUnaryNot((UnaryExpression)ex.Body, sqlBuilder, adapter, parameters, appendParameter);

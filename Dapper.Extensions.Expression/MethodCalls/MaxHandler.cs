@@ -17,7 +17,7 @@ namespace Dapper.Extensions.Expression.MethodCalls
         public override void Handle(MethodCallExpression e, ISqlAdapter sqlAdapter, StringBuilder builder, DynamicParameters parameters, bool appendParameter)
         {
             builder.Append("Max(");
-            SelectExpressionVisitor.Visit(e.Arguments[0], sqlAdapter, builder, appendParameter);
+            SelectExpressionVisitor.Visit(e.Arguments[0], sqlAdapter, builder);
             builder.Append(") AS ");
         }
     }

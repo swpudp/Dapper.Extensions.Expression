@@ -95,7 +95,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="builder">构建器</param>
         /// <param name="appendParameter">是否追加参数</param>
         /// <param name="action">访问表达式动作</param>
-        void VisitCoalesce(BinaryExpression e, StringBuilder builder, bool appendParameter, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder, bool> action);
+        void VisitCoalesce(BinaryExpression e, StringBuilder builder, Action<System.Linq.Expressions.Expression, ISqlAdapter, StringBuilder> action);
 
         /// <summary>
         /// 添加参数
