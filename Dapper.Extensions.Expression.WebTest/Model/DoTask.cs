@@ -31,6 +31,17 @@ namespace Dapper.Extensions.Expression.WebTest.Model
         public int Size { get; set; }
     }
 
+    public class TaskGroupQuery
+    {
+        public string Name { get; set; }
+
+        public DateTime? CreateTimeStart { get; set; }
+        public DateTime? CreateTimeEnd { get; set; }
+
+        public int Index { get; set; }
+        public int Size { get; set; }
+    }
+
     public class Paging<T> where T : class
     {
         public IList<T> Data { get; set; } = [];
