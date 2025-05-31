@@ -56,4 +56,13 @@ namespace Dapper.Extensions.Expression.WebTest.Model
         Face,
         Remote
     }
+
+    public enum TaskType
+    {
+        Recite,
+        ListenAndWrite,
+        Review,
+        Rewrite,
+        ReciteAgain
+    }
 }
