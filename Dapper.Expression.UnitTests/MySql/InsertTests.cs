@@ -296,8 +296,8 @@ namespace Dapper.Extensions.Expression.UnitTests.MySql
         [TestMethod]
         public async Task InsertManyAsyncTest()
         {
-            IEnumerable<Buyer> buyers = Enumerable.Range(0, 100).Select(f => ObjectUtils.CreateBuyer());
-            int result = await Execute(connection => connection.InsertAsync(buyers));
+            IList<Buyer> buyers = Enumerable.Range(0, 100).Select(f => ObjectUtils.CreateBuyer()).ToList();
+            int result = await Execute(connection => connection.InsertBulkAsync(buyers));
             Assert.IsTrue(result > 0);
         }
 

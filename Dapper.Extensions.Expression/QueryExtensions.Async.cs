@@ -17,15 +17,15 @@ namespace Dapper.Extensions.Expression
         /// <summary>
         /// 当写入多条数据时，实质是循环写入
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="connection"></param>
-        /// <param name="entity"></param>
-        /// <param name="transaction"></param>
-        /// <param name="commandTimeout"></param>
+        /// <typeparam name="T">类型</typeparam>
+        /// <param name="connection">数据库连接</param>
+        /// <param name="entity">实体实例</param>
+        /// <param name="transaction">事务实例</param>
+        /// <param name="commandTimeout">超时时间</param>
         /// <returns></returns>
         public static Task<int> InsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }
@@ -41,7 +41,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static Task<int> UniqueInsertAsync<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert ignore into {tableName} ({columnList}) values ({parameterList})";
             return connection.ExecuteAsync(cmd, entity, transaction, commandTimeout);
         }

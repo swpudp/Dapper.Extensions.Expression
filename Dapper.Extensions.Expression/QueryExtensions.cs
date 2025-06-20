@@ -28,7 +28,8 @@ namespace Dapper.Extensions.Expression
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, string> CountQueries = new ConcurrentDictionary<RuntimeTypeHandle, string>();
 
         /// <summary>
-        /// 写入一条或多条记录
+        /// 写入一条或多条记录。
+        /// 写入多条记录时是一条一条写入，效率不够高，可考虑使用InsertBulk。
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="connection"></param>
@@ -38,7 +39,7 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         public static int Insert<T>(this IDbConnection connection, T entity, IDbTransaction transaction = null, int? commandTimeout = null) where T : class
         {
-            string tableName = BuildInsertSql(connection, entity, out StringBuilder columnList, out StringBuilder parameterList);
+            string tableName = BuildInsertSql<T>(connection, out StringBuilder columnList, out StringBuilder parameterList);
             string cmd = $"insert into {tableName} ({columnList}) values ({parameterList})";
             return connection.Execute(cmd, entity, transaction, commandTimeout);
         }
@@ -51,57 +52,26 @@ namespace Dapper.Extensions.Expression
         /// <param name="columnList"></param>
         /// <param name="parameterList"></param>
         /// <returns></returns>
-        private static string BuildInsertSql<T>(IDbConnection connection, T entity, out StringBuilder columnList, out StringBuilder parameterList)
+        private static string BuildInsertSql<T>(IDbConnection connection, out StringBuilder columnList, out StringBuilder parameterList)
         {
             Type type = typeof(T);
             if (type.IsList(out Type eleType))
             {
                 type = eleType;
             }
-            columnList = new StringBuilder();
             List<PropertyInfo> canWriteProperties = TypeProvider.GetCanWriteProperties(type);
+            columnList = new StringBuilder(canWriteProperties.Count);
+            parameterList = new StringBuilder(canWriteProperties.Count);
             ISqlAdapter adapter = SqlProvider.GetFormatter(connection);
             for (int i = 0; i < canWriteProperties.Count; i++)
             {
                 PropertyInfo property = canWriteProperties[i];
                 adapter.AppendColumnName(columnList, property);
+                adapter.AddParameter(parameterList, property.Name);
                 if (i < canWriteProperties.Count - 1)
                 {
-                    columnList.Append(", ");
-                }
-            }
-            parameterList = new StringBuilder();
-            for (int i = 0; i < canWriteProperties.Count; i++)
-            {
-                PropertyInfo property = canWriteProperties[i];
-                object value = property.GetValue(entity);
-                if (value == null)
-                {
-                    parameterList.Append("NULL");
-                }
-                else if (value is bool v)
-                {
-                    parameterList.Append(adapter.ParseBool(v));
-                }
-                else if (value is Guid v1)
-                {
-                    parameterList.Append('\'').Append(v1).Append('\'');
-                }
-                else if (value.GetType().IsEnum)
-                {
-                    parameterList.Append(Convert.ChangeType(value, Enum.GetUnderlyingType(value.GetType())));
-                }
-                else if (value.GetType().IsNumericType())
-                {
-                    parameterList.Append(value);
-                }
-                else
-                {
-                    adapter.AddParameter(parameterList, property.Name);
-                }
-                if (i < canWriteProperties.Count - 1)
-                {
-                    parameterList.Append(", ");
+                    columnList.Append(',');
+                    parameterList.Append(',');
                 }
             }
             return adapter.GetTableName(type);
