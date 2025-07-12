@@ -81,7 +81,7 @@ namespace Dapper.Extensions.Expression.Providers
             {
                 return pis;
             }
-            List<PropertyInfo> properties = type.GetProperties().ToList();
+            List<PropertyInfo> properties = type.GetProperties().Where(f => !typeof(IEnumerable).IsAssignableFrom(f.PropertyType)).ToList();
             TypeProperties[type.TypeHandle] = properties;
             return properties;
         }
