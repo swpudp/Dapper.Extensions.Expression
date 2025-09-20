@@ -125,6 +125,10 @@ namespace Dapper.Extensions.Expression
         /// <returns></returns>
         protected void Where(LambdaExpression ex)
         {
+            if (ex.Body is ConstantExpression constant && Equals(constant.Value, true))
+            {
+                return;
+            }
             if (_whereBuilder == null)
             {
                 _whereBuilder = new StringBuilder();

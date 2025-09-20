@@ -81,7 +81,7 @@ namespace Dapper.Extensions.Expression.Providers
             {
                 return pis;
             }
-            List<PropertyInfo> properties = type.GetProperties().Where(f => !typeof(IEnumerable).IsAssignableFrom(f.PropertyType)).ToList();
+            List<PropertyInfo> properties = type.GetProperties().Where(f => !IsList(f.PropertyType, out _)).ToList();
             TypeProperties[type.TypeHandle] = properties;
             return properties;
         }
@@ -96,6 +96,24 @@ namespace Dapper.Extensions.Expression.Providers
             List<PropertyInfo> keyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => (a is KeyAttribute keyAttribute) && keyAttribute.IsAutoIncrement)).ToList();
             AutoIncrementProperties[type.TypeHandle] = keyProperties;
             return keyProperties;
+        }
+
+        internal static List<PropertyInfo> GetKeyProperties(Type type)
+        {
+            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
+            {
+                return pi;
+            }
+            List<PropertyInfo> allProperties = GetAllProperties(type);
+            List<PropertyInfo> explicitKeyProperties = allProperties.Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
+            if (explicitKeyProperties.Count>0)
+            {
+                ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
+                return explicitKeyProperties;
+            }
+            List<PropertyInfo> idProperties = allProperties.Where(f => f.Name.Equals("id", StringComparison.OrdinalIgnoreCase)).ToList();
+            ExplicitKeyProperties[type.TypeHandle] =idProperties;
+            return idProperties;
         }
 
         /// <summary>
@@ -136,17 +154,6 @@ namespace Dapper.Extensions.Expression.Providers
             List<PropertyInfo> nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
             CanUpdateProperties[type.TypeHandle] = nonIdProps;
             return nonIdProps;
-        }
-
-        internal static List<PropertyInfo> GetKeyProperties(Type type)
-        {
-            if (ExplicitKeyProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
-            {
-                return pi;
-            }
-            List<PropertyInfo> explicitKeyProperties = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is KeyAttribute)).ToList();
-            ExplicitKeyProperties[type.TypeHandle] = explicitKeyProperties;
-            return explicitKeyProperties;
         }
 
         internal static bool IsList(this Type type, out Type eleType)

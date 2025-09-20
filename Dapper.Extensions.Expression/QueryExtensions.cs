@@ -473,9 +473,9 @@ namespace Dapper.Extensions.Expression
         {
             parameters = new DynamicParameters();
             Type type = typeof(T);
+            ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
             if (!GetQueries.TryGetValue(type.TypeHandle, out string sql))
             {
-                ISqlAdapter sqlAdapter = SqlProvider.GetFormatter(connection);
                 List<PropertyInfo> queryProperties = TypeProvider.GetCanQueryProperties(type);
                 StringBuilder sqlBuilder = new StringBuilder();
                 sqlBuilder.Append("SELECT ");
@@ -491,11 +491,12 @@ namespace Dapper.Extensions.Expression
                 }
                 string tableName = sqlAdapter.GetTableName(type);
                 sqlBuilder.AppendFormat(" FROM {0} WHERE ", tableName);
-                WhereExpressionVisitor.Visit(condition, sqlAdapter, sqlBuilder, parameters);
                 sql = sqlBuilder.ToString();
                 GetQueries[type.TypeHandle] = sql;
             }
-            return sql;
+            StringBuilder where = new StringBuilder(sql);
+            WhereExpressionVisitor.Visit(condition, sqlAdapter, where, parameters);
+            return where.ToString();
         }
 
         /// <summary>
