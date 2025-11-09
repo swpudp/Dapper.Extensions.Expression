@@ -29,7 +29,7 @@ namespace Dapper.Extensions.Expression.Adapters
                 return;
             }
             int currentPage = page > 1 ? page - 1 : 0;
-            sb.AppendFormat(" LIMIT {0} OFFSET {1}", currentPage * pageSize, pageSize);
+            sb.AppendFormat(" LIMIT {0} OFFSET {1}", pageSize, currentPage * pageSize);
         }
 
         public void HandleDateTime(MemberExpression exp, StringBuilder sqlBuilder, DynamicParameters parameters, bool appendParameter)
