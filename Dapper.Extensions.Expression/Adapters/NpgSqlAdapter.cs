@@ -1,4 +1,5 @@
-﻿using Dapper.Extensions.Expression.Visitors;
+﻿using Dapper.Extensions.Expression.Utilities;
+using Dapper.Extensions.Expression.Visitors;
 using System;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -141,6 +142,34 @@ namespace Dapper.Extensions.Expression.Adapters
             builder.Append(',');
             action(e.Right, this, builder);
             builder.Append(") AS CHAR) AS ");
+        }
+
+        public override void AddParameter(StringBuilder builder, PropertyInfo property)
+        {
+            if (property.IsDefined(typeof(JsonbAttribute)))
+            {
+                AddParameter(builder, property.Name+"::jsonb");
+            }
+            else
+            {
+                base.AddParameter(builder, property);
+            }
+        }
+
+        public override void AppendBinaryColumn(StringBuilder sb, MemberInfo memberInfo, out string name)
+        {
+            string ext = memberInfo.IsDefined(typeof(JsonbAttribute)) ? "::jsonb" : string.Empty;
+            ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
+            if (columnAttribute == null)
+            {
+                name = memberInfo.Name;
+                sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, NamingUtils.GetName(memberInfo.Name), RightQuote, ParameterPrefix, memberInfo.Name+ext);
+            }
+            else
+            {
+                name = columnAttribute.Name;
+                sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, NamingUtils.GetName(columnAttribute.Name), RightQuote, ParameterPrefix, columnAttribute.Name + ext);
+            }
         }
     }
 }

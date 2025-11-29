@@ -96,7 +96,7 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="sb">The string builder  to append to.</param>
         /// <param name="memberInfo">The column name.</param>
         /// <param name="name"></param>
-        public void AppendBinaryColumn(StringBuilder sb, MemberInfo memberInfo, out string name)
+        public virtual void AppendBinaryColumn(StringBuilder sb, MemberInfo memberInfo, out string name)
         {
             //FieldNamingAttribute namingAttribute = NamingUtils.GetNamingAttribute(memberInfo);
             ColumnAttribute columnAttribute = memberInfo.GetCustomAttribute<ColumnAttribute>();
@@ -125,6 +125,16 @@ namespace Dapper.Extensions.Expression.Adapters
         public void AddParameter(StringBuilder builder, string name)
         {
             builder.AppendFormat("{0}{1}", ParameterPrefix, name);
+        }
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数容器</param>
+        /// <param name="property">属性</param>
+        public virtual void AddParameter(StringBuilder builder, PropertyInfo property)
+        {
+            AddParameter(builder, property.Name);
         }
 
         /// <summary>

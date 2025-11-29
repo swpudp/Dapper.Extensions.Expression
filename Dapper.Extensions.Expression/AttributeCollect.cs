@@ -57,6 +57,22 @@ namespace Dapper.Extensions.Expression
     }
 
     /// <summary>
+    /// jsonb字段标记
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class JsonbAttribute : Attribute
+    {
+    }
+
+    /// <summary>
+    /// 忽略更新字段标记
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Property)]
+    public class IgnoreUpdateAttribute : Attribute
+    {
+    }
+
+    /// <summary>
     /// 主键称指定
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)]

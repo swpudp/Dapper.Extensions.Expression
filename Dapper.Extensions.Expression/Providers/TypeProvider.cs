@@ -16,6 +16,7 @@ namespace Dapper.Extensions.Expression.Providers
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> TypeProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> ComputedProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> NotMappedProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
+        private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> IgnoreUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> CanWriteProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> CanUpdateProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
         private static readonly ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>> CanQueryProperties = new ConcurrentDictionary<RuntimeTypeHandle, List<PropertyInfo>>();
@@ -73,6 +74,17 @@ namespace Dapper.Extensions.Expression.Providers
             List<PropertyInfo> notMappedPropertyInfos = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is NotMappedAttribute)).ToList();
             NotMappedProperties[type.TypeHandle] = notMappedPropertyInfos;
             return notMappedPropertyInfos;
+        }
+
+        private static IEnumerable<PropertyInfo> GetIgnoreUpdateProperties(Type type)
+        {
+            if (IgnoreUpdateProperties.TryGetValue(type.TypeHandle, out List<PropertyInfo> pi))
+            {
+                return pi;
+            }
+            List<PropertyInfo> ignoreUpdatePropertyInfos = GetAllProperties(type).Where(p => p.GetCustomAttributes(true).Any(a => a is IgnoreUpdateAttribute)).ToList();
+            IgnoreUpdateProperties[type.TypeHandle] = ignoreUpdatePropertyInfos;
+            return ignoreUpdatePropertyInfos;
         }
 
         private static List<PropertyInfo> GetAllProperties(Type type)
@@ -151,7 +163,8 @@ namespace Dapper.Extensions.Expression.Providers
             List<PropertyInfo> allProperties = GetAllProperties(type);
             IEnumerable<PropertyInfo> computedProperties = GetComputedProperties(type);
             IEnumerable<PropertyInfo> notMappedProperties = GetNotMappedProperties(type);
-            List<PropertyInfo> nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties)).ToList();
+            IEnumerable<PropertyInfo> ignoreUpdateProperties = GetIgnoreUpdateProperties(type);
+            List<PropertyInfo> nonIdProps = allProperties.Except(keyProperties.Union(computedProperties).Union(notMappedProperties).Union(ignoreUpdateProperties)).ToList();
             CanUpdateProperties[type.TypeHandle] = nonIdProps;
             return nonIdProps;
         }
