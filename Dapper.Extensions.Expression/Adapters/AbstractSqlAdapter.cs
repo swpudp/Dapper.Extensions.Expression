@@ -167,5 +167,27 @@ namespace Dapper.Extensions.Expression.Adapters
         {
             parameters.Add(ParameterPrefix + name, value);
         }
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="parameters"></param>
+        /// <param name="property"></param>
+        /// <param name="v"></param>
+        /// <param name="value"></param>
+        public virtual void AddParameter(Dictionary<string, object> parameters, PropertyInfo property, int index, object value)
+        {
+            parameters.Add($"{ParameterPrefix}{property.Name}_{index}", value);
+        }
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数容器</param>
+        /// <param name="property">属性</param>
+        public virtual void AddParameter(StringBuilder builder, PropertyInfo property, int index)
+        {
+            builder.AppendFormat("{0}{1}_{2}", ParameterPrefix, property.Name, index);
+        }
     }
 }

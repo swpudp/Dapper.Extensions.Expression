@@ -1,6 +1,7 @@
 ﻿using Dapper.Extensions.Expression.Utilities;
 using Dapper.Extensions.Expression.Visitors;
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
@@ -169,6 +170,30 @@ namespace Dapper.Extensions.Expression.Adapters
             {
                 name = columnAttribute.Name;
                 sb.AppendFormat("{0}{1}{2} = {3}{4}", LeftQuote, NamingUtils.GetName(columnAttribute.Name), RightQuote, ParameterPrefix, columnAttribute.Name + ext);
+            }
+        }
+
+        public override void AddParameter(StringBuilder builder, PropertyInfo property, int index)
+        {
+            if (property.IsDefined(typeof(JsonbAttribute)))
+            {
+                builder.AppendFormat("{0}{1}{2}::jsonb", ParameterPrefix, property.Name, index);
+            }
+            else
+            {
+                base.AddParameter(builder, property, index);
+            }
+        }
+
+        public override void AddParameter(Dictionary<string, object> parameters, PropertyInfo property, int index, object value)
+        {
+            if (property.IsDefined(typeof(JsonbAttribute)))
+            {
+                parameters.Add(string.Format("{0}{1}{2}::jsonb", ParameterPrefix, property.Name, index), value);
+            }
+            else
+            {
+                base.AddParameter(parameters, property, index, value);
             }
         }
     }

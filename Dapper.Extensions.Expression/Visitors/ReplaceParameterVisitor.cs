@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Xml.Linq;
 
 namespace Dapper.Extensions.Expression.Visitors
 {
@@ -14,12 +15,14 @@ namespace Dapper.Extensions.Expression.Visitors
     /// </summary>
     internal class ReplaceParameterVisitor : ExpressionVisitor
     {
-        private readonly ReadOnlyCollection<ParameterExpression> _parameters;
-        private static readonly IDictionary<RuntimeTypeHandle, IDictionary<int, ParameterExpression>> NewExpressions = new ConcurrentDictionary<RuntimeTypeHandle, IDictionary<int, ParameterExpression>>();
+        private readonly Dictionary<RuntimeTypeHandle, ParameterExpression> _newExpressions = new Dictionary<RuntimeTypeHandle, ParameterExpression>();
 
         private ReplaceParameterVisitor(ReadOnlyCollection<ParameterExpression> parameters)
         {
-            _parameters = parameters;
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                _newExpressions[parameters[i].Type.TypeHandle] = System.Linq.Expressions.Expression.Parameter(parameters[i].Type, "t" + (i + 1));
+            }
         }
 
         internal static LambdaExpression Replace(System.Linq.Expressions.Expression ex, ReadOnlyCollection<ParameterExpression> parameterExpressions)
@@ -30,19 +33,7 @@ namespace Dapper.Extensions.Expression.Visitors
 
         protected override System.Linq.Expressions.Expression VisitParameter(ParameterExpression node)
         {
-            if (!NewExpressions.TryGetValue(node.Type.TypeHandle, out IDictionary<int, ParameterExpression> typeParameterExpressions))
-            {
-                typeParameterExpressions = new ConcurrentDictionary<int, ParameterExpression>();
-            }
-            int parameterIndex = _parameters.IndexOf(node);
-            if (typeParameterExpressions.TryGetValue(parameterIndex, out ParameterExpression p))
-            {
-                return base.VisitParameter(p);
-            }
-            p = System.Linq.Expressions.Expression.Parameter(node.Type, "t" + (parameterIndex + 1));
-            typeParameterExpressions[parameterIndex] = p;
-            NewExpressions[node.Type.TypeHandle] = typeParameterExpressions;
-            return base.VisitParameter(p);
+            return base.VisitParameter(_newExpressions[node.Type.TypeHandle]);
         }
     }
 }

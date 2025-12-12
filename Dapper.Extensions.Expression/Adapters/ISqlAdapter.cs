@@ -134,5 +134,21 @@ namespace Dapper.Extensions.Expression.Adapters
         /// <param name="name">参数名称</param>
         /// <param name="value">参数值</param>
         void AddParameter(DynamicParameters parameters, string name, object value);
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="parameters"></param>
+        /// <param name="property"></param>
+        /// <param name="v"></param>
+        /// <param name="value"></param>
+        void AddParameter(Dictionary<string, object> parameters, PropertyInfo property, int index, object value);
+
+        /// <summary>
+        /// 添加参数
+        /// </summary>
+        /// <param name="builder">参数容器</param>
+        /// <param name="property">属性</param>
+        void AddParameter(StringBuilder builder, PropertyInfo property, int index);
     }
 }

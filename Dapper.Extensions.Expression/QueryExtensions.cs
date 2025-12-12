@@ -67,14 +67,7 @@ namespace Dapper.Extensions.Expression
             {
                 PropertyInfo property = canWriteProperties[i];
                 adapter.AppendColumnName(columnList, property);
-                if (property.IsDefined(typeof(JsonbAttribute)))
-                {
-                    adapter.AddParameter(parameterList, property.Name+"::jsonb");
-                }
-                else
-                {
-                    adapter.AddParameter(parameterList, property.Name);
-                }
+                adapter.AddParameter(parameterList, property);
                 if (i < canWriteProperties.Count - 1)
                 {
                     columnList.Append(',');
@@ -143,9 +136,9 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(value);
                         continue;
                     }
-                    string parameterName = $"n_p_{entities.IndexOf(entity)}_{i}";
-                    adapter.AddParameter(parameterList, parameterName);
-                    adapter.AddParameter(parameters, parameterName, value);
+                    int index = entities.IndexOf(entity);
+                    adapter.AddParameter(parameterList, property, index);
+                    adapter.AddParameter(parameters, property, index, value);
                 }
                 parameterList.Append(')');
                 if (parameters.Count > maxParameterCount || entities.IndexOf(entity) + 1 == entities.Count)

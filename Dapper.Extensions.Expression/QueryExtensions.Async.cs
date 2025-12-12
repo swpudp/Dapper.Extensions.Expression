@@ -104,9 +104,13 @@ namespace Dapper.Extensions.Expression
                         parameterList.Append(value.ToString());
                         continue;
                     }
+                    int index = entities.IndexOf(entity);
                     string parameterName = $"n_p_{entities.IndexOf(entity)}_{i}";
-                    adapter.AddParameter(parameters, parameterName, value);
                     adapter.AddParameter(parameterList, parameterName);
+                    adapter.AddParameter(parameters, parameterName, value);
+                    //todo jsonb数据批量写入
+                    //adapter.AddParameter(parameters, property, index, value);
+                    //adapter.AddParameter(parameterList, property, index);
                 }
                 parameterList.Append(')');
                 if (parameters.Count > maxParameterCount || entities.IndexOf(entity) + 1 == entities.Count)
